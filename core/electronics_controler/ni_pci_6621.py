@@ -15,7 +15,7 @@ def choice_cuvette():
     return solution
 
 
-def Voltage_acquisition(SAMPLES_PER_CHANNEL, SAMPLE_RATE, Frequence_creneau, Rapport_cyclique, CHANNELS, Channel):
+def voltage_acquisition(SAMPLES_PER_CHANNEL, SAMPLE_RATE, Frequence_creneau, Rapport_cyclique, CHANNELS, Channel):
     min_tensions = []
     
     if Channel=='ai0': # Acquisition sur le 1er capteur
