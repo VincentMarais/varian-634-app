@@ -8,7 +8,7 @@ from core.kinematic_chains.screw_motor import state_screw_motor, grbl_parameter_
 from core.kinematic_chains.mirror_cuves_motor import move_mirror_cuves_motor , initialisation_mirror_cuves_motor
 from core.kinematic_chains.end_stop_sensor import *
 
-from core.electronics_controler.ni_pci_6621 import Voltage_acquisition
+from core.electronics_controler.ni_pci_6621 import Voltage_acquisition , choice_cuvette
 
 from core.utils.Enregistrement_des_fichiers import save_data_csv
 from core.utils.Tracer_courbe import graph
@@ -53,64 +53,70 @@ PIN = BOARD_OPTICAL_FORK.get_pin('d:3:i')  # d pour digital, 3 pour le pin 3, i 
 """
 ACQUISITION DU SIGNAL
 """
-def mode_precision(course_vis, nombre_de_mesures, vitesse_translation_vis):  # d: distance parcourue par la vis en mm/  n: nombre de mesure de tension / vitesse_translation_vis: vitesse_translation_vis translation de la vis (mm/min)
+def mode_precision(screw_travel, number_measurements,screw_translation_speed):  
     """
     Entrée :
-
+# d: distance parcourue par la vis en mm/  n: nombre de mesure de tension / screw_translation_speed: vitesse de translation de la vis (mm/min)
     Sortie : 
     
     """
     
-    Tensions_capteur_1= []
-    Tensions_capteur_2= []
+    voltages_photodiode_1= []
+    voltages_photodiode_2= []
 
-    Longueur_d_onde=[]
-    pas_de_vis=[]
+    wavelength=[]
+    no_screw=[]
     i=0
-    pas=course_vis/nombre_de_mesures # 0.5mm Pas de la vis (cf Exel)
-    temps_par_pas= (pas*60)/vitesse_translation_vis # Temps pour faire un pas 
+    step=screw_travel/number_measurements # 0.5mm Pas de la vis (cf Exel)
+    time_per_step= (step*60)/screw_translation_speed # Temps pour faire un pas 
     
+
+    """
+    Initialisation cuves
+    """
+    choice = choice_cuvette()
+
     """
     Initialisation moteur    
     """
     initialisation_mirror_cuves_motor(S,PIN)
 
-    initialisation_motor_screw(S,vitesse_translation_vis)
-    
+    initialisation_motor_screw(S,screw_translation_speed)
     
 
+    # Hypothèse : La photodiode 1 est toujours branché sur le port 'ai0' et la photodiode 2 toujours branché sur le port 'ai1'
 
     """
     Début de l'acquisition
     """
     while i < course_vis: # Tant que la vis n'a pas parcouru une distance course_vis
-        Tension_capteur_1 = Voltage_acquisition(SAMPLES_PER_CHANNEL, SAMPLE_RATE, PULSE_FREQUENCY, DUTY_CYCLE, CHANNELS, Channel='ai0')
-        Tensions_capteur_1.append(Tension_capteur_1)
+        voltage_photodiode_1 = Voltage_acquisition(SAMPLES_PER_CHANNEL, SAMPLE_RATE, PULSE_FREQUENCY, DUTY_CYCLE, CHANNELS, solution='ai0')
+        voltages_photodiode_1.append(voltage_photodiode_1)
 
         move_mirror_cuves_motor(S, 0.33334)  # Le moteur doit faire une angle de 60°
         time.sleep(0.5)
         
-        Tension_capteur_2 = Voltage_acquisition(SAMPLES_PER_CHANNEL, SAMPLE_RATE, PULSE_FREQUENCY, DUTY_CYCLE, CHANNELS, Channel='ai1')
-        Tensions_capteur_2.append(Tension_capteur_2)
+        voltage_photodiode_2 = Voltage_acquisition(SAMPLES_PER_CHANNEL, SAMPLE_RATE, PULSE_FREQUENCY, DUTY_CYCLE, CHANNELS, Channel='ai1')
+        voltages_photodiode_2.append(voltage_photodiode_2)
 
         move_mirror_cuves_motor(S, -0.33334)  # Le moteur doit faire une angle de 60°
         time.sleep(0.5)
 
-        pas_de_vis.append(i)
-        Longueur_d_onde.append(-31.10419907 * i + 800)  # cf rapport 2022-2023 dans la partie "Acquisition du signal"
+        no_screw.append(i)
+        wavelength.append(-31.10419907 * i + 800)  # cf rapport 2022-2023 dans la partie "Acquisition du signal"
 
-        move_screw(S, i + pas)  # Le moteur travail en mode absolu par défaut G90
+        move_screw(S, i + step)  # Le moteur travail en mode absolu par défaut G90
 
-        print(f"Tension photodiode 1 (Volt) : {Tensions_capteur_1}")
-        print(f"Taille de la liste Tension photodiode 1 : {len(Tensions_capteur_1)}")
-        print(f"Tension photodiode 2 (Volt) : {Tensions_capteur_2}")
-        print(f"Taille de la liste photodiode 2 : {len(Tensions_capteur_2)}")
+        print(f"Tension photodiode 1 (Volt) : {voltages_photodiode_1}")
+        print(f"Taille de la liste Tension photodiode 1 : {len(voltages_photodiode_1)}")
+        print(f"Tension photodiode 2 (Volt) : {voltages_photodiode_2}")
+        print(f"Taille de la liste photodiode 2 : {len(voltages_photodiode_2)}")
         print(f"Pas de vis (mm) : {i}")
-        print(f"Longueur d'onde (nm) : {Longueur_d_onde}")
-        print(f"Taille de la liste Longueur d'onde (nm) : {len(Longueur_d_onde)}")
+        print(f"Longueur d'onde (nm) : {wavelength}")
+        print(f"Taille de la liste Longueur d'onde (nm) : {len(wavelength)}")
 
-        time.sleep(temps_par_pas)  # Comme $110 =4mm/min et le pas de vis est de 0.5mm => Le moteur réalise un pas de vis en 7.49s
-        i += pas
+        time.sleep(time_per_step)  # Comme $110 =4mm/min et le pas de vis est de 0.5mm => Le moteur réalise un pas de vis en 7.49s
+        i += step
 
         
         
@@ -119,13 +125,25 @@ def mode_precision(course_vis, nombre_de_mesures, vitesse_translation_vis):  # d
     Fin de l'acquisition
     """
 
-   
-    Longueur_d_onde.reverse()
-    Tensions_capteur_1.reverse()
-    Tensions_capteur_2.reverse()
-    pas_de_vis.reverse()
+    """
+    Dé
+    """
+    if choice == '(cuve 1)':
+        reference_solution=voltages_photodiode_1
+        sample_solution=voltages_photodiode_2
+    else:
+        reference_solution=voltages_photodiode_2
+        sample_solution=voltages_photodiode_1
 
-    return  Longueur_d_onde, Tensions_capteur_1, Tensions_capteur_2, pas_de_vis
+
+
+   
+    wavelength.reverse()
+    reference_solution.reverse()
+    sample_solution.reverse()
+    no_screw.reverse()
+
+    return  wavelength, reference_solution, sample_solution, no_screw
 
 
 
@@ -133,7 +151,7 @@ def mode_precision(course_vis, nombre_de_mesures, vitesse_translation_vis):  # d
 """
 PARTIE ACQUISITION DES DONNEES
 """ 
-def ACQUISITION(course_vis, nombre_de_mesure, vitesse_translation_vis, PULSE_FREQUENCY, DUTY_CYCLE, fichier_blanc, fichier_echantillon, Nom_echantillon, Titre, REPERTORY): # Départ 7.25mm / 21 - 7.25 = 13.75mm où 21 course de la vis total de la vis => course_vis=13.75mm
+def ACQUISITION(course_vis, nombre_de_mesure, screw_translation_speed, PULSE_FREQUENCY, DUTY_CYCLE, fichier_blanc, fichier_echantillon, Nom_echantillon, Titre, REPERTORY): # Départ 7.25mm / 21 - 7.25 = 13.75mm où 21 course de la vis total de la vis => course_vis=13.75mm
     nom_colonne_tension_blanc='Tension blanc (Volt)'
 
     nom_colonne_tension_echantillon='Tension échantillon (Volt)'
@@ -142,7 +160,7 @@ def ACQUISITION(course_vis, nombre_de_mesure, vitesse_translation_vis, PULSE_FRE
   
 
 
-    [Longueur_d_onde, Tension_blanc, Tension_echantillon, pas_de_vis] = mode_precision(course_vis, nombre_de_mesure, vitesse_translation_vis, PULSE_FREQUENCY, DUTY_CYCLE)
+    [wavelength, Tension_blanc, Tension_echantillon, no_screw] = mode_precision(course_vis, nombre_de_mesure, screw_translation_speed, PULSE_FREQUENCY, DUTY_CYCLE)
     
 
    
@@ -150,8 +168,8 @@ def ACQUISITION(course_vis, nombre_de_mesure, vitesse_translation_vis, PULSE_FRE
     
 
     
-    save_data_csv(fichier_echantillon, Longueur_d_onde, Tension_echantillon, pas_de_vis, 'Longueur d\'onde (nm)', nom_colonne_tension_echantillon,'Liste_pas_vis')
-    save_data_csv(fichier_blanc, Longueur_d_onde, Tension_blanc, pas_de_vis, 'Longueur d\'onde (nm)', nom_colonne_tension_blanc,'Liste_pas_vis')
+    save_data_csv(fichier_echantillon, wavelength, Tension_echantillon, no_screw, 'Longueur d\'onde (nm)', nom_colonne_tension_echantillon,'Liste_pas_vis')
+    save_data_csv(fichier_blanc, wavelength, Tension_blanc, no_screw, 'Longueur d\'onde (nm)', nom_colonne_tension_blanc,'Liste_pas_vis')
 
     a=str(state_screw_motor(S))
     while 'Idle' not in a: # 'Idle': Instruction GRBL pour dire que ce moteur est à l'arrêt / 'Run' le moteur tourne
@@ -160,7 +178,7 @@ def ACQUISITION(course_vis, nombre_de_mesure, vitesse_translation_vis, PULSE_FRE
     print(a)
     
     grbl_parameter_screw_motor(S)
-    return_screw(S,course_vis, vitesse_translation_vis=10)
+    return_screw(S,course_vis, screw_translation_speed=10)
     grbl_parameter_screw_motor(S)    
 
     graph(fichier_blanc, fichier_echantillon, Nom_echantillon, Titre, REPERTORY)
@@ -179,7 +197,7 @@ LANCEMENT DU PROGRAMME
 
 course_vis=2 # 7mm
 nombre_de_mesures=10 # A modifier si on veut être plus précis
-vitesse_translation_vis=10 # mm/min
+screw_translation_speed=10 # mm/min
 
 Nom_echantillon=input("Nom de l'échantillon :") # A modifier si on change de composé chimique
 
@@ -190,8 +208,8 @@ fichier_echantillon=  REPERTORY + '\Tension_echantillon_' + DATE + "_" + SLOT_SI
 
 Titre="Absorbance_"+ "_" + Nom_echantillon+ DATE+"_"+ SLOT_SIZE  
 
-ACQUISITION(course_vis, nombre_de_mesures, vitesse_translation_vis, PULSE_FREQUENCY, DUTY_CYCLE, fichier_blanc, fichier_echantillon, Nom_echantillon, Titre, REPERTORY) # course_vis 13.75 mm / 260 points / vitesse_translation_vis = 4mm/min
+ACQUISITION(course_vis, nombre_de_mesures, screw_translation_speed, PULSE_FREQUENCY, DUTY_CYCLE, fichier_blanc, fichier_echantillon, Nom_echantillon, Titre, REPERTORY) # course_vis 13.75 mm / 260 points / screw_translation_speed = 4mm/min
 #graph(fichier_blanc, fichier_echantillon, Nom_echantillon, Titre, REPERTORY)
 
-#mode_precision(course_vis, nombre_de_mesures, vitesse_translation_vis, Frequence_creneau=np.array([Frequence_creneau]), DUTY_CYCLE=np.array([DUTY_CYCLE]))
+#mode_precision(course_vis, nombre_de_mesures, screw_translation_speed, Frequence_creneau=np.array([Frequence_creneau]), DUTY_CYCLE=np.array([DUTY_CYCLE]))
 
