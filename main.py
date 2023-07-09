@@ -128,7 +128,7 @@ def mode_precision(screw_travel, number_measurements, screw_translation_speed):
     """
     Dé
     """
-    if choice == '(cuve 1)':
+    if choice == 'cuve 1':
         reference_solution=voltages_photodiode_1
         sample_solution=voltages_photodiode_2
     else:

@@ -9,9 +9,10 @@ Fonction acquisition_tension
 
 
 def choice_cuvette():
-    solution=input("Dans qu'elle cuve numéro est la solution blanche, (cuve 1) ou (cuve 2)")
-    while solution != '(cuve 1)' or '(cuve 2)':
-        solution=input("Dans qu'elle cuve numéro est la solution blanche, (cuve 1) ou (cuve 2)")
+    solution=input("Dans qu'elle cuve numéro est la solution blanche : cuve 1 ou cuve 2 : ")
+    while solution != 'cuve 1' and solution !='cuve 2':
+        solution=input("Dans qu'elle cuve numéro est la solution blanche : cuve 1 ou cuve 2 : ")
+    print("La solution de blanc est dans la", solution)
     return solution
 
 
@@ -75,4 +76,4 @@ def voltage_acquisition(SAMPLES_PER_CHANNEL, SAMPLE_RATE, Frequence_creneau, Rap
         return moyenne
 
 
-
+a=choice_cuvette()
