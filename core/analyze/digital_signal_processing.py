@@ -1,12 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from scipy.signal import find_peaks # https://www.youtube.com/watch?v=1SvDZPvUo_I&ab_channel=KiyonoLab (Vidéo sur savgol_Filter)
+from scipy.signal import find_peaks 
 from scipy.interpolate import UnivariateSpline
 import os
-import datetime
-import matplotlib.animation as animation
-from matplotlib import style
+
 #CONSTANTE
 FE = 250000 # Fréquence d'échantillonage de la carte NI-PCI 6221
 """
@@ -193,12 +191,9 @@ def Sauvegarder_pics(Titre, Absorbance):
         print('{:.2f} nm : {:.2f}'.format(Longueur_donde[i], Absorbance[i]))
 
 
-    # Calculer le maximum d'absorbance
-    Max_absorbance = Absorbance.max()
 
     # Trouver la longueur lié au maximum d'absorbance 
     s = pd.Series(Absorbance)
-    max_index = s.idxmax()
 
 
     fichier_peaks=  chemin + '\pic_'+Titre + "_" + Date + "_" + Taille_de_fente + '.csv'
