@@ -6,6 +6,15 @@ from nidaqmx.constants import AcquisitionType, TerminalConfiguration
 """
 Fonction acquisition_tension
 """
+
+
+def choice_cuvette():
+    solution=input("Dans qu'elle cuve numéro est la solution blanche, (cuve 1) ou (cuve 2)")
+    while solution != '(cuve 1)' or '(cuve 2)':
+        solution=input("Dans qu'elle cuve numéro est la solution blanche, (cuve 1) ou (cuve 2)")
+    return solution
+
+
 def Voltage_acquisition(SAMPLES_PER_CHANNEL, SAMPLE_RATE, Frequence_creneau, Rapport_cyclique, CHANNELS, Channel):
     min_tensions = []
     
