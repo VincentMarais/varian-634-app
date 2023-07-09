@@ -8,7 +8,7 @@ from core.kinematic_chains.screw_motor import state_screw_motor, grbl_parameter_
 from core.kinematic_chains.mirror_cuves_motor import move_mirror_cuves_motor , initialisation_mirror_cuves_motor
 from core.kinematic_chains.end_stop_sensor import *
 
-from core.electronics_controler.ni_pci_6621 import Voltage_acquisition , choice_cuvette
+from core.electronics_controler.ni_pci_6621 import voltage_acquisition , choice_cuvette
 
 from core.utils.Enregistrement_des_fichiers import save_data_csv
 from core.utils.Tracer_courbe import graph
@@ -90,13 +90,13 @@ def mode_precision(screw_travel, number_measurements,screw_translation_speed):
     Début de l'acquisition
     """
     while i < course_vis: # Tant que la vis n'a pas parcouru une distance course_vis
-        voltage_photodiode_1 = Voltage_acquisition(SAMPLES_PER_CHANNEL, SAMPLE_RATE, PULSE_FREQUENCY, DUTY_CYCLE, CHANNELS, solution='ai0')
+        voltage_photodiode_1 = voltage_acquisition(SAMPLES_PER_CHANNEL, SAMPLE_RATE, PULSE_FREQUENCY, DUTY_CYCLE, CHANNELS, solution='ai0')
         voltages_photodiode_1.append(voltage_photodiode_1)
 
         move_mirror_cuves_motor(S, 0.33334)  # Le moteur doit faire une angle de 60°
         time.sleep(0.5)
         
-        voltage_photodiode_2 = Voltage_acquisition(SAMPLES_PER_CHANNEL, SAMPLE_RATE, PULSE_FREQUENCY, DUTY_CYCLE, CHANNELS, Channel='ai1')
+        voltage_photodiode_2 = voltage_acquisition(SAMPLES_PER_CHANNEL, SAMPLE_RATE, PULSE_FREQUENCY, DUTY_CYCLE, CHANNELS, Channel='ai1')
         voltages_photodiode_2.append(voltage_photodiode_2)
 
         move_mirror_cuves_motor(S, -0.33334)  # Le moteur doit faire une angle de 60°
