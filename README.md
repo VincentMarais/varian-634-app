@@ -1,7 +1,6 @@
 # Automatisation d'un spectrophotomètre Varian 634 avec Python
 
-
-Ce programme Python permet d'automatiser un ancien spectrophotomètre Varian 634 en utilisant différentes bibliothèques telles que serial, Phidget22, time, matplotlib, numpy, csv, pandas, re et scipy.signal. Il permet d'acquérir la tension de la photodiode à l'aide d'un Phidget, de piloter le réseau de diffration du spectrophotomètre avec un moteur, de configurer le spectrophotomètre en mode simple faisceau ou double faisceaux et de traiter le signal d'absorbance de la solution pour enlever le bruit de mesure.
+Ce programme Python permet d'automatiser un ancien spectrophotomètre Varian 634 en utilisant différentes bibliothèques telles que serial, time, matplotlib, numpy, csv, pandas, re et scipy.signal. Il permet d'acquérir la tension de la photodiode à l'aide d'une carte NI-PCI 6221, de piloter le réseau de diffraction du spectrophotomètre avec un moteur, de contrôler l'alternance du faisceau lumineux afin de faire fonctionner le spectrophotomètre Varian 634 en mode double faisceau, et de traiter le signal d'absorbance de la solution pour éliminer le bruit de mesure.
 
 # Installation des bibliothèques Python avec pip
 
@@ -39,15 +38,9 @@ pip install -r requirements.txt
 ```
 Cette commande va installer toutes les bibliothèques listées dans le fichier requirements.txt qui se trouve dans le répertoire du projet. Assurez-vous que ce fichier contient bien toutes les bibliothèques nécessaires au bon fonctionnement du programme.
 
-## Installation Phidget
-
-Pour mettre en fonctionnement le Phidget, veuillez suivre ces instructions :
-
-https://www.phidgets.com/?tier=3&catid=16&pcid=14&prodid=953 
-
 # Utilisation du programme
 
-1. Branchez le Phidget et la carte arduino sur l'ordinateur.
+1. Brancher les cartes arduino sur l'ordinateur.
 
 2. Allumez le spectrophotomètre Varian 634 et assurez-vous qu'il est correctement connecté à l'ordinateur.
 

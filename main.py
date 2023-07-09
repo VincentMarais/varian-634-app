@@ -8,7 +8,7 @@ from core.kinematic_chains.screw_motor import state_screw_motor, grbl_parameter_
 from core.kinematic_chains.mirror_cuves_motor import move_mirror_cuves_motor , initialisation_mirror_cuves_motor
 from core.kinematic_chains.end_stop_sensor import *
 
-from core.electronics_controler.ni_pci_6621 import acquisition_tension
+from core.electronics_controler.ni_pci_6621 import Voltage_acquisition
 
 from core.utils.Enregistrement_des_fichiers import save_data_csv
 from core.utils.Tracer_courbe import graph
@@ -84,13 +84,13 @@ def mode_precision(course_vis, nombre_de_mesures, vitesse_translation_vis):  # d
     Début de l'acquisition
     """
     while i < course_vis: # Tant que la vis n'a pas parcouru une distance course_vis
-        Tension_capteur_1 = acquisition_tension(PULSE_FREQUENCY, DUTY_CYCLE, 'ai0')
+        Tension_capteur_1 = Voltage_acquisition(SAMPLES_PER_CHANNEL, SAMPLE_RATE, PULSE_FREQUENCY, DUTY_CYCLE, CHANNELS, Channel='ai0')
         Tensions_capteur_1.append(Tension_capteur_1)
 
         move_mirror_cuves_motor(S, 0.33334)  # Le moteur doit faire une angle de 60°
         time.sleep(0.5)
         
-        Tension_capteur_2 = acquisition_tension(PULSE_FREQUENCY, DUTY_CYCLE, 'ai1')
+        Tension_capteur_2 = Voltage_acquisition(SAMPLES_PER_CHANNEL, SAMPLE_RATE, PULSE_FREQUENCY, DUTY_CYCLE, CHANNELS, Channel='ai1')
         Tensions_capteur_2.append(Tension_capteur_2)
 
         move_mirror_cuves_motor(S, -0.33334)  # Le moteur doit faire une angle de 60°

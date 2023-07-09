@@ -2,17 +2,13 @@ import numpy as np
 import nidaqmx
 from nidaqmx.constants import AcquisitionType, TerminalConfiguration
 
-# Configurations lorsque le signal de commande de la lampe au xénon est réglé à 20Hz
-SAMPLES_PER_CHANNEL = 30000
-SAMPLE_RATE = 250000
-CHANNELS = ['Dev1/ai0', 'Dev1/ai1']  
 
 """
 Fonction acquisition_tension
 """
-def acquisition_tension(Frequence_creneau, Rapport_cyclique, Channel):
+def Voltage_acquisition(SAMPLES_PER_CHANNEL, SAMPLE_RATE, Frequence_creneau, Rapport_cyclique, CHANNELS, Channel):
     min_tensions = []
-
+    
     if Channel=='ai0': # Acquisition sur le 1er capteur
         
         with nidaqmx.Task() as task_impulsion , nidaqmx.Task() as task_voltage :
