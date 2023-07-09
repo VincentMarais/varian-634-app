@@ -53,7 +53,7 @@ PIN = BOARD_OPTICAL_FORK.get_pin('d:3:i')  # d pour digital, 3 pour le pin 3, i 
 """
 ACQUISITION DU SIGNAL
 """
-def mode_precision(screw_travel, number_measurements,screw_translation_speed):  
+def mode_precision(screw_travel, number_measurements, screw_translation_speed):  
     """
     Entrée :
 # d: distance parcourue par la vis en mm/  n: nombre de mesure de tension / screw_translation_speed: vitesse de translation de la vis (mm/min)
@@ -89,7 +89,7 @@ def mode_precision(screw_travel, number_measurements,screw_translation_speed):
     """
     Début de l'acquisition
     """
-    while i < course_vis: # Tant que la vis n'a pas parcouru une distance course_vis
+    while i < screw_travel: # Tant que la vis n'a pas parcouru une distance course_vis
         voltage_photodiode_1 = voltage_acquisition(SAMPLES_PER_CHANNEL, SAMPLE_RATE, PULSE_FREQUENCY, DUTY_CYCLE, CHANNELS, solution='ai0')
         voltages_photodiode_1.append(voltage_photodiode_1)
 
@@ -151,7 +151,7 @@ def mode_precision(screw_travel, number_measurements,screw_translation_speed):
 """
 PARTIE ACQUISITION DES DONNEES
 """ 
-def ACQUISITION(course_vis, nombre_de_mesure, screw_translation_speed, PULSE_FREQUENCY, DUTY_CYCLE, fichier_blanc, fichier_echantillon, Nom_echantillon, Titre, REPERTORY): # Départ 7.25mm / 21 - 7.25 = 13.75mm où 21 course de la vis total de la vis => course_vis=13.75mm
+def ACQUISITION(screw_travel, number_measurements, screw_translation_speed, PULSE_FREQUENCY, DUTY_CYCLE, fichier_blanc, fichier_echantillon, Nom_echantillon, Titre, REPERTORY): # Départ 7.25mm / 21 - 7.25 = 13.75mm où 21 course de la vis total de la vis => screw_travel=13.75mm
     nom_colonne_tension_blanc='Tension blanc (Volt)'
 
     nom_colonne_tension_echantillon='Tension échantillon (Volt)'
@@ -160,7 +160,7 @@ def ACQUISITION(course_vis, nombre_de_mesure, screw_translation_speed, PULSE_FRE
   
 
 
-    [wavelength, Tension_blanc, Tension_echantillon, no_screw] = mode_precision(course_vis, nombre_de_mesure, screw_translation_speed, PULSE_FREQUENCY, DUTY_CYCLE)
+    [wavelength, Tension_blanc, Tension_echantillon, no_screw] = mode_precision(screw_travel, number_measurements, screw_translation_speed, PULSE_FREQUENCY, DUTY_CYCLE)
     
 
    
@@ -171,14 +171,14 @@ def ACQUISITION(course_vis, nombre_de_mesure, screw_translation_speed, PULSE_FRE
     save_data_csv(fichier_echantillon, wavelength, Tension_echantillon, no_screw, 'Longueur d\'onde (nm)', nom_colonne_tension_echantillon,'Liste_pas_vis')
     save_data_csv(fichier_blanc, wavelength, Tension_blanc, no_screw, 'Longueur d\'onde (nm)', nom_colonne_tension_blanc,'Liste_pas_vis')
 
-    a=str(state_screw_motor(S))
-    while 'Idle' not in a: # 'Idle': Instruction GRBL pour dire que ce moteur est à l'arrêt / 'Run' le moteur tourne
-        a=str(state_screw_motor(S))
+    gcode_state_motor=str(state_screw_motor(S))
+    while 'Idle' not in gcode_state_motor: # 'Idle': Instruction GRBL pour dire que ce moteur est à l'arrêt / 'Run' le moteur tourne
+        gcode_state_motor=str(state_screw_motor(S))
 
-    print(a)
+    print(gcode_state_motor)
     
     grbl_parameter_screw_motor(S)
-    return_screw(S,course_vis, screw_translation_speed=10)
+    return_screw(S,screw_travel, screw_translation_speed=10)
     grbl_parameter_screw_motor(S)    
 
     graph(fichier_blanc, fichier_echantillon, Nom_echantillon, Titre, REPERTORY)
@@ -195,21 +195,19 @@ LANCEMENT DU PROGRAMME
 
 
 
-course_vis=2 # 7mm
-nombre_de_mesures=10 # A modifier si on veut être plus précis
+screw_travel=2 # 7mm
+number_measurements=10 # A modifier si on veut être plus précis
 screw_translation_speed=10 # mm/min
 
-Nom_echantillon=input("Nom de l'échantillon :") # A modifier si on change de composé chimique
+sample_name=input("Nom de l'échantillon :") # A modifier si on change de composé chimique
 
 
-fichier_blanc=  REPERTORY + '\Tension_blanc_' + DATE + "_" + SLOT_SIZE + '.csv'
-fichier_echantillon=  REPERTORY + '\Tension_echantillon_' + DATE + "_" + SLOT_SIZE + '.csv'
+reference_solution_file=  REPERTORY + '\Tension_blanc_' + DATE + "_" + SLOT_SIZE + '.csv'
+sample_solution_file=  REPERTORY + '\Tension_echantillon_' + DATE + "_" + SLOT_SIZE + '.csv'
 
 
-Titre="Absorbance_"+ "_" + Nom_echantillon+ DATE+"_"+ SLOT_SIZE  
+title="Absorbance_"+ "_" + sample_name + DATE+"_"+ SLOT_SIZE  
 
-ACQUISITION(course_vis, nombre_de_mesures, screw_translation_speed, PULSE_FREQUENCY, DUTY_CYCLE, fichier_blanc, fichier_echantillon, Nom_echantillon, Titre, REPERTORY) # course_vis 13.75 mm / 260 points / screw_translation_speed = 4mm/min
-#graph(fichier_blanc, fichier_echantillon, Nom_echantillon, Titre, REPERTORY)
+ACQUISITION(screw_travel, number_measurements, screw_translation_speed, PULSE_FREQUENCY, DUTY_CYCLE, reference_solution_file, sample_solution_file, sample_name, title, REPERTORY) # screw_travel 13.75 mm / 260 points / screw_translation_speed = 4mm/min
 
-#mode_precision(course_vis, nombre_de_mesures, screw_translation_speed, Frequence_creneau=np.array([Frequence_creneau]), DUTY_CYCLE=np.array([DUTY_CYCLE]))
 
