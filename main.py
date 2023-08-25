@@ -2,7 +2,7 @@ import serial
 import time 
 
 # Méthode VARIAN 634
-from core.dual_beam import ACQUISITION
+from core.dual_beam import acquition
 
 # Data processing
 from core.utils.Creation_repertoire import creation_repertoire_date_slot 
@@ -42,6 +42,6 @@ sample_solution_file=  REPERTORY + '\Tension_echantillon_' + DATE + "_" + SLOT_S
 
 title="Absorbance_"+ "_" + sample_name + DATE+ "_" + SLOT_SIZE  
 
-ACQUISITION(S, screw_travel, number_measurements, screw_translation_speed, reference_solution_file, sample_solution_file, sample_name, title, REPERTORY) # screw_travel 13.75 mm / 260 points / screw_translation_speed = 4mm/min
+acquition(S, screw_travel, number_measurements, screw_translation_speed, reference_solution_file, sample_solution_file, sample_name, title, REPERTORY) # screw_travel 13.75 mm / 260 points / screw_translation_speed = 4mm/min
 
 

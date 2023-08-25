@@ -46,7 +46,7 @@ PIN = BOARD_OPTICAL_FORK.get_pin('d:3:i')  # d pour digital, 3 pour le pin 3, i 
 """
 ACQUISITION DU SIGNAL
 """
-def mode_precision(S, screw_travel, number_measurements, screw_translation_speed):  
+def precision_mode(S, screw_travel, number_measurements, screw_translation_speed):  
     """
     Entrée :
         - S: Méthode pour intéragir avec l'arduino
@@ -143,7 +143,7 @@ def mode_precision(S, screw_travel, number_measurements, screw_translation_speed
     return  wavelength, reference_solution, sample_solution, no_screw
 
 
-def ACQUISITION(S, screw_travel, number_measurements, screw_translation_speed, fichier_blanc, fichier_echantillon, Nom_echantillon, Titre, REPERTORY): # Départ 7.25mm / 21 - 7.25 = 13.75mm où 21 course de la vis total de la vis => screw_travel=13.75mm
+def acquition(S, screw_travel, number_measurements, screw_translation_speed, fichier_blanc, fichier_echantillon, Nom_echantillon, Titre, REPERTORY): # Départ 7.25mm / 21 - 7.25 = 13.75mm où 21 course de la vis total de la vis => screw_travel=13.75mm
     nom_colonne_tension_blanc='Tension blanc (Volt)'
 
     nom_colonne_tension_echantillon='Tension échantillon (Volt)'
@@ -152,7 +152,7 @@ def ACQUISITION(S, screw_travel, number_measurements, screw_translation_speed, f
   
 
 
-    [wavelength, Tension_blanc, Tension_echantillon, no_screw] = mode_precision(S,screw_travel, number_measurements, screw_translation_speed)
+    [wavelength, Tension_blanc, Tension_echantillon, no_screw] = precision_mode(S,screw_travel, number_measurements, screw_translation_speed)
     
 
    
