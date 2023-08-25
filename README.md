@@ -1,6 +1,6 @@
 # Automatisation d'un spectrophotomètre Varian 634 avec Python
 
-Ce programme Python permet d'automatiser un ancien spectrophotomètre Varian 634 en utilisant différentes bibliothèques telles que serial, time, matplotlib, numpy, csv, pandas, re et scipy.signal. Il permet d'acquérir la tension de la photodiode à l'aide d'une carte NI-PCI 6221, de piloter le réseau de diffraction du spectrophotomètre avec un moteur, de contrôler l'alternance du faisceau lumineux afin de faire fonctionner le spectrophotomètre Varian 634 en mode double faisceau, et de traiter le signal d'absorbance de la solution pour éliminer le bruit de mesure.
+Ce programme Python permet d'automatiser un ancien spectrophotomètre Varian 634. Il permet d'acquérir la tension de la photodiode à l'aide d'une carte NI-PCI 6221, de piloter le réseau de diffraction du spectrophotomètre avec un moteur, de contrôler l'alternance du faisceau lumineux afin de faire fonctionner le spectrophotomètre Varian 634 en mode double faisceau, et de traiter le signal d'absorbance de la solution pour éliminer le bruit de mesure.
 
 # Installation des bibliothèques Python avec pip
 

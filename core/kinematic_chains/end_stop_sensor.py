@@ -1,6 +1,6 @@
 from pyfirmata import Arduino, util
-import time
-# remplacer 'COM3' par le port série correct de votre Arduino
+
+# remplacer 'COM' par le port série correct de votre Arduino
 board = Arduino('COM8')
 
         # utiliser l'itérateur seulement pour les entrées analogiques (non nécessaire ici)

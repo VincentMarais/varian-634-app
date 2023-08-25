@@ -2,7 +2,7 @@ import time
 
 
 def optical_fork_state(pin):
-        # définir le pin 3 comme entrée
+    # Entry : définir le pin 3 comme entrée
 
 
     # une boucle pour lire l'état du pin
