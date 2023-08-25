@@ -1,0 +1,12 @@
+Voici le protocole de l'expérience :
+
+
+- Nous avons préparé une solution de bromophénol de concentration inconnue, à pH 7, en utilisant de l'eau du robinet comme solvant.
+
+- Nous avons mesuré l'absorbance de la solution en utilisant différentes fentes sur le spectrophotomètre Varian 634 (2 nm, 1 nm, 0.5 nm, 0.2 nm), en respectant les hypothèses énoncées dans la partie. 
+
+Une relation linéaire entre le pas de vis et la longueur d'onde : (longueur d'onde en (nm))
+
+longueur d'onde = -30 * pas de vis -800
+
+Le spectrophotomètre fonctionne en mode simple faisceau : Le mode simple faisceau permet de mesurer l'absorbance d'une solution échantillon en faisant passer un faisceau lumineux à travers celle-ci
