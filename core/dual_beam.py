@@ -87,13 +87,13 @@ def precision_mode(S, screw_travel, number_measurements, screw_translation_speed
     Début de l'acquisition
     """
     while i < screw_travel: # Tant que la vis n'a pas parcouru une distance course_vis
-        voltage_photodiode_1 = voltage_acquisition(SAMPLES_PER_CHANNEL, SAMPLE_RATE, PULSE_FREQUENCY, DUTY_CYCLE, CHANNELS, solution='ai0')
+        voltage_photodiode_1 = voltage_acquisition(SAMPLES_PER_CHANNEL, SAMPLE_RATE, PULSE_FREQUENCY, DUTY_CYCLE, CHANNELS, channel='ai0')
         voltages_photodiode_1.append(voltage_photodiode_1)
 
         move_mirror_cuves_motor(S, 0.33334)  # Le moteur doit faire une angle de 60°
         time.sleep(0.5)
         
-        voltage_photodiode_2 = voltage_acquisition(SAMPLES_PER_CHANNEL, SAMPLE_RATE, PULSE_FREQUENCY, DUTY_CYCLE, CHANNELS, Channel='ai1')
+        voltage_photodiode_2 = voltage_acquisition(SAMPLES_PER_CHANNEL, SAMPLE_RATE, PULSE_FREQUENCY, DUTY_CYCLE, CHANNELS, channel='ai1')
         voltages_photodiode_2.append(voltage_photodiode_2)
 
         move_mirror_cuves_motor(S, -0.33334)  # Le moteur doit faire une angle de 60°
@@ -143,16 +143,16 @@ def precision_mode(S, screw_travel, number_measurements, screw_translation_speed
     return  wavelength, reference_solution, sample_solution, no_screw
 
 
-def acquition(S, screw_travel, number_measurements, screw_translation_speed, fichier_blanc, fichier_echantillon, Nom_echantillon, Titre, REPERTORY): # Départ 7.25mm / 21 - 7.25 = 13.75mm où 21 course de la vis total de la vis => screw_travel=13.75mm
-    nom_colonne_tension_blanc='Tension blanc (Volt)'
+def acquition(S, screw_travel, number_measurements, screw_translation_speed, file_reference_solution, sample_solution_file, sample_solution_name, title, REPERTORY): # Départ 7.25mm / 21 - 7.25 = 13.75mm où 21 course de la vis total de la vis => screw_travel=13.75mm
+    column_name_voltages_reference_solution='Tension blanc (Volt)'
 
-    nom_colonne_tension_echantillon='Tension échantillon (Volt)'
+    column_name_voltages_sample_solution='Tension échantillon (Volt)'
 
    
   
 
 
-    [wavelength, Tension_blanc, Tension_echantillon, no_screw] = precision_mode(S,screw_travel, number_measurements, screw_translation_speed)
+    [wavelength, voltages_reference_solution, voltages_sample_solution, no_screw] = precision_mode(S,screw_travel, number_measurements, screw_translation_speed)
     
 
    
@@ -160,8 +160,8 @@ def acquition(S, screw_travel, number_measurements, screw_translation_speed, fic
     
 
     
-    save_data_csv(fichier_echantillon, wavelength, Tension_echantillon, no_screw, 'Longueur d\'onde (nm)', nom_colonne_tension_echantillon,'Liste_pas_vis')
-    save_data_csv(fichier_blanc, wavelength, Tension_blanc, no_screw, 'Longueur d\'onde (nm)', nom_colonne_tension_blanc,'Liste_pas_vis')
+    save_data_csv(sample_solution_file, wavelength, voltages_sample_solution, no_screw, 'Longueur d\'onde (nm)', column_name_voltages_sample_solution,'Liste_pas_vis')
+    save_data_csv(file_reference_solution, wavelength, voltages_reference_solution, no_screw, 'Longueur d\'onde (nm)', column_name_voltages_reference_solution,'Liste_pas_vis')
 
     gcode_state_motor=str(state_screw_motor(S))
     while 'Idle' not in gcode_state_motor: # 'Idle': Instruction GRBL pour dire que ce moteur est à l'arrêt / 'Run' le moteur tourne
@@ -173,4 +173,4 @@ def acquition(S, screw_travel, number_measurements, screw_translation_speed, fic
     return_screw(S,screw_travel, screw_translation_speed=10)
     grbl_parameter_screw_motor(S)    
 
-    graph(fichier_blanc, fichier_echantillon, Nom_echantillon, Titre, REPERTORY)
+    graph(file_reference_solution, sample_solution_file, sample_solution_name, title, REPERTORY)
