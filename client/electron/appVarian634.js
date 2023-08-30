@@ -39,51 +39,15 @@ const startCodeFunction = () => {
     }
   });
 
-  child.stdout.on("data", (data) => {
-    printBoth(
-      `Following data has been piped from python program: ${data.toString(
-        "utf8"
-      )}`
-    );
-  });
+  
 };
 
-const sendCodeFunction = () => {
-  const stringToSend = document.getElementById("string_to_send").value;
-  printBoth(`Sending "${stringToSend}" to program`);
-  sendToProgram(stringToSend);
-};
 
-const stopCodeFunction = () => {
-  printBoth("Terminated program");
-  sendToProgram("terminate");
-  child.stdin.end();
-};
 
-const openFileFunctionSync = () => {
-  printBoth("From guiExample.js sending a request to main.js via ipc");
-  ipcRenderer.send("open_json_file_sync");
-};
-
-const openFileFunctionAsync = () => {
-  printBoth("From guiExample.js sending a request to main.js via ipc");
-  ipcRenderer.send("open_json_file_async");
-};
 
 document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("start_code")
     .addEventListener("click", startCodeFunction);
-  document
-    .getElementById("send_code")
-    .addEventListener("click", sendCodeFunction);
-  document
-    .getElementById("stop_code")
-    .addEventListener("click", stopCodeFunction);
-  document
-    .getElementById("open_file_sync")
-    .addEventListener("click", openFileFunctionSync);
-  document
-    .getElementById("open_file_async")
-    .addEventListener("click", openFileFunctionAsync);
+
 });
