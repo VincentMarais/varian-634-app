@@ -92,29 +92,7 @@ Install Node.js and Python.
 
 ![alt text](../images/screenshot_2.png)
 
-1. Press **LAUNCH PROGRAM\_** button
 
-   this will launch a python application with a loop inside,
-   that is waiting for data to be send from js
-
-2. Press **INTERACT WITH PROGRAM** button
-
-   this will send a message named "hello" from js to python
-   and python will read it and print a message
-
-3. Press **TERMINATE PROGRAM** button
-
-   a termination message ("terminate") is sent to the program which knows
-   to stop the loop and execution
-
-4. Press **HOW TO OPEN A FILE** button
-
-   from `electron/guiExample.js` an ipc.send message is sent to the main.js
-   which will then read and output `config.json` values (fast feature to store settings).
-
-### Interpretation Guide
-
-Important functionality can be found in files `electron/guiExample.js` where the core of electron is. Listeners are implemented there awaiting for click events to trigger initialization of program, communication and termination. The program `python/pythonExample.py` which is the external or 3rd party application that electron calls, is a simple for-loop awaiting commands. It responds to commands and terminates when sent an empty string, "terminate" or by pressing the terminate program button.
 
 ## Authors
 
