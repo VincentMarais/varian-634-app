@@ -5,14 +5,14 @@ import time
 from core.dual_beam import acquition
 
 # Data processing
-from core.utils.Creation_repertoire import creation_repertoire_date_slot 
+from core.utils.Creation_repertoire import creation_directory_date_slot 
 
 
 """
 Initialisation fichier pour le programme 
 """
 
-[REPERTORY, DATE, SLOT_SIZE] = creation_repertoire_date_slot()
+[REPERTORY, DATE, SLOT_SIZE] = creation_directory_date_slot()
 
 
 # INITIALISATION ARDUINO MOTEURS
@@ -43,7 +43,6 @@ sample_solution_file=  REPERTORY + '\Tension_echantillon_' + DATE + "_" + SLOT_S
 title="Absorbance_"+ "_" + sample_name + DATE+ "_" + SLOT_SIZE  
 
 
-print("HOOOOO", flush=True)
 
-#acquition(S, screw_travel, number_measurements, screw_translation_speed, reference_solution_file, sample_solution_file, sample_name, title, REPERTORY) # screw_travel 13.75 mm / 260 points / screw_translation_speed = 4mm/min
+acquition(S, screw_travel, number_measurements, screw_translation_speed, reference_solution_file, sample_solution_file, sample_name, title, REPERTORY) # screw_travel 13.75 mm / 260 points / screw_translation_speed = 4mm/min
 

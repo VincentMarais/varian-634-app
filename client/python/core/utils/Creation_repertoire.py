@@ -1,17 +1,17 @@
 import os
 import datetime
 
-def detection_exitance_repertoire(chemin): # Path chemin d'accès
+def detection_exitance_directory(chemin): # Path chemin d'accès
     chemin=os.path.join(chemin)
     if not os.path.exists(chemin):
         return False
 
-def repertoire_annee_mois_jour():
+def directory_year_month_day():
     current_date = datetime.datetime.now()
     current_year, current_month, current_day = current_date.strftime("%Y") , current_date.strftime("%m_%Y"), current_date.strftime("%d_%m_%Y") 
         
-    chemin=os.path.join("experiments","experiments_"+ current_year, "experiments_"+ current_month , "experiments_"+current_day)
-    if  detection_exitance_repertoire(chemin)==False:
+    chemin=os.path.join("./experiments","experiments_"+ current_year, "experiments_"+ current_month , "experiments_"+current_day)
+    if  detection_exitance_directory(chemin)==False:
         os.makedirs(chemin)
         print("Le répertoire à été créé : ", chemin)
     else:
@@ -19,11 +19,11 @@ def repertoire_annee_mois_jour():
 
     return chemin
 
-def creation_repertoire_date_slot():
+def creation_directory_date_slot():
     Taille_de_fente=input("Taille de fente : Fente_2nm, Fente_1nm , Fente_0_5nm, Fente_0_2nm : ")
     date_aujourdhui = datetime.date.today()
     Date = date_aujourdhui.strftime("%d_%m_%Y")
-    chemin= repertoire_annee_mois_jour()
+    chemin= directory_year_month_day()
     chemin = os.path.join(chemin, Taille_de_fente)
 
     # Vérifier si le répertoire existe déjà
