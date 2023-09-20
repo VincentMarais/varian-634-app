@@ -1,7 +1,6 @@
 
-import numpy as np
 import time 
-from pyfirmata import Arduino, util
+
 
 
 # Motors
@@ -13,40 +12,21 @@ from core.kinematic_chains.end_stop_sensor import *
 from core.electronics_controler.ni_pci_6621 import voltage_acquisition , get_solution_cuvette
 
 # Data processing
-from core.utils.Enregistrement_des_fichiers import save_data_csv
-from core.utils.Tracer_courbe import graph
-
-
-# Data processing
-from core.utils.Enregistrement_des_fichiers import save_data_csv
-from core.utils.Tracer_courbe import graph
-
-
-"""
-INITIALISATION DE L'ARDUINO + CARTE NI-PCI 6221
-"""
-
-# Initialisation carte NI-PCI 6221
-PULSE_FREQUENCY = np.array([20.0]) # 20Hz l'amplitude de la tension est maximale aux bornes de la photodiode, si on augmente la fréquence aux bornes de la photodiode => diminution de la tension
-DUTY_CYCLE = np.array([0.5]) # Déterminer un rapport cyclique optimal pour la mesure
-SAMPLES_PER_CHANNEL = 30000 # Nombre d'échantillon récupéré
-SAMPLE_RATE = 250000 # Fréquence d'échantillonage maximale de la carte (on récupère une partie du signal cf critère de Shannon)
-CHANNELS = ['Dev1/ai0', 'Dev1/ai1']  
+from core.utils.save_data_csv import save_data_csv
+from core.utils.draw_curve import graph
 
 
 
-# INITIALISATION ARDUINO Fourche OPTIQUE
-BOARD_OPTICAL_FORK = Arduino('COM8')
-it = util.Iterator(BOARD_OPTICAL_FORK)
-it.start()
-PIN = BOARD_OPTICAL_FORK.get_pin('d:3:i')  # d pour digital, 3 pour le pin 3, i pour input
+
+
+
 
 
 
 """
 ACQUISITION DU SIGNAL
 """
-def precision_mode(S, screw_travel, number_measurements, screw_translation_speed):  
+def precision_mode(S, PIN, screw_travel, number_measurements, screw_translation_speed, PULSE_FREQUENCY, DUTY_CYCLE, SAMPLES_PER_CHANNEL, SAMPLE_RATE, CHANNELS):  
     """
     Entrée :
         - S: Méthode pour intéragir avec l'arduino

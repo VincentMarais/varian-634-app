@@ -1,11 +1,15 @@
 import serial  
 import time 
+from pyfirmata import Arduino, util
+import numpy as np
+import sys
+sys.path.append("C:/Users/admin/Documents/Projet_GP/Programmation_Spectro/varian-634-app/client/python")
 
 # Méthode VARIAN 634
 from core.dual_beam import acquition
 
 # Data processing
-from core.utils.Creation_repertoire import creation_directory_date_slot 
+from core.utils.directory_creation import creation_directory_date_slot 
 
 
 """
@@ -13,6 +17,25 @@ Initialisation fichier pour le programme
 """
 
 [REPERTORY, DATE, SLOT_SIZE] = creation_directory_date_slot()
+
+"""
+INITIALISATION DE L'ARDUINO + CARTE NI-PCI 6221
+"""
+
+# Initialisation carte NI-PCI 6221
+PULSE_FREQUENCY = np.array([20.0]) # 20Hz l'amplitude de la tension est maximale aux bornes de la photodiode, si on augmente la fréquence aux bornes de la photodiode => diminution de la tension
+DUTY_CYCLE = np.array([0.5]) # Déterminer un rapport cyclique optimal pour la mesure
+SAMPLES_PER_CHANNEL = 30000 # Nombre d'échantillon récupéré
+SAMPLE_RATE = 250000 # Fréquence d'échantillonage maximale de la carte (on récupère une partie du signal cf critère de Shannon)
+CHANNELS = ['Dev1/ai0', 'Dev1/ai1']  
+
+
+
+# INITIALISATION ARDUINO Fourche OPTIQUE
+BOARD_OPTICAL_FORK = Arduino('COM8')
+it = util.Iterator(BOARD_OPTICAL_FORK)
+it.start()
+PIN = BOARD_OPTICAL_FORK.get_pin('d:3:i')  # d pour digital, 3 pour le pin 3, i pour input
 
 
 # INITIALISATION ARDUINO MOTEURS
