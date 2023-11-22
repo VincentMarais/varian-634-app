@@ -1,5 +1,6 @@
 """
-Description of what this module does.
+This program will scan wavelengths within a specific interval to detect the peak of absorbance in the solution.
+
 """
 
 import time

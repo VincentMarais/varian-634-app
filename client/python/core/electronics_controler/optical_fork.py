@@ -1,6 +1,8 @@
 import time 
 import serial
 
+
+
 def optical_fork_state():#   Initialiser la communication série avec l'Arduino
     """
     
@@ -18,3 +20,4 @@ def optical_fork_state():#   Initialiser la communication série avec l'Arduino
 
         else: 
               print("Le pin n\'est pas reconnu.")
+
