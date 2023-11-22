@@ -1,6 +1,11 @@
 """
 This program will scan wavelengths within a specific interval to detect the peak of absorbance in the solution.
 
+
+Define deferente speed of analysis 3 for exampl (look the exampl in the spectro use in TP GP3A) :
+- suvey 100nm/min
+- half 10nm/min
+- slow 1nm/min
 """
 
 import time
