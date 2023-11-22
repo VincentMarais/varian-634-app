@@ -19,11 +19,11 @@ def optical_fork_state(pin):
 
 
 
-def move_mirror_cuves_motor(s,course_vis): # Fonction qui pilote le moteur      
+def move_mirror_cuves_motor(s,plastic_disc_position): # Fonction qui pilote le moteur      
         g_code= 'G91'+ '\n'
         s.write(g_code.encode())
         time.sleep(0.5)
-        gcode_1= 'G0Y' + str(course_vis) + '\n'
+        gcode_1= 'G0Y' + str(plastic_disc_position) + '\n'
         s.write(gcode_1.encode())
 
 
