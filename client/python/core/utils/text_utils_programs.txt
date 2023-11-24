@@ -1,0 +1,9 @@
+# Test python draw_curve.py
+
+path="C:/Users/admin/Desktop/Projet_GP/Programmation_Spectro/varian-634-app/experiments/Manip_2023/Manip_06_2023/30_06_2023/Fente_2nm/"
+sample_reference_file="Tension_blanc_30_06_2023_Fente_2nm.csv"
+sample_analyzed_file="Tension_echantillon_30_06_2023_Fente_2nm.csv"
+sample_analyzed_name="bleu de bromophénol"
+graph_title="Absorbance du " + sample_analyzed_name
+
+graph(path, sample_reference_file, sample_analyzed_file, sample_analyzed_name, graph_title)
