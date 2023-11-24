@@ -41,4 +41,29 @@ $130=800.000
 $131=800.000
 $132=800.000
 
-Assurez-vous que ces paramètres sont correctement configurés pour votre application avant de tester vos moteurs.
+Assurez-vous que ces paramètres sont correctement configurés avant de tester les moteurs.
+
+
+Pour tester le moteur qui pilote le diviseur de faisceaux 
+
+import serial  
+
+# INITIALISATION MOTEUR:
+
+COM_PORT = 'COM3'
+BAUD_RATE = 115200
+INITIALIZATION_TIME = 2
+
+s = serial.Serial(COM_PORT, BAUD_RATE)
+s.write("\r\n\r\n".encode()) # encode pour convertir "\r\n\r\n" 
+time.sleep(INITIALIZATION_TIME)   # Attend initialisation un GRBL
+s.flushInput()  # Vider le tampon d'entrée, en supprimant tout son contenu.
+
+# INITIALISATION Forche optique:
+
+#arduino_optical_fork = serial.Serial('COM6', 9600)
+
+
+
+# Test move_mirror_cuves_motor
+move_mirror_cuves_motor(s,plastic_disc_position=0.4)
