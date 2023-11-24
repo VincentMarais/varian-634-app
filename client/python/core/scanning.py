@@ -7,33 +7,28 @@ Define deferente speed of analysis 3 for exampl (look the exampl in the spectro 
 - half 10nm/min
 - slow 1nm/min
 """
-
 import time
 
 # Motors
-from core.kinematic_chains.screw_motor import (
-    state_screw_motor, 
-    grbl_parameter_screw_motor, 
-    initialisation_motor_screw, 
-    move_screw, 
-    return_screw
-)
-from core.kinematic_chains.mirror_cuves_motor import (
-    move_mirror_cuves_motor, 
-    initialisation_mirror_cuves_motor
-)
+from kinematic_chains.screw_motor import (state_screw_motor, grbl_parameter_screw_motor, initialisation_motor_screw, move_screw, return_screw)
+
+from kinematic_chains.mirror_cuves_motor import (move_mirror_cuves_motor, initialisation_mirror_cuves_motor)
 # Specify individual imports from end_stop_sensor module
 # from core.kinematic_chains.end_stop_sensor import specific_function
 
 # Voltage acquisition
-from core.electronics_controler.ni_pci_6621 import voltage_acquisition, get_solution_cuvette
+from electronics_controler.ni_pci_6621 import voltage_acquisition, get_solution_cuvette
 
 # Data processing
-from core.utils.save_data_csv import save_data_csv
-from core.utils.draw_curve import graph
+from utils.save_data_csv import save_data_csv
+from utils.draw_curve import graph
+
+
+
 
 def precision_mode(S, pin, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, duty_cycle, samples_per_channel, sample_rate, channels):  
     # Function documentation here
+
     """
     Entrée :
         - S: Méthode pour intéragir avec l'arduino
@@ -43,8 +38,7 @@ def precision_mode(S, pin, screw_travel, number_measurements, screw_translation_
         - Hypothèse : La photodiode 1 est toujours branché sur le port 'ai0' et la photodiode 2 toujours branché sur le port 'ai1'
     
     Sortie : 
-    
-    
+
     """
 
     voltages_photodiode_1= []
@@ -88,12 +82,9 @@ def precision_mode(S, pin, screw_travel, number_measurements, screw_translation_
         move_screw(S, i + step)  # Le moteur travail en mode absolu par défaut G90
 
         print(f"Tension photodiode 1 (Volt) : {voltages_photodiode_1}")
-        print(f"Taille de la liste Tension photodiode 1 : {len(voltages_photodiode_1)}")
         print(f"Tension photodiode 2 (Volt) : {voltages_photodiode_2}")
-        print(f"Taille de la liste photodiode 2 : {len(voltages_photodiode_2)}")
         print(f"Pas de vis (mm) : {i}")
         print(f"Longueur d'onde (nm) : {wavelength}")
-        print(f"Taille de la liste Longueur d'onde (nm) : {len(wavelength)}")
         time.sleep(time_per_step)  # Comme $110 =4mm/min et le pas de vis est de 0.5mm => Le moteur réalise un pas de vis en 7.49s
         i += step
     # Fin de l'acquisition
@@ -113,7 +104,6 @@ def precision_mode(S, pin, screw_travel, number_measurements, screw_translation_
 
 def acquition(S, screw_travel, number_measurements, screw_translation_speed, file_reference_solution, sample_solution_file, sample_solution_name, title, REPERTORY): # Départ 7.25mm / 21 - 7.25 = 13.75mm où 21 course de la vis total de la vis => screw_travel=13.75mm
     column_name_voltages_reference_solution='Tension blanc (Volt)'
-
     column_name_voltages_sample_solution='Tension échantillon (Volt)'
 
    
@@ -141,3 +131,5 @@ def acquition(S, screw_travel, number_measurements, screw_translation_speed, fil
     return_screw(S,screw_travel, screw_translation_speed=10)
     grbl_parameter_screw_motor(S)
     graph(file_reference_solution, sample_solution_file, sample_solution_name, title, REPERTORY)
+
+
