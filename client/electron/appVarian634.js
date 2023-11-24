@@ -33,7 +33,7 @@ const sendToProgram = (str) => {
 const startCodeFunction = () => {
   printBoth("Initiating program");
 
-  child = exec("python -i ./python/pythonExample.py", (error) => {
+  child = exec("python -i ./python/core/kinematic_chains/screw_motor.py", (error) => {
     if (error) {
       printBoth(`exec error: ${error}`);
     }

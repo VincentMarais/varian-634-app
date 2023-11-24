@@ -70,7 +70,7 @@ import serial
 import time 
 
 # INITIALISATION MOTEUR:
-
+    
 COM_PORT = 'COM3'
 BAUD_RATE = 115200
 INITIALIZATION_TIME = 2
@@ -84,6 +84,6 @@ s.flushInput()  # Vider le tampon d'entrée, en supprimant tout son contenu.
 
 #grbl_parameter_screw_motor(s)
 
-#move_screw(s, screw_course=1,screw_translation_speed=10)
+move_screw(s, screw_course=1,screw_translation_speed=10)
 
 #return_screw(s, screw_course=1, screw_translation_speed=10)
