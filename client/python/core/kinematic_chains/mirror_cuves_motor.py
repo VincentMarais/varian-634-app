@@ -1,5 +1,6 @@
 """
-Program pilote le moteur lié miroir celui permet de passer de la cuve avec l'échantillon, à la cuve de référence à une autre 
+The pilot program controls the mirror-linked engine, allowing the transition from the sample chamber to the reference chamber.
+²
 """
 
 
@@ -51,10 +52,9 @@ def initialisation_mirror_cuves_motor(S,PIN):
 
 
 # Test python pour tester le code python vérifier il avoir téléversé le code grblUpload.ino sur la carte 
-# et vérifier les caractéristique GRBL dans le Serial de l'arduino $$
+# et vérifier les caractéristique GRBL dans le Serial de l'arduino en tapant : $$
 import serial  
 import time 
-import re
 
 # INITIALISATION MOTEUR:
 
