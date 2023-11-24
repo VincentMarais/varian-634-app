@@ -3,14 +3,14 @@ import nidaqmx
 from nidaqmx.constants import AcquisitionType, TerminalConfiguration
 
 
-"""
-Fonction acquisition_tension
-"""
+
+# Fonction acquisition_tension
+
 
 
 def get_solution_cuvette():
     solution = input("Dans quelle cuve numéro est la solution blanche : cuve 1 ou cuve 2 : ")
-    while solution not in ['    cuve 1', 'cuve 2']:
+    while solution not in ['cuve 1', 'cuve 2']:
         solution = input("Veuillez choisir cuve 1 ou cuve 2 : ")
     print("La solution de blanc est dans la", solution)
     return solution
