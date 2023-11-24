@@ -1,6 +1,6 @@
-Pour tester le code Python des moteur 
+Pour tester le code Python des moteurs :
 
-1. Assurez-vous que le code "grblUpload.ino" a été téléversé sur la carte Arduino avec la CNC shield.
+1. Assurez-vous que le code "grbl.ino" a été téléversé sur la carte Arduino avec la CNC shield.
 
 2. Ouvrez le terminal série de l'Arduino en tapant la commande suivante : "$$"
 
