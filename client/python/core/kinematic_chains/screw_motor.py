@@ -30,39 +30,60 @@ def grbl_parameter_screw_motor(s):
     """
     g_code='$G' + '\n'
     s.write(g_code.encode())
-    print(s.read(75))
+    print(s.read(75)) # 75 because the information on G90 is at this position
 
 
 
 # initialization of the motor
 
-def modify_screw_translation_speed(s, vitesse_translation_vis):
-    g_code = '$110=' + str(vitesse_translation_vis) + '\n'
+def modify_screw_translation_speed(s, screw_translation_speed):
+    g_code = '$110=' + str(screw_translation_speed) + '\n'
     s.write(g_code.encode())
     time.sleep(0.5)
 
 
-def initialisation_motor_screw(S,vitesse_translation_vis):
+def initialisation_motor_screw(S,screw_translation_speed):
     g_code= 'G90'+ '\n' # Le moteur se déplace en relatif
     S.write(g_code.encode())
     time.sleep(0.5)
-    modify_screw_translation_speed(S,vitesse_translation_vis)
+    modify_screw_translation_speed(S,screw_translation_speed)
 
 # screw cinematics 
         
-def move_screw(s,pas): # Fonction qui pilote le moteur      
-        g_code= 'G90\n' + 'G0X' + str(pas) + '\n' # Le moteur ce déplace en relatif
+def move_screw(s,screw_course, screw_translation_speed): # Fonction qui pilote le moteur
+        modify_screw_translation_speed(s,screw_translation_speed)      
+        g_code= 'G90\n' + 'G0X' + str(screw_course) + '\n' # Le moteur ce déplace en relatif
         s.write(g_code.encode())
         
 
-def return_screw(s, course_vis, vitesse_translation_vis): 
-        modify_screw_translation_speed(s,vitesse_translation_vis)
-        g_code= 'G91'+ 'G0X-' + str(course_vis) + '\n' # Le moteur ce déplace en relatif  
+def return_screw(s, screw_course, screw_translation_speed): 
+        modify_screw_translation_speed(s,screw_translation_speed)
+        g_code= 'G91'+ 'G0X-' + str(screw_course) + '\n' # Le moteur ce déplace en relatif  
         #Le moteur ce déplace linéairement de -pas_vis (retour_moteur_vis en arrière)
         s.write(g_code.encode())
 
 
 
+# Test python (vous devez suivre la même procédure expliquer dans le code mirror_cuves_motor.py)
 
+import serial  
+import time 
 
+# INITIALISATION MOTEUR:
 
+COM_PORT = 'COM3'
+BAUD_RATE = 115200
+INITIALIZATION_TIME = 2
+
+s = serial.Serial(COM_PORT, BAUD_RATE)
+s.write("\r\n\r\n".encode()) # encode pour convertir "\r\n\r\n" 
+time.sleep(INITIALIZATION_TIME)   # Attend initialisation un GRBL
+s.flushInput()  # Vider le tampon d'entrée, en supprimant tout son contenu.
+
+#print(state_screw_motor(s))
+
+#grbl_parameter_screw_motor(s)
+
+#move_screw(s, screw_course=1,screw_translation_speed=10)
+
+#return_screw(s, screw_course=1, screw_translation_speed=10)
