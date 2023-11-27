@@ -52,4 +52,20 @@ def creation_directory_date_slot():
         print("Le répertoire existe déjà :", path)
 
     return path, date, slot_size
+
+def path_creation(path, physical_data):
+    """
+    Créé un chemin pour une grandeur physique
+
+    """
+    chemin = os.path.join(path, physical_data)
+
+    if not os.path.exists(chemin):
+    # Créer le répertoire en utilisant le chemin d'accès
+        os.makedirs(chemin)
+        print("Répertoire créé avec succès :", chemin)
+    else:
+        print("Le répertoire existe déjà :", chemin)
+
+    return chemin
 # End-of-file (EOF)
