@@ -13,7 +13,7 @@ def save_data_csv(path, file_name, data_list, title_list):
     Program transform the python list on csv file
 
     """
-    path_file = path + '/' + file_name
+    path_file = path + '/' + file_name + '.csv'
     # Transposer la liste de données
     data_transposed = list(itertools.zip_longest(*data_list))
     with open(path_file, 'w', newline='', encoding='utf-8') as file_csv:
@@ -39,3 +39,5 @@ def csv_experiment(path,sample_reference_file, sample_analyzed_file):
     voltage_sample_analyzed= data_2['Tension échantillon (Volt)']
 
     return wavelength, voltage_sample_reference, voltage_sample_analyzed
+
+

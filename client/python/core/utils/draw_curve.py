@@ -49,7 +49,7 @@ def graph(path, sample_reference_file, sample_analyzed_file, sample_analyzed_nam
     absorbance_peak=max(absorbance)
     wavelength_peak=wavelength[np.argmax((absorbance))]
     peaks, _ = find_peaks(absorbance, distance=peak_search_window)
-    save_data_csv(path=path, file_name="peak"+graph_title, data_list=[peaks, _], title_list=["pic_absorbance", "longueur d'onde"])
+    save_data_csv(path=path, file_name="peak"+graph_title, data_list=[peaks, wavelength[peaks]], title_list=["pic_absorbance", "longueur d'onde"])
 # Création du graphique
     plt.plot(wavelength, absorbance)
     plt.plot(wavelength[peaks], absorbance[peaks], 'ro')
@@ -100,3 +100,11 @@ def fourier_transformed_display(path, title, FE):
 
 
 
+path="C:/Users/admin/Desktop/Projet_GP/Programmation_Spectro/varian-634-app/experiments/Manip_2023/Manip_06_2023/30_06_2023/Fente_2nm/"
+sample_reference_file="Tension_blanc_30_06_2023_Fente_2nm.csv"
+sample_analyzed_file="Tension_echantillon_30_06_2023_Fente_2nm.csv"
+sample_analyzed_name="bleu de bromophénol"
+graph_title="Absorbance du " + sample_analyzed_name
+date="27/11/2023"
+
+graph(path, sample_reference_file, sample_analyzed_file, sample_analyzed_name, graph_title, peak_search_window=20)
