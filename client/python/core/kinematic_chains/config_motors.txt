@@ -18,11 +18,11 @@ $11=0.010
 $12=0.002
 $13=0
 $20=0
-$21=0
-$22=0
+$21=1
+$22=1
 $23=0
-$24=25.000
-$25=100.000
+$24=10.000
+$25=12.000
 $26=250
 $27=1.000
 $30=1000
@@ -30,16 +30,17 @@ $31=0
 $32=0
 $100=10295.660
 $101=3200.000
-$102=50.000
+$102=3200.000
 $110=10.000
-$111=100.000
-$112=100.000
+$111=10.000
+$112=10.000
 $120=200.000
 $121=10.000
 $122=10.000
-$130=800.000
+$130=21.000
 $131=800.000
 $132=800.000
+
 
 Assurez-vous que ces paramètres sont correctement configurés avant de tester les moteurs.
 
@@ -47,6 +48,7 @@ Assurez-vous que ces paramètres sont correctement configurés avant de tester l
 Pour tester le moteur qui pilote le diviseur de faisceaux 
 
 import serial  
+from pyfirmata import Arduino, util, INPUT
 
 # INITIALISATION MOTEUR:
 
@@ -54,14 +56,14 @@ COM_PORT = 'COM3'
 BAUD_RATE = 115200
 INITIALIZATION_TIME = 2
 
-s = serial.Serial(COM_PORT, BAUD_RATE)
-s.write("\r\n\r\n".encode()) # encode pour convertir "\r\n\r\n" 
+arduino_motors = serial.Serial(COM_PORT, BAUD_RATE)
+arduino_motors.write("\r\n\r\n".encode()) # encode pour convertir "\r\n\r\n" 
 time.sleep(INITIALIZATION_TIME)   # Attend initialisation un GRBL
-s.flushInput()  # Vider le tampon d'entrée, en supprimant tout son contenu.
+arduino_motors.flushInput()  # Vider le tampon d'entrée, en supprimant tout son contenu.
 
 # INITIALISATION Forche optique:
 
-#arduino_optical_fork = serial.Serial('COM6', 9600)
+#arduino_optical_fork = Arduino('COM6')
 
 # $21=1 pour activer les capteurs de fin de courses
 

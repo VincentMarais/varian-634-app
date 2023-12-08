@@ -20,18 +20,19 @@ from kinematic_chains.mirror_cuves_motor import (move_mirror_cuves_motor, initia
 from electronics_controler.ni_pci_6621 import voltage_acquisition, get_solution_cuvette
 
 # Data processing
-from utils.save_data_csv import save_data_csv
+from utils.data_csv import save_data_csv
 from utils.draw_curve import graph
 
 
 
 
-def precision_mode(S, pin, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, duty_cycle, samples_per_channel, sample_rate, channels):  
+def precision_mode(arduino_optical_fork, arduino_motors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, duty_cycle, samples_per_channel, sample_rate, channels):  
     # Function documentation here
 
     """
     Entrée :
-        - S: Méthode pour intéragir avec l'arduino
+        - arduino_optical_fork
+        - arduino_motors
         - screw_travel: distance parcourue par la vis en mm 
         - number_measurements: nombre de mesure de tension en Volt
         - screw_translation_speed: vitesse de translation de la vis (mm/min)
@@ -55,9 +56,9 @@ def precision_mode(S, pin, screw_travel, number_measurements, screw_translation_
     choice = get_solution_cuvette()
     # Initialisation moteur    
 
-    initialisation_mirror_cuves_motor(S,pin)
+    initialisation_mirror_cuves_motor(arduino_motors,arduino_optical_fork)
 
-    initialisation_motor_screw(S,screw_translation_speed)
+    initialisation_motor_screw(arduino_motors,screw_translation_speed)
     
 
     # Début de l'acquisition
@@ -67,19 +68,19 @@ def precision_mode(S, pin, screw_travel, number_measurements, screw_translation_
         voltage_photodiode_1 = voltage_acquisition(samples_per_channel, sample_rate, pulse_frequency, duty_cycle, channels, channel='ai0')
         voltages_photodiode_1.append(voltage_photodiode_1)
 
-        move_mirror_cuves_motor(S, 0.33334)  # Le moteur doit faire une angle de 60°
+        move_mirror_cuves_motor(arduino_motors, 0.33334)  # Le moteur doit faire une angle de 60°
         time.sleep(0.5)
         
         voltage_photodiode_2 = voltage_acquisition(samples_per_channel, sample_rate, pulse_frequency, duty_cycle, channels, channel='ai1')
         voltages_photodiode_2.append(voltage_photodiode_2)
 
-        move_mirror_cuves_motor(S, -0.33334)  # Le moteur doit faire une angle de 60°
+        move_mirror_cuves_motor(arduino_motors, -0.33334)  # Le moteur doit faire une angle de 60°
         time.sleep(0.5)
 
         no_screw.append(i)
         wavelength.append(-31.10419907 * i + 800)  # cf rapport 2022-2023 dans la partie "Acquisition du signal"
 
-        move_screw(S, i + step)  # Le moteur travail en mode absolu par défaut G90
+        move_screw(arduino_motors, i + step)  # Le moteur travail en mode absolu par défaut G90
 
         print(f"Tension photodiode 1 (Volt) : {voltages_photodiode_1}")
         print(f"Tension photodiode 2 (Volt) : {voltages_photodiode_2}")
@@ -102,7 +103,7 @@ def precision_mode(S, pin, screw_travel, number_measurements, screw_translation_
     return  wavelength, reference_solution, sample_solution, no_screw
 
 
-def acquition(S, screw_travel, number_measurements, screw_translation_speed, file_reference_solution, sample_solution_file, sample_solution_name, title, REPERTORY): # Départ 7.25mm / 21 - 7.25 = 13.75mm où 21 course de la vis total de la vis => screw_travel=13.75mm
+def acquition(arduino_motors, screw_travel, number_measurements, screw_translation_speed, file_reference_solution, sample_solution_file, sample_solution_name, title, REPERTORY): # Départ 7.25mm / 21 - 7.25 = 13.75mm où 21 course de la vis total de la vis => screw_travel=13.75mm
     column_name_voltages_reference_solution='Tension blanc (Volt)'
     column_name_voltages_sample_solution='Tension échantillon (Volt)'
 
@@ -110,7 +111,7 @@ def acquition(S, screw_travel, number_measurements, screw_translation_speed, fil
   
 
 
-    [wavelength, voltages_reference_solution, voltages_sample_solution, no_screw] = precision_mode(S,screw_travel, number_measurements, screw_translation_speed)
+    [wavelength, voltages_reference_solution, voltages_sample_solution, no_screw] = precision_mode(arduino_motors,screw_travel, number_measurements, screw_translation_speed)
     
 
    
@@ -121,15 +122,17 @@ def acquition(S, screw_travel, number_measurements, screw_translation_speed, fil
     save_data_csv(sample_solution_file, wavelength, voltages_sample_solution, no_screw, 'Longueur d\'onde (nm)', column_name_voltages_sample_solution,'Liste_pas_vis')
     save_data_csv(file_reference_solution, wavelength, voltages_reference_solution, no_screw, 'Longueur d\'onde (nm)', column_name_voltages_reference_solution,'Liste_pas_vis')
 
-    gcode_state_motor=str(state_screw_motor(S))
+    gcode_state_motor=str(state_screw_motor(arduino_motors))
 # 'Idle': Instruction GRBL pour dire que ce moteur est à l'arrêt / 'Run' le moteur tourne
     while 'Idle' not in gcode_state_motor:
-        gcode_state_motor=str(state_screw_motor(S))
+        gcode_state_motor=str(state_screw_motor(arduino_motors))
 
     print(gcode_state_motor)
-    grbl_parameter_screw_motor(S)
-    return_screw(S,screw_travel, screw_translation_speed=10)
-    grbl_parameter_screw_motor(S)
+    grbl_parameter_screw_motor(arduino_motors)
+    return_screw(arduino_motors, screw_travel, screw_translation_speed=10)
+    grbl_parameter_screw_motor(arduino_motors)
     graph(file_reference_solution, sample_solution_file, sample_solution_name, title, REPERTORY)
+
+
 
 
