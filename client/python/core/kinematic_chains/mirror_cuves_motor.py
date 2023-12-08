@@ -58,10 +58,15 @@ def initialisation_mirror_cuves_motor(arduino_optical_fork, arduino_motors):
         digital_value = arduino_optical_fork.digital[3].read()
         print(digital_value)
         move_mirror_cuves_motor(arduino_motors, plastic_disc_position=0.4)    
-        time.sleep(4)
         digital_value = arduino_optical_fork.digital[3].read()
         print(digital_value)
-     
+    
+    g_code = '!'+'\n'
+    arduino_motors.write(g_code.encode())
+    g_code = '~'+'\n'
+    arduino_motors.write(g_code.encode())
+    move_mirror_cuves_motor(arduino_motors, plastic_disc_position=0.4)    
+
 
 # End-of-file (EOF)
 
