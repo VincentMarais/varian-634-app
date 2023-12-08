@@ -1,4 +1,4 @@
-// Modules to control application life and create native browser window
+  // Modules to control application life and create native browser window
 const { app, BrowserWindow, ipcMain, Notification } = require("electron");
 const exec = require("child_process").exec;
 const path = require("path");

@@ -1,0 +1,8 @@
+Pour lire la valeur d'un port digital avec PyFirmata sur un Arduino, 
+vous devez d'abord configurer votre Arduino avec le firmware StandardFirmata.
+
+1. Fichier>Exemples>Firmata>StandardFirmata 
+
+2. Téléverser le fichier StandardFirmata.ino sur la carte arduino
+
+3. Lancer le code python test_pyfirmata.py

@@ -63,7 +63,7 @@ s.flushInput()  # Vider le tampon d'entrée, en supprimant tout son contenu.
 
 #arduino_optical_fork = serial.Serial('COM6', 9600)
 
-
+# $21=1 pour activer les capteurs de fin de courses
 
 # Test move_mirror_cuves_motor
 move_mirror_cuves_motor(s,plastic_disc_position=0.4)

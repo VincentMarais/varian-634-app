@@ -63,9 +63,13 @@ def return_screw(s, screw_course, screw_translation_speed):
         s.write(g_code.encode())
 
 
+def mode_alarm(s):
+    if 'Alarm' == state_screw_motor(s):
+         return True
 
 # Test python (vous devez suivre la même procédure expliquer dans le code mirror_cuves_motor.py)
-
+# https://www.youtube.com/watch?v=IJER_8nqK-Y&t=16s&ab_channel=ZenToolworks (Vidéo pour le homing et regarder)
+# (Regarder https://www.youtube.com/watch?v=OpaUwWouyE0&ab_channel=MichaelKlements)
 import serial  
 import time 
 
@@ -81,9 +85,11 @@ time.sleep(INITIALIZATION_TIME)   # Attend initialisation un GRBL
 s.flushInput()  # Vider le tampon d'entrée, en supprimant tout son contenu.
 
 #print(state_screw_motor(s))
-
+print(state_screw_motor(s))
 #grbl_parameter_screw_motor(s)
-
-move_screw(s, screw_course=1,screw_translation_speed=10)
+g_code= '$X'+'\n' 
+#Le moteur ce déplace linéairement de -pas_vis (retour_moteur_vis en arrière)
+print(state_screw_motor(s))
+move_screw(s, screw_course=0, screw_translation_speed=10)
 
 #return_screw(s, screw_course=1, screw_translation_speed=10)
