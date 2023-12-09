@@ -4,8 +4,7 @@ transition from the sample chamber to the reference chamber.
 
 """
 import time
-import serial
-from pyfirmata import Arduino, util, INPUT
+from pyfirmata import util, INPUT
 
 def move_mirror_cuves_motor(arduino_motors, plastic_disc_position):
     """
@@ -17,9 +16,9 @@ def move_mirror_cuves_motor(arduino_motors, plastic_disc_position):
             - plastic_disc_position : position relative du disque de plastique lié au moteur
     
         """
-    g_code= '$X'+'\n' # $ Unlock la sécurité 
-#Le moteur ce déplace linéairement de -pas_vis (retour_moteur_vis en arrière)
-    s.write(g_code.encode())
+    g_code= '$X'+'\n' # $ Unlock la sécurité
+    #Le moteur ce déplace linéairement de -pas_vis (retour_moteur_vis en arrière)
+    arduino_motors.write(g_code.encode())
     g_code = 'G91\n' + 'G0Y' + str(plastic_disc_position) + '\n'
     arduino_motors.write(g_code.encode())
 
@@ -43,6 +42,9 @@ def optical_fork_state(arduino_optical_fork):#   Initialiser la communication s�
 
 
 def initialisation_mirror_cuves_motor(arduino_optical_fork, arduino_motors):
+    """
+    Fonction pour déterminer la position de mon moteur 
+    """
     # Configurer le port digital 3 en tant qu'entrée
     arduino_optical_fork.digital[3].mode = INPUT  # Modifié ici
 
@@ -52,39 +54,14 @@ def initialisation_mirror_cuves_motor(arduino_optical_fork, arduino_motors):
 
 # Permettre à l'itérateur de démarrer
     time.sleep(1)
-    digital_value = arduino_optical_fork.digital[3].read()    
+    digital_value = arduino_optical_fork.digital[3].read()
     while digital_value is True:
         # Lire la valeur du port digital 3
         digital_value = arduino_optical_fork.digital[3].read()
         print(digital_value)
-        move_mirror_cuves_motor(arduino_motors, plastic_disc_position=0.4)    
+        move_mirror_cuves_motor(arduino_motors, plastic_disc_position=0.4)
         digital_value = arduino_optical_fork.digital[3].read()
-        print(digital_value)    
-    g_code = '!'+'\n'
+        print(digital_value)
+        g_code = '!'+'\n'
     arduino_motors.write(g_code.encode())
-      
-
-
-# End-of-file (EOF)
-
-# INITIALISATION MOTEUR:
-COM_PORT = 'COM3'
-BAUD_RATE = 115200
-INITIALIZATION_TIME = 2
-
-s = serial.Serial(COM_PORT, BAUD_RATE)
-s.write("\r\n\r\n".encode()) # encode pour convertir "\r\n\r\n" 
-time.sleep(INITIALIZATION_TIME)   # Attend initialisation un GRBL
-s.flushInput()  # Vider le tampon d'entrée, en supprimant tout son contenu.
-
-# INITIALISATION Forche optique:
-# https://www.youtube.com/watch?v=LwV3uGqKspc&ab_channel=EuroMakers (Réinitialiser la carte)
-# Constantes ARDUINO Fourche OPTIQUE
-from pyfirmata import Arduino, util, INPUT
-import time
-
-arduino_optical_fork = Arduino('COM6')
-
-
-
-initialisation_mirror_cuves_motor(arduino_optical_fork,s)
+    # End-of-file (EOF)
