@@ -5,6 +5,7 @@ transition from the sample chamber to the reference chamber.
 """
 import time
 from pyfirmata import util, INPUT
+from screw_motor import stop_motors
 
 def move_mirror_cuves_motor(arduino_motors, plastic_disc_position):
     """
@@ -62,6 +63,5 @@ def initialisation_mirror_cuves_motor(arduino_optical_fork, arduino_motors):
         move_mirror_cuves_motor(arduino_motors, plastic_disc_position=0.4)
         digital_value = arduino_optical_fork.digital[3].read()
         print(digital_value)
-        g_code = '!'+'\n'
-    arduino_motors.write(g_code.encode())
-    # End-of-file (EOF)
+    stop_motors(arduino_motors)
+# End-of-file (EOF)

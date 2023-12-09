@@ -35,8 +35,9 @@ def grbl_parameter_motors(arduino_motors):
     arduino_motors.write(g_code.encode())
     print(arduino_motors.read(75)) # 75 because the information on G90 is at this position
 
-
-
+def stop_motors(arduino_motors):
+    g_code = '!'+'\n'
+    arduino_motors.write(g_code.encode())
 # initialization of the motor
 
 def modify_screw_translation_speed(arduino_motors, screw_translation_speed):
@@ -97,8 +98,6 @@ def end_stop_state(arduino_end_stop, arduino_motors,screw_course, screw_translat
         move_screw(arduino_motors, screw_course, screw_translation_speed)
         digital_value = arduino_end_stop.digital[2].read()
         print(digital_value)
-    g_code = '!'+'\n'
-    arduino_motors.write(g_code.encode())
 
 def position_vis(arduino_motors):
     """

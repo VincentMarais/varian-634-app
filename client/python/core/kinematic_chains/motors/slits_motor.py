@@ -11,7 +11,7 @@ from pyfirmata import util, INPUT
 
 def initialisation_slits_motor(arduino_motors):
     """
-    Initialise le système de fentes variable qui déplace le réseau de diffraction pour le début de l'expérience
+    Initialise le système de fentes variable pour le début de l'expérience
     """
     g_code= 'G90'+ '\n' # Le moteur se déplace en relatif
     arduino_motors.write(g_code.encode())
@@ -21,7 +21,7 @@ def initialisation_slits_motor(arduino_motors):
 
 def move_slits(arduino_motors):
     """
-    Déplace le système de fentes variable qui déplace le réseau de diffraction
+    Déplace le système de fentes variable 
     """
     slit_course = 0.2
     g_code= 'G90\n' + 'G0Z' + str(slit_course) + '\n' # Le moteur ce déplace en relatif
@@ -29,7 +29,7 @@ def move_slits(arduino_motors):
 
 def return_slit(arduino_motors):
     """
-    Déplacement arrière de le système de fentes variable
+    Déplacement arrière du système de fentes variable
     """
     slit_course = 0.2
     g_code= 'G91'+ 'G0Z-' + str(slit_course) + '\n' # Le moteur ce déplace en relatif

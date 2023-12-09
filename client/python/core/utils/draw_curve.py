@@ -1,7 +1,6 @@
 """
 This program will plot the results of the experiment on the VARIAN 634
 """
-import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from directory_creation import path_creation
@@ -84,7 +83,7 @@ def voltage_curve_display(path, sample_reference_file, sample_analyzed_file, tit
     plt.savefig(path + "\\" + title +".pdf")
     plt.show()
 
-def fourier_transformed_display(path, title, FE):
+def fourier_transformed_display(path, title, FE, sample_reference_file, sample_analyzed_file):
     [wavelength, voltage_sample_reference, voltage_sample_analyzed]=csv_experiment(path, sample_reference_file, sample_analyzed_file)
 
     fourier_transform = np.fft.fft(voltage_sample_reference,n=4096) # 4096 Pour plus de précision fft (zero padding) cf https://www.youtube.com/watch?v=LAswxBR513M&t=582s&ab_channel=VincentChoqueuse
@@ -98,13 +97,9 @@ def fourier_transformed_display(path, title, FE):
     plt.savefig(path + "\\" + title+".pdf")
     plt.show()
 
-
-
-path="C:/Users/admin/Desktop/Projet_GP/Programmation_Spectro/varian-634-app/experiments/Manip_2023/Manip_06_2023/30_06_2023/Fente_2nm/"
-sample_reference_file="Tension_blanc_30_06_2023_Fente_2nm.csv"
-sample_analyzed_file="Tension_echantillon_30_06_2023_Fente_2nm.csv"
-sample_analyzed_name="bleu de bromophénol"
-graph_title="Absorbance du " + sample_analyzed_name
-date="27/11/2023"
-
-graph(path, sample_reference_file, sample_analyzed_file, sample_analyzed_name, graph_title, peak_search_window=20)
+def graph_basic_array(x_array, y_array, xlabel, ylabel, color_graph):
+    plt.plot(x_array,y_array, color=color_graph)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.show()
+# End-of-file (EOF)
