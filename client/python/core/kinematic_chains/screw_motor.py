@@ -1,26 +1,29 @@
 """
-This program controls the motor that drives the screw and the reflection 
-diffraction grating of the VARIAN 634
+This program controls the motor that drives the screw which allows the 
+rotation of the reflection diffraction grating of the VARIAN 634.
 """
 
 import time
+from typing import Any
 from pyfirmata import util, INPUT
 
 # CARACTERISTIQUE GRBL MOTEUR
 
-def state_screw_motor(arduino_motors):
+def state_motors(arduino_motors):
     """
-    Entree : Aucune
+    But: Connaître l'état de tout les moteurs du VARIAN 634 si l'un moteur 
+    des est en mouvement "Run" ou non "Idle"
+
+    Entrée : arduino_motors     
 
     Sortie : renvoie les 10 premiers caractère de l'état du moteur 
 
-    But: Savoir si le moteur est en mouvement "Run" ou non "Idle"
     """
     g_code='?' + '\n'
     arduino_motors.write(g_code.encode())
     return arduino_motors.read(40) # 10: On lit 10 caractère dans le serial
 
-def grbl_parameter_screw_motor(arduino_motors):
+def grbl_parameter_motors(arduino_motors):
     """
     Entree : arduino_motors
 
@@ -97,7 +100,7 @@ def end_stop_state(arduino_end_stop, arduino_motors,screw_course, screw_translat
     g_code = '!'+'\n'
     arduino_motors.write(g_code.encode())
 
-def position_moteur_x(arduino_motors):
+def position_vis(arduino_motors):
     """
     Donne la position de la vis 
     """

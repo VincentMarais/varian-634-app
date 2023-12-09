@@ -5,10 +5,8 @@ Program transform the python list on csv file
 import csv
 import itertools
 import pandas as pd
-from directory_creation import path_creation
 
 def save_data_csv(path, file_name, data_list, title_list):
-
     """
     Program transform the python list on csv file
 
@@ -29,6 +27,9 @@ def save_data_csv(path, file_name, data_list, title_list):
 
 
 def csv_experiment(path,sample_reference_file, sample_analyzed_file):
+    """
+    Création du fichier csv de l'expérience
+    """
     path_sample_reference=path+ '/'+ sample_reference_file
     path_sample_analyzed=path+ '/'+ sample_analyzed_file
     data_sample_reference = pd.read_csv(path_sample_reference,  encoding='ISO-8859-1')
@@ -38,6 +39,4 @@ def csv_experiment(path,sample_reference_file, sample_analyzed_file):
     voltage_sample_reference = data_sample_reference['Tension blanc (Volt)']
     voltage_sample_analyzed= data_2['Tension échantillon (Volt)']
 
-    return wavelength, voltage_sample_reference, voltage_sample_analyzed
-
-
+    return wavelength, voltage_sample_reference, voltage_sample_analyzed #End-of-file (EOF)
