@@ -35,7 +35,7 @@ def move_screw(arduino_motors, screw_course, screw_translation_speed):
     g_code= 'G90\n' + 'G0X' + str(screw_course) + '\n' # Le moteur ce déplace en relatif
     arduino_motors.write(g_code.encode())
 
-def return_screw(arduino_motors, screw_course, screw_translation_speed):
+def reset_screw_position(arduino_motors, screw_course, screw_translation_speed):
     """
     Déplacement arrière de la vis
     """

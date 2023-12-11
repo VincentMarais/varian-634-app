@@ -5,8 +5,8 @@ This program will create the baseline for the absorbance analysis of the sample.
 import time
 
 # Motors
-from kinematic_chains.motors.all_motors import state_motors, grbl_parameter_motors
-from kinematic_chains.motors.screw_motor import (initialisation_motor_screw, move_screw, return_screw)
+from kinematic_chains.motors.all_motors import wait_for_motor_idle
+from kinematic_chains.motors.screw_motor import (initialisation_motor_screw, move_screw, reset_screw_position)
 from kinematic_chains.motors.mirror_cuves_motor import (move_mirror_cuves_motor, initialisation_mirror_cuves_motor)
 # Specify individual imports from end_stop_sensor module
 # from core.kinematic_chains.end_stop_sensor import specific_function
@@ -18,111 +18,73 @@ from electronics_controler.ni_pci_6621 import voltage_acquisition, get_solution_
 from utils.data_csv import save_data_csv
 from utils.draw_curve import graph
 
-
-
-
-def precision_mode(arduino_optical_fork, arduino_motors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, duty_cycle, samples_per_channel, sample_rate, channels):  
-    # Function documentation here
-
+def initialize_measurement(arduino_motors, arduino_optical_fork, screw_translation_speed):
     """
-    Entrée :
-        - arduino_optical_fork
-        - arduino_motors
-        - screw_travel: distance parcourue par la vis en mm 
-        - number_measurements: nombre de mesure de tension en Volt
-        - screw_translation_speed: vitesse de translation de la vis (mm/min)
-        - Hypothèse : La photodiode 1 est toujours branché sur le port 'ai0' et la photodiode 2 toujours branché sur le port 'ai1'
-    
-    Sortie : 
-
+    Initialise les composants nécessaires pour la mesure.
     """
-
-    voltages_photodiode_1= []
-    voltages_photodiode_2= []
-
-    wavelength=[]
-    no_screw=[] 
-    i=0
-    step=screw_travel/number_measurements # 0.5mm Pas de la vis (cf Exel)
-    time_per_step= (step*60)/screw_translation_speed # Temps pour faire un pas 
-    
-    #Initialisation cuves
-
+    # Initialisation cuves et moteurs
     choice = get_solution_cuvette()
-    # Initialisation moteur    
+    initialisation_mirror_cuves_motor(arduino_motors, arduino_optical_fork)
+    initialisation_motor_screw(arduino_motors, screw_translation_speed)
+    return choice
 
-    initialisation_mirror_cuves_motor(arduino_motors,arduino_optical_fork)
+def perform_step_measurement(arduino_motors, step, samples_per_channel, sample_rate, pulse_frequency, duty_cycle, channels):
+    """
+    Effectue une mesure à un pas donné et retourne les tensions mesurées.
+    """
+    # Mesure pour la photodiode 1
+    voltage_photodiode_1 = voltage_acquisition(samples_per_channel, sample_rate, pulse_frequency, duty_cycle, channels, channel='ai0')
 
-    initialisation_motor_screw(arduino_motors,screw_translation_speed)
-    
+    # Rotation du miroir et mesure pour la photodiode 2
+    move_mirror_cuves_motor(arduino_motors, 0.33334)  # Rotation de 60°
+    time.sleep(0.5)  # Délai pour stabilisation
+    voltage_photodiode_2 = voltage_acquisition(samples_per_channel, sample_rate, pulse_frequency, duty_cycle, channels, channel='ai1')
 
-    # Début de l'acquisition
+    # Retour du miroir à sa position initiale
+    move_mirror_cuves_motor(arduino_motors, -0.33334)
+    time.sleep(0.5)
 
+    return voltage_photodiode_1, voltage_photodiode_2
 
-    while i < screw_travel: # Tant que la vis n'a pas parcouru une distance course_vis
-        voltage_photodiode_1 = voltage_acquisition(samples_per_channel, sample_rate, pulse_frequency, duty_cycle, channels, channel='ai0')
-        voltages_photodiode_1.append(voltage_photodiode_1)
+def calculate_wavelength(position):
+    """
+    Calcule la longueur d'onde en fonction de la position.
+    """
+    return -31.10419907 * position + 800  # Formule spécifique au système
 
-        move_mirror_cuves_motor(arduino_motors, 0.33334)  # Le moteur doit faire une angle de 60°
-        time.sleep(0.5)
-        
-        voltage_photodiode_2 = voltage_acquisition(samples_per_channel, sample_rate, pulse_frequency, duty_cycle, channels, channel='ai1')
-        voltages_photodiode_2.append(voltage_photodiode_2)
+def precision_mode(arduino_optical_fork, arduino_motors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, duty_cycle, samples_per_channel, sample_rate, channels):
+    """
+    Exécute le mode de précision pour la mesure et retourne les résultats.
+    """
+    choice = initialize_measurement(arduino_motors, arduino_optical_fork, screw_translation_speed)
+    voltages_photodiode_1, voltages_photodiode_2 = [], []
+    no_screw, wavelength = [], []    
+    step = screw_travel / number_measurements
+    time_per_step = (step * 60) / screw_translation_speed
 
-        move_mirror_cuves_motor(arduino_motors, -0.33334)  # Le moteur doit faire une angle de 60°
-        time.sleep(0.5)
+    for i in range(number_measurements):
+        position = i * step
+        voltage_1, voltage_2 = perform_step_measurement(arduino_motors, position, samples_per_channel, sample_rate, pulse_frequency, duty_cycle, channels)
+        voltages_photodiode_1.append(voltage_1)
+        voltages_photodiode_2.append(voltage_2)
+        no_screw.append(position)
+        wavelength.append(calculate_wavelength(position))
+        move_screw(arduino_motors, position)
+        time.sleep(time_per_step)
 
-        no_screw.append(i)
-        wavelength.append(-31.10419907 * i + 800)  # cf rapport 2022-2023 dans la partie "Acquisition du signal"
+    reference_solution, sample_solution = (voltages_photodiode_1, voltages_photodiode_2) if choice == 'cuve 1' else (voltages_photodiode_2, voltages_photodiode_1)
+    return list(reversed(wavelength)), list(reversed(reference_solution)), list(reversed(sample_solution)), list(reversed(no_screw))
 
-        move_screw(arduino_motors, i + step)  # Le moteur travail en mode absolu par défaut G90
+def acquisition(arduino_motors, screw_travel, number_measurements, screw_translation_speed, file_reference_solution, sample_solution_file, sample_solution_name, title, REPERTORY):
+    """
+    Effectue une acquisition complète et sauvegarde les données.
+    """
+    wavelength, voltages_reference_solution, voltages_sample_solution, no_screw = precision_mode(arduino_motors, screw_travel, number_measurements, screw_translation_speed)
 
-        print(f"Tension photodiode 1 (Volt) : {voltages_photodiode_1}")
-        print(f"Tension photodiode 2 (Volt) : {voltages_photodiode_2}")
-        print(f"Pas de vis (mm) : {i}")
-        print(f"Longueur d'onde (nm) : {wavelength}")
-        time.sleep(time_per_step)  # Comme $110 =4mm/min et le pas de vis est de 0.5mm => Le moteur réalise un pas de vis en 7.49s
-        i += step
-    # Fin de l'acquisition
-    if choice == 'cuve 1':
-        reference_solution=voltages_photodiode_1
-        sample_solution=voltages_photodiode_2
-    else:
-        reference_solution=voltages_photodiode_2
-        sample_solution=voltages_photodiode_1    
-    wavelength.reverse()
-    reference_solution.reverse()
-    sample_solution.reverse()
-    no_screw.reverse()
+    save_data_csv(sample_solution_file, wavelength, voltages_sample_solution, no_screw, 'Longueur d\'onde (nm)', 'Tension échantillon (Volt)', 'Liste_pas_vis')
+    save_data_csv(file_reference_solution, wavelength, voltages_reference_solution, no_screw, 'Longueur d\'onde (nm)', 'Tension blanc (Volt)', 'Liste_pas_vis')
 
-    return  wavelength, reference_solution, sample_solution, no_screw
-
-
-def acquisition(arduino_motors, screw_travel, number_measurements, screw_translation_speed, file_reference_solution, sample_solution_file, sample_solution_name, title, REPERTORY): # Départ 7.25mm / 21 - 7.25 = 13.75mm où 21 course de la vis total de la vis => screw_travel=13.75mm
-    column_name_voltages_reference_solution='Tension blanc (Volt)'
-    column_name_voltages_sample_solution='Tension échantillon (Volt)'
-    [wavelength, voltages_reference_solution, voltages_sample_solution, no_screw] = precision_mode(arduino_motors,screw_travel, number_measurements, screw_translation_speed)
-    
-
-   
-
-    
-
-    
-    save_data_csv(sample_solution_file, wavelength, voltages_sample_solution, no_screw, 'Longueur d\'onde (nm)', column_name_voltages_sample_solution,'Liste_pas_vis')
-    save_data_csv(file_reference_solution, wavelength, voltages_reference_solution, no_screw, 'Longueur d\'onde (nm)', column_name_voltages_reference_solution,'Liste_pas_vis')
-
-    gcode_state_motor=str(state_motors(arduino_motors))
-# 'Idle': Instruction GRBL pour dire que ce moteur est à l'arrêt / 'Run' le moteur tourne
-    while 'Idle' not in gcode_state_motor:
-        gcode_state_motor=str(state_motors(arduino_motors))
-
-    print(gcode_state_motor)
-    grbl_parameter_motors(arduino_motors)
-    return_screw(arduino_motors, screw_travel, screw_translation_speed=10)
-    grbl_parameter_motors(arduino_motors)
+    # Gestion des états du moteur
+    wait_for_motor_idle(arduino_motors)
+    reset_screw_position(arduino_motors, screw_travel, screw_translation_speed)
     graph(file_reference_solution, sample_solution_file, sample_solution_name, title, REPERTORY)
-# End-of-file (EOF)
-
-
-

@@ -34,4 +34,13 @@ def stop_motors(arduino_motors):
     """
     g_code = '!'+'\n'
     arduino_motors.write(g_code.encode())
+
+def wait_for_motor_idle(arduino_motors):
+    """
+    Attend que le moteur soit au repos.
+    """
+    gcode_state_motor = str(state_motors(arduino_motors))
+    while 'Idle' not in gcode_state_motor:
+        gcode_state_motor = str(state_motors(arduino_motors))
+    print(gcode_state_motor)
 # End-of-file (EOF)
