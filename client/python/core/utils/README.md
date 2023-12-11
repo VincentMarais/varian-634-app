@@ -1,19 +1,23 @@
+# Test des fonctions de utils
+
+## Test python draw_curve.py
+
+```
+    path="C:/Users/admin/Desktop/Projet_GP/Programmation_Spectro/varian-634-app/experiments/Manip_2023/Manip_06_2023/30_06_2023/Fente_2nm/"
+    sample_reference_file="Tension_blanc_30_06_2023_Fente_2nm.csv"
+    sample_analyzed_file="Tension_echantillon_30_06_2023_Fente_2nm.csv"
+    sample_analyzed_name="bleu de bromophénol"
+    graph_title="Absorbance du " + sample_analyzed_name
+    date="27/11/2023"
+
+    graph(path, sample_reference_file, sample_analyzed_file, sample_analyzed_name, graph_title, peak_search_window=20)
+    voltage_curve_display(path, title="voltage and wavelenght", sample_reference_file=sample_reference_file, sample_analyzed_file=sample_analyzed_file)
+    fourier_transformed_display(path=path, title="Transformée de Fourier", FE=250000)# fréquence d'échantillonage de la carte NI-PCI 
+
+```
 
 
-# Test python draw_curve.py
-
-path="C:/Users/admin/Desktop/Projet_GP/Programmation_Spectro/varian-634-app/experiments/Manip_2023/Manip_06_2023/30_06_2023/Fente_2nm/"
-sample_reference_file="Tension_blanc_30_06_2023_Fente_2nm.csv"
-sample_analyzed_file="Tension_echantillon_30_06_2023_Fente_2nm.csv"
-sample_analyzed_name="bleu de bromophénol"
-graph_title="Absorbance du " + sample_analyzed_name
-date="27/11/2023"
-
-graph(path, sample_reference_file, sample_analyzed_file, sample_analyzed_name, graph_title, peak_search_window=20)
-voltage_curve_display(path, title="voltage and wavelenght", sample_reference_file=sample_reference_file, sample_analyzed_file=sample_analyzed_file)
-fourier_transformed_display(path=path, title="Transformée de Fourier", FE=250000)# fréquence d'échantillonage de la carte NI-PCI 
-
-# Test python save_data_csv
+## Test python save_data_csv
 
 path = "C:/Users/admin/Desktop/Projet_GP/Programmation_Spectro/varian-634-app/client/python/core/utils"
 file_name = "Test_program_save_data.csv"
@@ -22,7 +26,7 @@ title_list = ["Liste 1", "Liste 2", "rgrzgzrgz"]
 save_data_csv(path, file_name, data_list, title_list)
 
 
-# Test python 
+## Test python 
 
 
 CHEMIN="C:\\Users\\admin\\Documents\\Projet_GP\\Programmation_Spectro\\Programmation_application_spectro\\Manip\\Manip_2023\\Manip_06_2023\\30_06_2023\\Fente_2nm"
@@ -43,10 +47,6 @@ data_solution_blanc = pd.read_csv(fichier_blanc, encoding='ISO-8859-1')
 data_solution_echantillon= pd.read_csv(fichier_echantillon, encoding='ISO-8859-1')
 #data_bruit_de_noir=pd.read_csv(Chemin_acces +'\Tension_de_noir_31_03_2023.csv', encoding='ISO-8859-1')
 
-
-
-
-# Obtenir les colonnes 
 Longueur_donde = data_solution_echantillon['Longueur d\'onde (nm)']
 voltage_sample_reference = data_solution_blanc['Tension blanc (Volt)']
 Tension_echantillon= data_solution_echantillon['Tension échantillon (Volt)']

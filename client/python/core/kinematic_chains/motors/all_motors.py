@@ -29,5 +29,9 @@ def grbl_parameter_motors(arduino_motors):
     print(arduino_motors.read(75)) # 75 because the information on G90 is at this position
 
 def stop_motors(arduino_motors):
+    """
+    Fonction qui force l'arrêt des moteurs 
+    """
     g_code = '!'+'\n'
     arduino_motors.write(g_code.encode())
+# End-of-file (EOF)

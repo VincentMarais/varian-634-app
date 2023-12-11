@@ -70,3 +70,4 @@ def slit_use(arduino_motors):
     reponse = arduino_motors.readline().decode().strip()
     position_z = reponse.split(":")[1]
     return position_z
+# End-of-file (EOF)
