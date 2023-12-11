@@ -18,35 +18,11 @@
 
 
 ## Test python save_data_csv
-
+```
 path = "C:/Users/admin/Desktop/Projet_GP/Programmation_Spectro/varian-634-app/client/python/core/utils"
 file_name = "Test_program_save_data.csv"
 data_list = [[1, 2, 3, 4, 4, 5], ["gregerge", "rgeg", "grgreg"], [545,55757]]
 title_list = ["Liste 1", "Liste 2", "rgrzgzrgz"]
 save_data_csv(path, file_name, data_list, title_list)
+```
 
-
-## Test python 
-
-
-CHEMIN="C:\\Users\\admin\\Documents\\Projet_GP\\Programmation_Spectro\\Programmation_application_spectro\\Manip\\Manip_2023\\Manip_06_2023\\30_06_2023\\Fente_2nm"
-Date="30_06_2023"
-Taille_de_fente = "Fente_2_nm"
-nom_espece_chimique=input("Qu'elle est votre échantillon étudié :")
-
-"""
-Lecture des fichier csv créé lors de l'acquisition 
-"""
-
-
-fichier_blanc=  CHEMIN + '\\'+ "Tension_blanc_30_06_2023_Fente_2nm.csv"
-fichier_echantillon=  CHEMIN + '\\' + "Tension_echantillon_30_06_2023_Fente_2nm.csv"
-
-
-data_solution_blanc = pd.read_csv(fichier_blanc, encoding='ISO-8859-1')
-data_solution_echantillon= pd.read_csv(fichier_echantillon, encoding='ISO-8859-1')
-#data_bruit_de_noir=pd.read_csv(Chemin_acces +'\Tension_de_noir_31_03_2023.csv', encoding='ISO-8859-1')
-
-Longueur_donde = data_solution_echantillon['Longueur d\'onde (nm)']
-voltage_sample_reference = data_solution_blanc['Tension blanc (Volt)']
-Tension_echantillon= data_solution_echantillon['Tension échantillon (Volt)']
