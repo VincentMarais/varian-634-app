@@ -5,7 +5,7 @@ transition from the sample chamber to the reference chamber.
 """
 import time
 from pyfirmata import util, INPUT
-from all_motors import stop_motors
+from kinematic_chains.motors.all_motors import stop_motors
 
 def move_mirror_cuves_motor(arduino_motors, plastic_disc_position):
     """

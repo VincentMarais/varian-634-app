@@ -1,5 +1,7 @@
 """
-This program allows reading the voltage across the photodiodes using an NI-PCI 6621 card.
+This program allows reading the voltage across the photodiodes using an NI-PCI 6221 card.
+Doc NI-PCI 6221
+https://www.ni.com/docs/fr-FR/bundle/pci-pxi-usb-6221-specs/page/specs.html
 
 """
 

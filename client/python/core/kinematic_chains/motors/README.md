@@ -1,3 +1,5 @@
+# Motors config
+
 Pour tester le code Python des moteurs :
 
 1. Assurez-vous que le code "grbl.ino" a été téléversé sur la carte Arduino avec la CNC shield.
@@ -5,7 +7,7 @@ Pour tester le code Python des moteurs :
 2. Ouvrez le terminal série de l'Arduino en tapant la commande suivante : "$$"
 
 3. Assurez-vous que les paramètres si-dessous sont correctement configurés avant de tester les moteurs
-
+```
 $0=10
 $1=25
 $2=0
@@ -41,11 +43,10 @@ $130=21.000
 $131=800.000
 $132=800.000
 
+```
 
-
-
-# Code pour tester mirror_cuves_motor.py 
-
+## Code pour tester mirror_cuves_motor.py 
+```
 import serial  
 from pyfirmata import Arduino, util, INPUT
 
@@ -56,7 +57,7 @@ COM_PORT_SENSORS = 'COM6'
 BAUD_RATE = 115200
 INITIALIZATION_TIME = 2
 
-arduino_motors = serial.Serial(COM_PORT, BAUD_RATE)
+arduino_motors = serial.Serial(COM_PORT_MOTORS, BAUD_RATE)
 arduino_motors.write("\r\n\r\n".encode()) # encode pour convertir "\r\n\r\n" 
 time.sleep(INITIALIZATION_TIME)   # Attend initialisation un GRBL
 arduino_motors.flushInput()  # Vider le tampon d'entrée, en supprimant tout son contenu.
@@ -66,11 +67,13 @@ arduino_motors.flushInput()  # Vider le tampon d'entrée, en supprimant tout son
 arduino_optical_fork = Arduino(COM_PORT_SENSORS)
 
 # Test move_mirror_cuves_motor
-move_mirror_cuves_motor(s,plastic_disc_position=0.4)
+move_mirror_cuves_motor(arduino_motors, plastic_disc_position=0.4)
+```
+
+## Code pour tester screw_motor.py 
 
 
-# Code pour tester screw_motor.py 
-
+```
 import serial  
 from pyfirmata import Arduino, util, INPUT
 
@@ -92,3 +95,4 @@ arduino_end_stop = Arduino(COM_PORT_SENSORS)
 
 # Test move_mirror_cuves_motor
 move_screw(arduino_motors, screw_motor=1, screw_translation_speed=10)
+```
