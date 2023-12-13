@@ -11,7 +11,7 @@ from kinematic_chains.motors.mirror_cuves_motor import (move_mirror_cuves_motor,
 # from core.kinematic_chains.end_stop_sensor import specific_function
 
 # Voltage acquisition
-from electronics_controler.ni_pci_6221 import voltage_acquisition, get_solution_cuvette
+from electronics_controler.ni_pci_6221 import voltage_acquisition_baseline, get_solution_cuvette
 
 # Data processing
 from utils.data_csv import save_data_csv
@@ -33,12 +33,12 @@ def perform_step_measurement(arduino_motors, samples_per_channel, sample_rate, p
     Effectue une mesure à un pas donné et retourne les tensions mesurées.
     """
     # Mesure pour la photodiode 1
-    voltage_photodiode_1 = voltage_acquisition(samples_per_channel, sample_rate, pulse_frequency, duty_cycle, channels, channel='ai0')
+    voltage_photodiode_1 = voltage_acquisition_baseline(samples_per_channel, sample_rate, pulse_frequency, duty_cycle, channels, channel='ai0')
 
     # Rotation du miroir et mesure pour la photodiode 2
     move_mirror_cuves_motor(arduino_motors, 0.33334)  # Rotation de 60°
     time.sleep(0.5)  # Délai pour stabilisation
-    voltage_photodiode_2 = voltage_acquisition(samples_per_channel, sample_rate, pulse_frequency, duty_cycle, channels, channel='ai1')
+    voltage_photodiode_2 = voltage_acquisition_baseline(samples_per_channel, sample_rate, pulse_frequency, duty_cycle, channels, channel='ai1')
 
     # Retour du miroir à sa position initiale
     move_mirror_cuves_motor(arduino_motors, -0.33334) 
@@ -80,7 +80,7 @@ def acquisition(arduino_motors, screw_travel, number_measurements, screw_transla
     """
     Effectue une acquisition complète et sauvegarde les données.
     """
-    wavelength, voltages_reference_solution, voltages_sample_solution, no_screw = precision_mode(arduino_motors, screw_travel, number_measurements, screw_translation_speed)
+    [wavelength, voltages_reference_solution, voltages_sample_solution, no_screw] = precision_mode(arduino_motors, screw_travel, number_measurements, screw_translation_speed)
 
     #save_data_csv(path=repertory, 'Longueur d\'onde (nm)', 'Tension échantillon (Volt)', 'Liste_pas_vis')
     #save_data_csv(file_reference_solution, wavelength, voltages_reference_solution, no_screw, 'Longueur d\'onde (nm)', 'Tension blanc (Volt)', 'Liste_pas_vis')
