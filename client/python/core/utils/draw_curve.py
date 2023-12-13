@@ -3,8 +3,8 @@ This program will plot the results of the experiment on the VARIAN 634
 """
 import matplotlib.pyplot as plt
 import numpy as np
-from directory_creation import path_creation
-from data_csv import save_data_csv, csv_experiment
+from utils.directory_creation import path_creation
+from utils.data_csv import save_data_csv, csv_experiment
 from scipy.signal import find_peaks 
 
 

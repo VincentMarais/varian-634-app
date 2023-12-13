@@ -4,7 +4,8 @@ transition from the sample chamber to the reference chamber.
 
 """
 import time
-from pyfirmata import util, INPUT
+import serial  
+from pyfirmata import Arduino, util, INPUT
 from kinematic_chains.motors.all_motors import stop_motors
 
 def move_mirror_cuves_motor(arduino_motors, plastic_disc_position):
@@ -42,7 +43,7 @@ def optical_fork_state(arduino_optical_fork):#   Initialiser la communication s√
 
 
 
-def initialisation_mirror_cuves_motor(arduino_optical_fork, arduino_motors):
+def initialisation_mirror_cuves_motor(arduino_motors, arduino_optical_fork):
     """
     Fonction pour d√©terminer la position de mon moteur 
     """

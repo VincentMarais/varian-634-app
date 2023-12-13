@@ -68,6 +68,8 @@ arduino_optical_fork = Arduino(COM_PORT_SENSORS)
 
 # Test move_mirror_cuves_motor
 move_mirror_cuves_motor(arduino_motors, plastic_disc_position=0.4)
+initialisation_mirror_cuves_motor(arduino_motors=arduino_motors, arduino_optical_fork=arduino_optical_fork)
+
 ```
 
 ## Code pour tester screw_motor.py 
