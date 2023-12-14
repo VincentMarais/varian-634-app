@@ -22,9 +22,9 @@ arduino_motors.flushInput()  # Vider le tampon d'entrée, en supprimant tout son
 
 # INITIALISATION Forche optique:
 
-arduino_optical_fork = Arduino(COM_PORT_SENSORS)
+arduino_sensors = Arduino(COM_PORT_SENSORS)
 
-initialize_measurement(arduino_motors=arduino_motors, arduino_optical_fork=arduino_optical_fork, screw_translation_speed=10)
+initialize_measurement(arduino_motors=arduino_motors, arduino_sensors=arduino_sensors, screw_translation_speed=10)
 
 ```
 
@@ -92,7 +92,7 @@ CHANNELS = ['Dev1/ai0', 'Dev1/ai1']
 
 # INITIALISATION Forche optique:
 
-arduino_optical_fork = Arduino(COM_PORT_SENSORS)
+arduino_sensors = Arduino(COM_PORT_SENSORS)
 
 print(precision_mode(arduino_motors=arduino_motors, screw_travel=5, number_measurements=5, screw_translation_speed=10, pulse_frequency=Frequence_creneau, duty_cycle=Rapport_cyclique, samples_per_channel=SAMPLES_PER_CHANNEL, sample_rate=SAMPLE_RATE, channels=CHANNELS))
 
@@ -129,10 +129,10 @@ CHANNELS = ['Dev1/ai0', 'Dev1/ai1']
 
 # INITIALISATION Forche optique:
 
-arduino_optical_fork = Arduino(COM_PORT_SENSORS)
+arduino_sensors = Arduino(COM_PORT_SENSORS)
 
 
-acquisition(arduino_motors=arduino_motors, arduino_optical_fork=arduino_optical_fork, screw_travel=3, number_measurements=3, screw_translation_speed=10, pulse_frequency=Frequence_creneau, duty_cycle=Rapport_cyclique, samples_per_channel=SAMPLES_PER_CHANNEL, sample_rate=SAMPLE_RATE, channels=CHANNELS)
+acquisition(arduino_motors=arduino_motors, arduino_sensors=arduino_sensors, screw_travel=3, number_measurements=3, screw_translation_speed=10, pulse_frequency=Frequence_creneau, duty_cycle=Rapport_cyclique, samples_per_channel=SAMPLES_PER_CHANNEL, sample_rate=SAMPLE_RATE, channels=CHANNELS)
 
 
 ```

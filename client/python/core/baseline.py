@@ -16,12 +16,12 @@ from utils.data_csv import save_data_csv
 from utils.draw_curve import graph
 from utils.directory_creation import creation_directory_date_slot
 
-def initialize_measurement(arduino_motors, arduino_optical_fork, screw_translation_speed):
+def initialize_measurement(arduino_motors, arduino_sensors, screw_translation_speed):
     """
     Initializes the necessary components for the measurement.
     Input:
-        arduino_motors (serial.Serial): Characterization of the motor Arduino connected to the screw
-        arduino_optical_fork (pyfirmata.Arduino): Characterization of the Arduino for the optical fork
+        arduino_motors (serial.Serial): Instance représentant l'Arduino connecté aux moteurs.
+        arduino_sensors (pyfirmata.Arduino): Instance représentant l'Arduino connecté à la fourche
         screw_translation_speed (int): Translation speed of the screw
 
     Output:
@@ -33,7 +33,7 @@ def initialize_measurement(arduino_motors, arduino_optical_fork, screw_translati
     # Initialization of cuvettes and motors
     echantillon_name = input("Name of the sample under study? ")
     [path, date, slot_size] = creation_directory_date_slot()
-    initialisation_mirror_cuves_motor(arduino_motors=arduino_motors, arduino_optical_fork=arduino_optical_fork)
+    initialisation_mirror_cuves_motor(arduino_motors=arduino_motors, arduino_sensors=arduino_sensors)
     initialisation_motor_screw(arduino_motors=arduino_motors, screw_translation_speed=screw_translation_speed)
     return echantillon_name, path, date, slot_size
 
@@ -87,11 +87,11 @@ def precision_mode(arduino_motors, screw_travel, number_measurements, screw_tran
     reference_solution, sample_solution = (voltages_photodiode_1, voltages_photodiode_2) if choice == 'cuve 1' else (voltages_photodiode_2, voltages_photodiode_1)
     return list(reversed(wavelength)), list(reversed(reference_solution)), list(reversed(sample_solution)), list(reversed(no_screw))
 
-def acquisition(arduino_motors, arduino_optical_fork, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, duty_cycle, samples_per_channel, sample_rate, channels):
+def acquisition(arduino_motors, arduino_sensors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, duty_cycle, samples_per_channel, sample_rate, channels):
     """
     Effectue une acquisition complète et sauvegarde les données.
     """
-    [echantillon, path, date, slot_size] = initialize_measurement(arduino_motors, arduino_optical_fork, screw_translation_speed)
+    [echantillon, path, date, slot_size] = initialize_measurement(arduino_motors, arduino_sensors, screw_translation_speed)
     data_acquisition = precision_mode(arduino_motors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, duty_cycle, samples_per_channel, sample_rate, channels)
     title_data_acquisition=["Longueur d\'onde (nm)", "Tension référence (Volt)", "Tension échantillon (Volt)", "pas de vis (mm)"]
     tilte_file=date + '_' + slot_size + '_' + echantillon

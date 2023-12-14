@@ -20,22 +20,6 @@ def modify_screw_translation_speed(arduino_motors, screw_translation_speed):
     time.sleep(0.5)
 
 
-def initialisation_motor_screw(arduino_motors, screw_translation_speed):
-    """
-    Initialise la vis qui déplace le réseau de diffraction pour le début de l'expérience
-    
-    Args:
-        arduino_motors (serial.Serial): Instance représentant le moteur Arduino connecté à la vis.
-        screw_translation_speed (int): Vitesse de translation de la vis à régler.
-    
-    Returns:
-        Aucune
-    """
-    g_code = 'G90' + '\n'  # Le moteur se déplace en mode absolu
-    arduino_motors.write(g_code.encode())
-    time.sleep(0.5)
-    modify_screw_translation_speed(arduino_motors, screw_translation_speed)
-
 # screw cinematics
 
 def move_screw(arduino_motors, screw_course, screw_translation_speed):
@@ -70,16 +54,13 @@ def reset_screw_position(arduino_motors, screw_course, screw_translation_speed):
     g_code = 'G91' + 'G0X-' + str(screw_course) + '\n'  # Le moteur se déplace en mode relatif
     arduino_motors.write(g_code.encode())
 
-def end_stop_state(arduino_end_stop, arduino_motors, screw_course, screw_translation_speed):
+def end_stop_state(arduino_end_stop):
     """
     Donne l'état des capteurs de fin de course au niveau de la vis
     
     Args:
         arduino_end_stop (Arduino): Instance représentant le capteur de fin de course.
-        arduino_motors (serial.Serial): Instance représentant le moteur Arduino connecté à la vis.
-        screw_course (float): Position de la vis.
-        screw_translation_speed (int): Vitesse de translation de la vis à régler.
-    
+            
     Returns:
         Aucune
     """
@@ -92,13 +73,9 @@ def end_stop_state(arduino_end_stop, arduino_motors, screw_course, screw_transla
     # Permet à l'itérateur de démarrer
     time.sleep(1)
     digital_value = arduino_end_stop.digital[2].read()
-    while digital_value is False:
-        # Lire la valeur du port digital 3
-        digital_value = arduino_end_stop.digital[2].read()
-        print(digital_value)
-        move_screw(arduino_motors, screw_course, screw_translation_speed)
-        digital_value = arduino_end_stop.digital[2].read()
-        print(digital_value)
+    return digital_value
+
+
 
 def position_vis(arduino_motors):
     """
@@ -115,4 +92,31 @@ def position_vis(arduino_motors):
     reponse = arduino_motors.readline().decode().strip()
     position_x = reponse.split(":")[1]
     return position_x
-# End-of-file (EOF)
+
+def initialisation_motor_screw(arduino_motors, arduino_end_stop, screw_translation_speed):
+    """
+    Initialise la vis qui déplace le réseau de diffraction pour le début de l'expérience
+    
+    Args:
+        arduino_motors (serial.Serial): Instance représentant le moteur Arduino connecté à la vis.
+        arduino_end_stop (Arduino): Instance représentant le capteur de fin de course.
+        screw_translation_speed (int): Vitesse de translation de la vis à régler.
+    
+    Returns:
+        Aucune
+    """
+    g_code = 'G90' + '\n'  # Le moteur se déplace en mode absolu
+    arduino_motors.write(g_code.encode())
+    time.sleep(0.5)
+    while end_stop_state(arduino_end_stop=arduino_end_stop) is True:
+        move_screw(arduino_motors=arduino_motors, screw_course=-1, screw_translation_speed=10)
+        a=end_stop_state(arduino_end_stop=arduino_end_stop)
+        print(a)
+    print("On est bien au départ !")
+    # Replacer le moteur
+    g_code = '$X' + '\n'  # Le moteur se déplace en mode absolu
+    arduino_motors.write(g_code.encode())
+    move_screw(arduino_motors=arduino_motors, screw_course=1,screw_translation_speed=10)
+    modify_screw_translation_speed(arduino_motors=arduino_motors, screw_translation_speed=screw_translation_speed)
+    print("Moteur prêt pour l'acquisition !")
+    # End-of-file (EOF)
