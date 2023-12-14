@@ -18,16 +18,28 @@ from utils.directory_creation import creation_directory_date_slot
 
 def initialize_measurement(arduino_motors, arduino_optical_fork, screw_translation_speed):
     """
-    Initialise les composants nécessaires pour la mesure.
+    Initializes the necessary components for the measurement.
+    Input:
+        arduino_motors (serial.Serial): Characterization of the motor Arduino connected to the screw
+        arduino_optical_fork (pyfirmata.Arduino): Characterization of the Arduino for the optical fork
+        screw_translation_speed (int): Translation speed of the screw
+
+    Output:
+        echantillon_name (string): Name of the sample that the user wants to analyze
+        path (string): Working directory for the experiment
+        date (string): Today's date
+        slot_size (string): Size of the slot used
     """
-    # Initialisation cuves et moteurs
-    echantillon_name=input("Nom de l'échantillon étudié ? ")
-    [path, date, slot_size]= creation_directory_date_slot()
+    # Initialization of cuvettes and motors
+    echantillon_name = input("Name of the sample under study? ")
+    [path, date, slot_size] = creation_directory_date_slot()
     initialisation_mirror_cuves_motor(arduino_motors=arduino_motors, arduino_optical_fork=arduino_optical_fork)
     initialisation_motor_screw(arduino_motors=arduino_motors, screw_translation_speed=screw_translation_speed)
     return echantillon_name, path, date, slot_size
 
+
 def perform_step_measurement(arduino_motors, samples_per_channel, sample_rate, pulse_frequency, channels):
+
     """
     Effectue une mesure à un pas donné et retourne les tensions mesurées.
     """
@@ -82,11 +94,12 @@ def acquisition(arduino_motors, arduino_optical_fork, screw_travel, number_measu
     [echantillon, path, date, slot_size] = initialize_measurement(arduino_motors, arduino_optical_fork, screw_translation_speed)
     data_acquisition = precision_mode(arduino_motors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, duty_cycle, samples_per_channel, sample_rate, channels)
     title_data_acquisition=["Longueur d\'onde (nm)", "Tension référence (Volt)", "Tension échantillon (Volt)", "pas de vis (mm)"]
-    tilte_file=date + '_' + slot_size + '_' + echantillon + '.csv'
+    tilte_file=date + '_' + slot_size + '_' + echantillon
     save_data_csv(path=path, data_list=data_acquisition, title_list=title_data_acquisition, file_name=tilte_file)
     # Gestion des états du moteur
     wait_for_motor_idle(arduino_motors)
     reset_screw_position(arduino_motors, screw_travel, screw_translation_speed)
     #graph(path=path)
+# End-of-file (EOF)
 
 

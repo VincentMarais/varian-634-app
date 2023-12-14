@@ -21,9 +21,17 @@ def get_solution_cuvette():
     print("La solution de blanc est dans la", solution)
     return solution
 
+
 def task_ni_pci_baseline(samples_per_channel, sample_rate, square_wave_frequency, channels):
     """
     Récupère seulement la tensions aux bornes des photodiodes pour effectuer la baseline de l'expérience
+    Args:
+        samples_per_channel (int): Nombre d'échantillons par canal.
+        sample_rate (float): Taux d'échantillonnage en Hz.
+        square_wave_frequency (float): Fréquence du signal carré.
+        channels (str): Configuration des canaux.
+    Returns:
+        mean (float): Moyenne des tensions minimales.
     """
 
     min_voltages= []
@@ -47,8 +55,17 @@ def task_ni_pci_baseline(samples_per_channel, sample_rate, square_wave_frequency
 def task_ni_pci_scanning(samples_per_channel, sample_rate,
                 square_wave_frequency, duty_cycle, channels):
     """
-    Fonction qui pilote la lampe à arc aux xénon en générant un signal créneau 
+    Fonction qui pilote la lampe à arc aux xénon en générant un signal créneau
     et qui récupère les tensions aux bornes des photodiodes
+    Args:
+        samples_per_channel (int): Nombre d'échantillons par canal.
+        sample_rate (float): Taux d'échantillonnage en Hz.
+        square_wave_frequency (float): Fréquence du signal carré.
+        duty_cycle (float): Rapport cyclique du signal carré.
+        channels (str): Configuration des canaux.
+    Returns:
+        mean (float): Moyenne des tensions minimales.
+    
     """
     min_voltages=[]
     with nidaqmx.Task() as task_impulsion, nidaqmx.Task() as task_voltage:
@@ -80,8 +97,17 @@ def task_ni_pci_scanning(samples_per_channel, sample_rate,
 def task_ni_pci_chemical_kinetics(samples_per_channel, sample_rate,
                                   square_wave_frequency, duty_cycle, channels, time_acquisition):
     """
-    Fonction qui pilote la lampe à arc aux xénon en générant un signal créneau 
-    et qui récupère les tensions aux bornes des photodiodes 
+    Fonction qui pilote la lampe à arc aux xénon en générant un signal créneau
+    et qui récupère les tensions aux bornes des photodiodes
+    Args:
+        samples_per_channel (int): Nombre d'échantillons par canal.
+        sample_rate (float): Taux d'échantillonnage en Hz.
+        square_wave_frequency (float): Fréquence du signal carré.
+        duty_cycle (float): Rapport cyclique du signal carré.
+        channels (str): Configuration des canaux.
+        time_acquisition (float): Durée de l'acquisition en secondes.
+    Returns:
+        mean (float): Moyenne des tensions minimales.
     """
     min_voltages = []
 
@@ -118,10 +144,17 @@ def task_ni_pci_chemical_kinetics(samples_per_channel, sample_rate,
 def voltage_acquisition_baseline(samples_per_channel, sample_rate,
                         square_wave_frequency, channels, channel):
     """
-    Renvois la valeur de la tension entre du channel 'ai0' ou 'ai1' 
+    Renvois la valeur de la tension entre du channel 'ai0' ou 'ai1'
     (il faut que je développe ce commentaire avec la doc NI-PCI 6221)
+    Args:
+        samples_per_channel (int): Nombre d'échantillons par canal.
+        sample_rate (float): Taux d'échantillonnage en Hz.
+        square_wave_frequency (float): Fréquence du signal carré.
+        channels (list): Liste de configurations des canaux.
+        channel (str): Nom du canal à acquérir ('ai0' ou 'ai1').
+    Returns:
+        mean (float): Moyenne des tensions minimales.
     """
-    min_voltages = []
     if channel == 'ai0': # Acquisition sur le 1er capteur
         mean = task_ni_pci_baseline(samples_per_channel, sample_rate, square_wave_frequency, channels[0])
         return mean
@@ -133,10 +166,18 @@ def voltage_acquisition_baseline(samples_per_channel, sample_rate,
 def voltage_acquisition_scanning(samples_per_channel, sample_rate,
                         square_wave_frequency, duty_cycle, channels, channel):
     """
-    Renvois la valeur de la tension entre du channel 'ai0' ou 'ai1' 
+    Renvois la valeur de la tension entre du channel 'ai0' ou 'ai1'
     (il faut que je développe ce commentaire avec la doc NI-PCI 6221)
+    Args:
+        samples_per_channel (int): Nombre d'échantillons par canal.
+        sample_rate (float): Taux d'échantillonnage en Hz.
+        square_wave_frequency (float): Fréquence du signal carré.
+        duty_cycle (float): Rapport cyclique du signal carré.
+        channels (list): Liste de configurations des canaux.
+        channel (str): Nom du canal à acquérir ('ai0' ou 'ai1').
+    Returns:
+        mean (float): Moyenne des tensions minimales.
     """
-    min_voltages = []
     if channel == 'ai0': # Acquisition sur le 1er capteur
         mean = task_ni_pci_scanning(samples_per_channel, sample_rate, square_wave_frequency, duty_cycle, channels[0])
         return mean
