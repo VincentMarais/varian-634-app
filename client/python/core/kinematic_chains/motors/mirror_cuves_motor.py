@@ -6,7 +6,7 @@ transition from the sample chamber to the reference chamber.
 import time
 import serial  
 from pyfirmata import Arduino, util, INPUT
-from kinematic_chains.motors.all_motors import stop_motors
+from all_motors import stop_motors #kinematic_chains.motors.all_motors
 
 def move_mirror_cuves_motor(arduino_motors, plastic_disc_position):
     """
@@ -41,6 +41,15 @@ def optical_fork_state(arduino_optical_fork):#   Initialiser la communication s√
         else:
             print("Le pin n\'est pas reconnu.")
 
+def position_mirroir(arduino_motors):
+    """
+    Donne la position du miroir de la vis 
+    """
+    # Demande la position actuelle du moteur selon l'axe X
+    arduino_motors.write(b"?y\n")
+    reponse = arduino_motors.readline().decode().strip()
+    position_x = reponse.split(":")[1]
+    return position_x
 
 
 def initialisation_mirror_cuves_motor(arduino_motors, arduino_optical_fork):
@@ -64,5 +73,31 @@ def initialisation_mirror_cuves_motor(arduino_motors, arduino_optical_fork):
         move_mirror_cuves_motor(arduino_motors, plastic_disc_position=0.4)
         digital_value = arduino_optical_fork.digital[3].read()
         print(digital_value)
+    
     stop_motors(arduino_motors)
+    g_code='~'+ '\n'  
+    arduino_motors.write(g_code.encode())
+
 # End-of-file (EOF)
+import serial  
+from pyfirmata import Arduino, util, INPUT
+
+# INITIALISATION MOTEUR:
+
+COM_PORT_MOTORS = 'COM3'
+COM_PORT_SENSORS = 'COM9'
+BAUD_RATE = 115200
+INITIALIZATION_TIME = 2
+
+arduino_motors = serial.Serial(COM_PORT_MOTORS, BAUD_RATE)
+arduino_motors.write("\r\n\r\n".encode()) # encode pour convertir "\r\n\r\n" 
+time.sleep(INITIALIZATION_TIME)   # Attend initialisation un GRBL
+arduino_motors.flushInput()  # Vider le tampon d'entr√©e, en supprimant tout son contenu.
+
+# INITIALISATION Forche optique:
+
+arduino_optical_fork = Arduino(COM_PORT_SENSORS)
+
+# Test move_mirror_cuves_motor
+move_mirror_cuves_motor(arduino_motors, plastic_disc_position=0.4)
+initialisation_mirror_cuves_motor(arduino_motors=arduino_motors, arduino_optical_fork=arduino_optical_fork)

@@ -8,8 +8,6 @@ from kinematic_chains.motors.all_motors import wait_for_motor_idle
 from kinematic_chains.motors.screw_motor import (initialisation_motor_screw, move_screw, reset_screw_position)
 from kinematic_chains.motors.mirror_cuves_motor import (move_mirror_cuves_motor, initialisation_mirror_cuves_motor)
 # Specify individual imports from end_stop_sensor module
-# from core.kinematic_chains.end_stop_sensor import specific_function
-
 # Voltage acquisition
 from electronics_controler.ni_pci_6221 import voltage_acquisition_baseline, get_solution_cuvette
 
@@ -29,21 +27,21 @@ def initialize_measurement(arduino_motors, arduino_optical_fork, screw_translati
     initialisation_motor_screw(arduino_motors=arduino_motors, screw_translation_speed=screw_translation_speed)
     return echantillon_name, path, date, slot_size
 
-def perform_step_measurement(arduino_motors, samples_per_channel, sample_rate, pulse_frequency, duty_cycle, channels):
+def perform_step_measurement(arduino_motors, samples_per_channel, sample_rate, pulse_frequency, channels):
     """
     Effectue une mesure à un pas donné et retourne les tensions mesurées.
     """
-    # Mesure pour la photodiode 1
-    voltage_photodiode_1 = voltage_acquisition_baseline(samples_per_channel, sample_rate, pulse_frequency, duty_cycle, channels, channel='ai0')
+    # Mesure pour la photodiode 1  samples_per_channel, sample_rate,
+    voltage_photodiode_1 = voltage_acquisition_baseline(samples_per_channel=samples_per_channel, sample_rate=sample_rate, square_wave_frequency=pulse_frequency, channels=channels, channel='ai0')
 
     # Rotation du miroir et mesure pour la photodiode 2
     move_mirror_cuves_motor(arduino_motors, 0.33334)  # Rotation de 60°
-    time.sleep(0.5)  # Délai pour stabilisation
-    voltage_photodiode_2 = voltage_acquisition_baseline(samples_per_channel, sample_rate, pulse_frequency, duty_cycle, channels, channel='ai1')
+    time.sleep(1)  # Délai pour stabilisation
+    voltage_photodiode_2 = voltage_acquisition_baseline(samples_per_channel=samples_per_channel, sample_rate=sample_rate, square_wave_frequency=pulse_frequency, channels=channels, channel='ai1')
 
     # Retour du miroir à sa position initiale
     move_mirror_cuves_motor(arduino_motors, -0.33334)
-    time.sleep(0.5)
+    time.sleep(1)
 
     return voltage_photodiode_1, voltage_photodiode_2
 
@@ -60,24 +58,24 @@ def precision_mode(arduino_motors, screw_travel, number_measurements, screw_tran
     """
     choice = get_solution_cuvette()
     voltages_photodiode_1, voltages_photodiode_2 = [], []
-    no_screw, wavelength = [], []
+    no_screw, wavelength = [0], []
     step = screw_travel / number_measurements
     time_per_step = (step * 60) / screw_translation_speed
 
-    for i in range(number_measurements):
+    for i in range(1, number_measurements):
         position = i * step
-        voltage_1, voltage_2 = perform_step_measurement(arduino_motors, samples_per_channel, sample_rate, pulse_frequency, duty_cycle, channels)
+        voltage_1, voltage_2 = perform_step_measurement(arduino_motors, samples_per_channel, sample_rate, pulse_frequency, channels)
         voltages_photodiode_1.append(voltage_1)
         voltages_photodiode_2.append(voltage_2)
         no_screw.append(position)
         wavelength.append(calculate_wavelength(position))
-        move_screw(arduino_motors=arduino_motors, screw_course=step, screw_translation_speed=screw_translation_speed)
+        move_screw(arduino_motors=arduino_motors, screw_course=position, screw_translation_speed=screw_translation_speed)
         time.sleep(time_per_step)
 
     reference_solution, sample_solution = (voltages_photodiode_1, voltages_photodiode_2) if choice == 'cuve 1' else (voltages_photodiode_2, voltages_photodiode_1)
     return list(reversed(wavelength)), list(reversed(reference_solution)), list(reversed(sample_solution)), list(reversed(no_screw))
 
-def acquisition(arduino_motors, arduino_optical_fork, screw_travel, number_measurements, screw_translation_speed, arduino_motors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, duty_cycle, samples_per_channel, sample_rate, channels):
+def acquisition(arduino_motors, arduino_optical_fork, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, duty_cycle, samples_per_channel, sample_rate, channels):
     """
     Effectue une acquisition complète et sauvegarde les données.
     """
@@ -90,3 +88,5 @@ def acquisition(arduino_motors, arduino_optical_fork, screw_travel, number_measu
     wait_for_motor_idle(arduino_motors)
     reset_screw_position(arduino_motors, screw_travel, screw_translation_speed)
     #graph(path=path)
+
+
