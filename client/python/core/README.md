@@ -100,7 +100,7 @@ print(precision_mode_baseline(arduino_motors=arduino_motors, screw_travel=5, num
 
 ```
 
-# acquisition
+5. acquisition
 
 ```
 
