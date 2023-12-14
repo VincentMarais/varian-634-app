@@ -31,14 +31,14 @@ def initialize_measurement(arduino_motors, arduino_sensors, screw_translation_sp
         slot_size (string): Size of the slot used
     """
     # Initialization of cuvettes and motors
-    echantillon_name = input("Name of the sample under study? ")
+    echantillon_name = input("Name of the sample under study ? ")
     [path, date, slot_size] = creation_directory_date_slot()
     initialisation_mirror_cuves_motor(arduino_motors=arduino_motors, arduino_sensors=arduino_sensors)
-    initialisation_motor_screw(arduino_motors=arduino_motors, screw_translation_speed=screw_translation_speed)
+    initialisation_motor_screw(arduino_motors=arduino_motors, arduino_end_stop=arduino_sensors, screw_translation_speed=screw_translation_speed)
     return echantillon_name, path, date, slot_size
 
 
-def perform_step_measurement(arduino_motors, samples_per_channel, sample_rate, pulse_frequency, channels):
+def perform_step_measurement_baseline(arduino_motors, samples_per_channel, sample_rate, pulse_frequency, channels):
 
     """
     Effectue une mesure à un pas donné et retourne les tensions mesurées.
@@ -64,7 +64,7 @@ def calculate_wavelength(position):
     # Formule spécifique au système (cf Rapport de projet 2022-2023 "Acquisition du signal")
     return -31.10419907 * position + 800
 
-def precision_mode(arduino_motors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, duty_cycle, samples_per_channel, sample_rate, channels):
+def precision_mode_baseline(arduino_motors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, samples_per_channel, sample_rate, channels):
     """
     Exécute le mode de précision pour la mesure et retourne les résultats.
     """
@@ -76,23 +76,22 @@ def precision_mode(arduino_motors, screw_travel, number_measurements, screw_tran
 
     for i in range(1, number_measurements):
         position = i * step
-        voltage_1, voltage_2 = perform_step_measurement(arduino_motors, samples_per_channel, sample_rate, pulse_frequency, channels)
+        voltage_1, voltage_2 = perform_step_measurement_baseline(arduino_motors, samples_per_channel, sample_rate, pulse_frequency, channels)
         voltages_photodiode_1.append(voltage_1)
         voltages_photodiode_2.append(voltage_2)
         no_screw.append(position)
         wavelength.append(calculate_wavelength(position))
         move_screw(arduino_motors=arduino_motors, screw_course=position, screw_translation_speed=screw_translation_speed)
         time.sleep(time_per_step)
-
     reference_solution, sample_solution = (voltages_photodiode_1, voltages_photodiode_2) if choice == 'cuve 1' else (voltages_photodiode_2, voltages_photodiode_1)
     return list(reversed(wavelength)), list(reversed(reference_solution)), list(reversed(sample_solution)), list(reversed(no_screw))
 
-def acquisition(arduino_motors, arduino_sensors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, duty_cycle, samples_per_channel, sample_rate, channels):
+def baseline_acquisition(arduino_motors, arduino_sensors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, samples_per_channel, sample_rate, channels):
     """
     Effectue une acquisition complète et sauvegarde les données.
     """
     [echantillon, path, date, slot_size] = initialize_measurement(arduino_motors, arduino_sensors, screw_translation_speed)
-    data_acquisition = precision_mode(arduino_motors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, duty_cycle, samples_per_channel, sample_rate, channels)
+    data_acquisition = precision_mode_baseline(arduino_motors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, samples_per_channel, sample_rate, channels)
     title_data_acquisition=["Longueur d\'onde (nm)", "Tension référence (Volt)", "Tension échantillon (Volt)", "pas de vis (mm)"]
     tilte_file=date + '_' + slot_size + '_' + echantillon
     save_data_csv(path=path, data_list=data_acquisition, title_list=title_data_acquisition, file_name=tilte_file)

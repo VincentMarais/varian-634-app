@@ -29,7 +29,7 @@ initialize_measurement(arduino_motors=arduino_motors, arduino_sensors=arduino_se
 ```
 
 
-2. perform_step_measurement
+2. perform_step_measurement_baseline
 
 ```
 import numpy as np
@@ -53,7 +53,7 @@ SAMPLES_PER_CHANNEL = 30000
 SAMPLE_RATE = 250000
 CHANNELS = ['Dev1/ai0', 'Dev1/ai1']  
 
-print(perform_step_measurement(arduino_motors=arduino_motors, samples_per_channel=SAMPLES_PER_CHANNEL, sample_rate=SAMPLE_RATE, pulse_frequency=Frequence_creneau, channels=CHANNELS))
+print(perform_step_measurement_baseline(arduino_motors=arduino_motors, samples_per_channel=SAMPLES_PER_CHANNEL, sample_rate=SAMPLE_RATE, pulse_frequency=Frequence_creneau, channels=CHANNELS))
 
 ```
 
@@ -64,7 +64,7 @@ print(calculate_wavelength(0))
 ```
 
 
-4. precision_mode
+4. precision_mode_baseline
 
 ```
 import numpy as np
@@ -94,7 +94,7 @@ CHANNELS = ['Dev1/ai0', 'Dev1/ai1']
 
 arduino_sensors = Arduino(COM_PORT_SENSORS)
 
-print(precision_mode(arduino_motors=arduino_motors, screw_travel=5, number_measurements=5, screw_translation_speed=10, pulse_frequency=Frequence_creneau, duty_cycle=Rapport_cyclique, samples_per_channel=SAMPLES_PER_CHANNEL, sample_rate=SAMPLE_RATE, channels=CHANNELS))
+print(precision_mode_baseline(arduino_motors=arduino_motors, screw_travel=5, number_measurements=5, screw_translation_speed=10, pulse_frequency=Frequence_creneau, samples_per_channel=SAMPLES_PER_CHANNEL, sample_rate=SAMPLE_RATE, channels=CHANNELS))
 
 
 
@@ -132,7 +132,7 @@ CHANNELS = ['Dev1/ai0', 'Dev1/ai1']
 arduino_sensors = Arduino(COM_PORT_SENSORS)
 
 
-acquisition(arduino_motors=arduino_motors, arduino_sensors=arduino_sensors, screw_travel=3, number_measurements=3, screw_translation_speed=10, pulse_frequency=Frequence_creneau, duty_cycle=Rapport_cyclique, samples_per_channel=SAMPLES_PER_CHANNEL, sample_rate=SAMPLE_RATE, channels=CHANNELS)
+baseline_acquisition(arduino_motors=arduino_motors, arduino_sensors=arduino_sensors, screw_travel=3, number_measurements=3, screw_translation_speed=10, pulse_frequency=Frequence_creneau, duty_cycle=Rapport_cyclique, samples_per_channel=SAMPLES_PER_CHANNEL, sample_rate=SAMPLE_RATE, channels=CHANNELS)
 
 
 ```

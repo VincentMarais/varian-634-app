@@ -88,7 +88,7 @@ def position_vis(arduino_motors):
         position_x (str): Position actuelle de la vis sur l'axe X.
     """
     # Demande la position actuelle du moteur selon l'axe X
-    arduino_motors.write(b"?x\n")
+    arduino_motors.write(b"?\n")
     reponse = arduino_motors.readline().decode().strip()
     position_x = reponse.split(":")[1]
     return position_x
@@ -118,5 +118,5 @@ def initialisation_motor_screw(arduino_motors, arduino_end_stop, screw_translati
     arduino_motors.write(g_code.encode())
     move_screw(arduino_motors=arduino_motors, screw_course=1,screw_translation_speed=10)
     modify_screw_translation_speed(arduino_motors=arduino_motors, screw_translation_speed=screw_translation_speed)
-    print("Moteur prêt pour l'acquisition !")
+    print("Moteur du réseau de diffraction est prêt pour l'acquisition !")
     # End-of-file (EOF)

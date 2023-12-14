@@ -52,4 +52,9 @@ acquition(S, SCREW_TRAVEL, NUMBER_MEASUREMENTS, SCREW_TRANSLATION_SPEED, referen
 
 """
 
-optical_fork_state(arduino_optical_fork)
+def acquisition_mode_used():
+    mode_used=input("Quel mode utiliser vous 'baseline' / 'scanning' / 'kinetics' ")
+    while mode_used not in ['baseline', 'scanning', 'kinetics']:
+        mode_used = input("Veuillez choisir un mode : 'baseline' / 'scanning' / 'kinetics' : ")
+    print("Le mode utilisé est ", mode_used)
+    return mode_used

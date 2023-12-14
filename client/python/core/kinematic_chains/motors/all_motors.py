@@ -1,6 +1,8 @@
 """
 This program controls all the motors present on the VARIAN 634.
 """
+import time
+import re
 
 def state_motors(arduino_motors):
     """
@@ -57,4 +59,29 @@ def wait_for_motor_idle(arduino_motors):
     while 'Idle' not in gcode_state_motor:
         gcode_state_motor = str(state_motors(arduino_motors))
     print(gcode_state_motor)
+
+def position_xyz(arduino_motors):
+    """
+    Purpose: Donner la positions des moteurs
+
+    Input:
+        arduino_motors (serial.Serial): Characterization of the motor Arduino connected to the screw
+
+    Output :
+
+    """
+    g_code= "?" + '\n' 
+    arduino_motors.write(g_code.encode())
+    time.sleep(0.1)
+
+    # Lire et traiter la réponse
+    response = str(arduino_motors.readline())
+    print("Réponse brute :", response)
+    while 'MPos' not in response:
+        response = str(arduino_motors.readline())    
+        # Extraire les coordonnées X, Y, et Z
+    match = re.search(r"MPos:([-+]?[0-9]*\.?[0-9]+),([-+]?[0-9]*\.?[0-9]+),([-+]?[0-9]*\.?[0-9]+)", response)        
+    x_pos, y_pos, z_pos = [float(coordinate) for coordinate in match.groups()]
+    
+    return x_pos, y_pos, z_pos
 # End-of-file (EOF)
