@@ -2,7 +2,7 @@ from pyfirmata import Arduino, util, INPUT
 import time
 
 # Remplacer 'COM3' par le nom de port de votre Arduino
-board = Arduino('COM6')
+board = Arduino('COM9')
 
 # Configurer le port digital 3 en tant qu'entrée
 board.digital[2].mode = INPUT  # Modifié ici

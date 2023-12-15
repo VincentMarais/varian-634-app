@@ -97,4 +97,6 @@ arduino_end_stop = Arduino(COM_PORT_SENSORS)
 
 # Test move_mirror_cuves_motor
 move_screw(arduino_motors, screw_motor=1, screw_translation_speed=10)
+print(end_stop_state(arduino_end_stop))
+initialisation_motor_screw(arduino_motors =arduino_motors, arduino_end_stop=arduino_end_stop, screw_translation_speed=10)
 ```

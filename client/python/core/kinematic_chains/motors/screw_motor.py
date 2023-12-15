@@ -105,18 +105,33 @@ def initialisation_motor_screw(arduino_motors, arduino_end_stop, screw_translati
     Returns:
         Aucune
     """
-    g_code = 'G90' + '\n'  # Le moteur se déplace en mode absolu
+    g_code = 'G91' + '\n'  # Le moteur se déplace en mode absolu
     arduino_motors.write(g_code.encode())
-    time.sleep(0.5)
-    while end_stop_state(arduino_end_stop=arduino_end_stop) is True:
-        move_screw(arduino_motors=arduino_motors, screw_course=-1, screw_translation_speed=10)
-        a=end_stop_state(arduino_end_stop=arduino_end_stop)
-        print(a)
+    # Remplacer 'COM3' par le nom de port de votre Arduino
+# Configurer le port digital 3 en tant qu'entrée
+    arduino_end_stop.digital[2].mode = INPUT  # Modifié ici
+
+# Créer une instance d'Itérateur pour ne pas manquer les données entrantes
+    it = util.Iterator(arduino_end_stop)
+    it.start()
+
+# Permettre à l'itérateur de démarrer
+    time.sleep(1)
+    
+    digital_value = arduino_end_stop.digital[2].read()
+
+    while digital_value is True:
+        #move_screw(arduino_motors=arduino_motors, screw_course=-1, screw_translation_speed=10)
+        digital_value=arduino_end_stop.digital[2].read()
+        print(digital_value)
+        time.sleep(0.1)
+
     print("On est bien au départ !")
     # Replacer le moteur
     g_code = '$X' + '\n'  # Le moteur se déplace en mode absolu
     arduino_motors.write(g_code.encode())
-    move_screw(arduino_motors=arduino_motors, screw_course=1,screw_translation_speed=10)
+    move_screw(arduino_motors=arduino_motors, screw_course=-2,screw_translation_speed=10)
     modify_screw_translation_speed(arduino_motors=arduino_motors, screw_translation_speed=screw_translation_speed)
     print("Moteur du réseau de diffraction est prêt pour l'acquisition !")
     # End-of-file (EOF)
+
