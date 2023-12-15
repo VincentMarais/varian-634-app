@@ -5,7 +5,7 @@ transition from the sample chamber to the reference chamber.
 """
 import time
 from pyfirmata import util, INPUT
-from all_motors import stop_motors, position_xyz #kinematic_chains.motors.all_motors
+from kinematic_chains.motors.all_motors import stop_motors, position_xyz #kinematic_chains.motors.all_motors
 
 def move_mirror_cuves_motor(arduino_motors, plastic_disc_position):
     """
@@ -71,6 +71,7 @@ def initialisation_mirror_cuves_motor_v2(arduino_motors, arduino_optical_fork):
     g_code = '$X' + '\n'  # Désactive la sécurité
     arduino_motors.write(g_code.encode())
     g_code = 'G90\n' + 'G0Y1' +'\n'
+    arduino_motors.write(g_code.encode())
     while digital_value is True:
         digital_value = arduino_optical_fork.digital[3].read()
         print(digital_value)        

@@ -186,3 +186,4 @@ def voltage_acquisition_scanning(samples_per_channel, sample_rate,
         mean = task_ni_pci_scanning(samples_per_channel, sample_rate, square_wave_frequency, duty_cycle, channels[1])
         return mean
 # End-of-file (EOF)
+

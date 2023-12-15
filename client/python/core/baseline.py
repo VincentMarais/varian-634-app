@@ -6,7 +6,7 @@ import time
 # Motors
 from kinematic_chains.motors.all_motors import wait_for_motor_idle
 from kinematic_chains.motors.screw_motor import (initialisation_motor_screw, move_screw, reset_screw_position)
-from kinematic_chains.motors.mirror_cuves_motor import (move_mirror_cuves_motor, initialisation_mirror_cuves_motor)
+from kinematic_chains.motors.mirror_cuves_motor import (move_mirror_cuves_motor, initialisation_mirror_cuves_motor_v2)
 # Specify individual imports from end_stop_sensor module
 # Voltage acquisition
 from electronics_controler.ni_pci_6221 import voltage_acquisition_baseline, get_solution_cuvette
@@ -30,10 +30,11 @@ def initialize_measurement(arduino_motors, arduino_sensors, screw_translation_sp
         date (string): Today's date
         slot_size (string): Size of the slot used
     """
+ 
     # Initialization of cuvettes and motors
     echantillon_name = input("Name of the sample under study ? ")
     [path, date, slot_size] = creation_directory_date_slot()
-    initialisation_mirror_cuves_motor(arduino_motors=arduino_motors, arduino_sensors=arduino_sensors)
+    initialisation_mirror_cuves_motor_v2(arduino_motors=arduino_motors, arduino_optical_forkYaY=arduino_sensors)
     initialisation_motor_screw(arduino_motors=arduino_motors, arduino_end_stop=arduino_sensors, screw_translation_speed=screw_translation_speed)
     return echantillon_name, path, date, slot_size
 
