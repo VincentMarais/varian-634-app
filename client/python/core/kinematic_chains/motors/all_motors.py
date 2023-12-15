@@ -47,6 +47,18 @@ def stop_motors(arduino_motors):
     g_code = '!' + '\n'
     arduino_motors.write(g_code.encode())
 
+def cycle_resumption(arduino_motors):
+    """
+    Purpose: reprise d’une commande des motors après la commande "!".
+
+    Input:
+        arduino_motors (serial.Serial): Characterization of the motor Arduino connected to the screw
+
+    """
+
+    g_code = '~' + '\n'
+    arduino_motors.write(g_code.encode())
+
 def wait_for_motor_idle(arduino_motors):
     """
     Purpose: Wait for the motors to be at rest, i.e., in 'Idle' mode.
