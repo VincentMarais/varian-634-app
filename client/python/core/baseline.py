@@ -34,10 +34,9 @@ def initialize_measurement(arduino_motors, arduino_sensors, screw_translation_sp
     # Initialization of cuvettes and motors
     echantillon_name = input("Name of the sample under study ? ")
     [path, date, slot_size] = creation_directory_date_slot()
-    initialisation_mirror_cuves_motor_v2(arduino_motors=arduino_motors, arduino_optical_forkYaY=arduino_sensors)
+    initialisation_mirror_cuves_motor_v2(arduino_motors=arduino_motors, arduino_optical_fork=arduino_sensors)
     initialisation_motor_screw(arduino_motors=arduino_motors, arduino_end_stop=arduino_sensors, screw_translation_speed=screw_translation_speed)
     return echantillon_name, path, date, slot_size
-
 
 def perform_step_measurement_baseline(arduino_motors, samples_per_channel, sample_rate, pulse_frequency, channels):
 
@@ -57,6 +56,8 @@ def perform_step_measurement_baseline(arduino_motors, samples_per_channel, sampl
     time.sleep(1)
 
     return voltage_photodiode_1, voltage_photodiode_2
+
+
 
 def calculate_wavelength(position):
     """
@@ -87,6 +88,7 @@ def precision_mode_baseline(arduino_motors, screw_travel, number_measurements, s
     reference_solution, sample_solution = (voltages_photodiode_1, voltages_photodiode_2) if choice == 'cuve 1' else (voltages_photodiode_2, voltages_photodiode_1)
     return list(reversed(wavelength)), list(reversed(reference_solution)), list(reversed(sample_solution)), list(reversed(no_screw))
 
+
 def baseline_acquisition(arduino_motors, arduino_sensors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, samples_per_channel, sample_rate, channels):
     """
     Effectue une acquisition complète et sauvegarde les données.
@@ -102,4 +104,33 @@ def baseline_acquisition(arduino_motors, arduino_sensors, screw_travel, number_m
     #graph(path=path)
 # End-of-file (EOF)
 
+import numpy as np
+import serial 
+from pyfirmata import Arduino
+
+# INITIALISATION MOTEUR:
+
+COM_PORT_MOTORS = 'COM3'
+COM_PORT_SENSORS = 'COM9'
+BAUD_RATE = 115200
+INITIALIZATION_TIME = 2
+
+arduino_motors = serial.Serial(COM_PORT_MOTORS, BAUD_RATE)
+arduino_motors.write("\r\n\r\n".encode()) # encode pour convertir "\r\n\r\n" 
+time.sleep(INITIALIZATION_TIME)   # Attend initialisation un GRBL
+arduino_motors.flushInput()  # Vider le tampon d'entrée, en supprimant tout son contenu.
+
+# INITIALISATION carte NI-PCI 6221:
+Frequence_creneau = np.array([20.0])
+Rapport_cyclique = np.array([0.5])
+SAMPLES_PER_CHANNEL = 30000
+SAMPLE_RATE = 250000
+CHANNELS = ['Dev1/ai0', 'Dev1/ai1']  
+
+# INITIALISATION Forche optique:
+
+arduino_sensors = Arduino(COM_PORT_SENSORS)
+
+
+baseline_acquisition(arduino_motors=arduino_motors, arduino_sensors=arduino_sensors, screw_travel=3, number_measurements=3, screw_translation_speed=10, pulse_frequency=Frequence_creneau, samples_per_channel=SAMPLES_PER_CHANNEL, sample_rate=SAMPLE_RATE, channels=CHANNELS)
 

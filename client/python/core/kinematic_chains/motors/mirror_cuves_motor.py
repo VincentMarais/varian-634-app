@@ -74,7 +74,7 @@ def initialisation_mirror_cuves_motor_v2(arduino_motors, arduino_optical_fork):
     arduino_motors.write(g_code.encode())
     while digital_value is True:
         digital_value = arduino_optical_fork.digital[3].read()
-        print(digital_value)        
+        print("Cuve 1 non atteinte", digital_value)        
     pos_y=position_xyz(arduino_motors=arduino_motors)[1]
     g_code="G0Y" + str(pos_y) + '\n'
     arduino_motors.write(g_code.encode())

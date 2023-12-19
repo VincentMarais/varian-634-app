@@ -37,7 +37,7 @@ import serial
 # INITIALISATION MOTEUR:
 
 COM_PORT_MOTORS = 'COM3'
-COM_PORT_SENSORS = 'COM6'
+COM_PORT_SENSORS = 'COM9'
 BAUD_RATE = 115200
 INITIALIZATION_TIME = 2
 
@@ -54,6 +54,7 @@ SAMPLE_RATE = 250000
 CHANNELS = ['Dev1/ai0', 'Dev1/ai1']  
 
 print(perform_step_measurement_baseline(arduino_motors=arduino_motors, samples_per_channel=SAMPLES_PER_CHANNEL, sample_rate=SAMPLE_RATE, pulse_frequency=Frequence_creneau, channels=CHANNELS))
+
 
 ```
 

@@ -19,7 +19,7 @@ def state_motors(arduino_motors):
     """
     g_code = '?' + '\n'
     arduino_motors.write(g_code.encode())
-    return arduino_motors.read(40)  # 10: We read the first 10 characters from the serial
+    return arduino_motors.read(70)  # 10: We read the first 10 characters from the serial
 
 def grbl_parameter_motors(arduino_motors):
     """
