@@ -1,5 +1,5 @@
 /***********************************************************************
-This sketch compiles and uploads Grbl to your 328p-based Arduino! 
+This sketch compiles and uploads Grbl to your 328p-based Arduino!   
 
 To use:
 - First make sure you have imported Grbl source code into your Arduino
