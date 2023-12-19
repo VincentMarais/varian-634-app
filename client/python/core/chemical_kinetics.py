@@ -1,7 +1,8 @@
 """
-This program will fait une analyse de la cinétique de l'absorbance for the absorbance analysis of the sample.
-"""
-# Importations nécessaires
+"This program will perform an analysis 
+of the absorbance kinetics for the absorbance 
+analysis of the sample."""
+
 import time
 import numpy as np
 
