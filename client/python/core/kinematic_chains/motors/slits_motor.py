@@ -95,3 +95,28 @@ def slit_use(arduino_motors):
     position_z = reponse.split(":")[1]
     return position_z
 # End-of-file (EOF)
+
+
+
+import serial  
+from pyfirmata import Arduino, util, INPUT
+
+# INITIALISATION MOTEUR:
+
+COM_PORT_MOTORS = 'COM3'
+COM_PORT_SENSORS = 'COM9'
+BAUD_RATE = 115200
+INITIALIZATION_TIME = 2
+
+arduino_motors = serial.Serial(COM_PORT_MOTORS, BAUD_RATE)
+arduino_motors.write("\r\n\r\n".encode()) # encode pour convertir "\r\n\r\n" 
+time.sleep(INITIALIZATION_TIME)   # Attend initialisation un GRBL
+arduino_motors.flushInput()  # Vider le tampon d'entrée, en supprimant tout son contenu.
+
+# INITIALISATION Forche optique:
+
+arduino_optical_fork = Arduino(COM_PORT_SENSORS)
+g_code='$X' + '\n'
+arduino_motors.write(g_code.encode())
+# Test move_mirror_cuves_motor
+move_slits(arduino_motors=arduino_motors)

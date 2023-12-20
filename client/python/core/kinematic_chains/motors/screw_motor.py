@@ -5,7 +5,7 @@ rotation of the reflection diffraction grating of the VARIAN 634.
 
 import time
 from pyfirmata import util, INPUT
-from all_motors import state_motors
+from all_motors import state_motors, wait_for_motor_idle #kinematic_chains.motors
 
 def modify_screw_translation_speed(arduino_motors, screw_translation_speed):
     """
@@ -145,8 +145,31 @@ def initialisation_motor_screw(arduino_motors, arduino_end_stop, screw_translati
         digital_value=arduino_end_stop.digital[4].read()
         print("Le moteur n'est pas au départ : ",digital_value)
         time.sleep(0.1)
-    print("Moteur du réseau de diffraction est prêt pour l'acquisition !")
-    time.sleep(2)
     print("On est bien au départ !")    
+    wait_for_motor_idle(arduino_motors=arduino_motors)
+    print("Moteur du réseau de diffraction est prêt pour l'acquisition !")
     # End-of-file (EOF)
 
+
+import serial  
+from pyfirmata import Arduino, util, INPUT
+
+# INITIALISATION MOTEUR:
+
+COM_PORT_MOTORS = 'COM3'
+COM_PORT_SENSORS = 'COM9'
+BAUD_RATE = 115200
+INITIALIZATION_TIME = 2
+
+arduino_motors = serial.Serial(COM_PORT_MOTORS, BAUD_RATE)
+arduino_motors.write("\r\n\r\n".encode()) # encode pour convertir "\r\n\r\n" 
+time.sleep(INITIALIZATION_TIME)   # Attend initialisation un GRBL
+arduino_motors.flushInput()  # Vider le tampon d'entrée, en supprimant tout son contenu.
+
+# INITIALISATION Forche optique:
+
+arduino_end_stop = Arduino(COM_PORT_SENSORS)
+g_code='$X' + '\n'
+arduino_motors.write(g_code.encode())
+# Test move_mirror_cuves_motor
+move_screw(arduino_motors=arduino_motors, screw_course=-19, screw_translation_speed=10)

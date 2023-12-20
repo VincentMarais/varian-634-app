@@ -11,7 +11,7 @@ from pyfirmata import Arduino
 # INITIALISATION MOTEUR:
 
 COM_PORT_MOTORS = 'COM3'
-COM_PORT_SENSORS = 'COM6'
+COM_PORT_SENSORS = 'COM9'
 BAUD_RATE = 115200
 INITIALIZATION_TIME = 2
 
@@ -25,6 +25,7 @@ arduino_motors.flushInput()  # Vider le tampon d'entrée, en supprimant tout son
 arduino_sensors = Arduino(COM_PORT_SENSORS)
 
 initialize_measurement(arduino_motors=arduino_motors, arduino_sensors=arduino_sensors, screw_translation_speed=10)
+
 
 ```
 

@@ -35,6 +35,7 @@ def initialize_measurement(arduino_motors, arduino_sensors, screw_translation_sp
     echantillon_name = input("Name of the sample under study ? ")
     [path, date, slot_size] = creation_directory_date_slot()
     initialisation_mirror_cuves_motor_v2(arduino_motors=arduino_motors, arduino_optical_fork=arduino_sensors)
+    wait_for_motor_idle(arduino_motors=arduino_motors) 
     initialisation_motor_screw(arduino_motors=arduino_motors, arduino_end_stop=arduino_sensors, screw_translation_speed=screw_translation_speed)
     return echantillon_name, path, date, slot_size
 
@@ -43,6 +44,8 @@ def perform_step_measurement_baseline(arduino_motors, samples_per_channel, sampl
     """
     Effectue une mesure à un pas donné et retourne les tensions mesurées.
     """
+    g_code='$X' + '\n'
+    arduino_motors.write(g_code.encode())
     # Mesure pour la photodiode 1  samples_per_channel, sample_rate,
     voltage_photodiode_1 = voltage_acquisition_baseline(samples_per_channel=samples_per_channel, sample_rate=sample_rate, square_wave_frequency=pulse_frequency, channels=channels, channel='ai0')
 
@@ -50,14 +53,11 @@ def perform_step_measurement_baseline(arduino_motors, samples_per_channel, sampl
     move_mirror_cuves_motor(arduino_motors, 0.33334)  # Rotation de 60°
     time.sleep(1)  # Délai pour stabilisation
     voltage_photodiode_2 = voltage_acquisition_baseline(samples_per_channel=samples_per_channel, sample_rate=sample_rate, square_wave_frequency=pulse_frequency, channels=channels, channel='ai1')
-
     # Retour du miroir à sa position initiale
     move_mirror_cuves_motor(arduino_motors, -0.33334)
     time.sleep(1)
 
     return voltage_photodiode_1, voltage_photodiode_2
-
-
 
 def calculate_wavelength(position):
     """
@@ -77,32 +77,17 @@ def precision_mode_baseline(arduino_motors, screw_travel, number_measurements, s
     time_per_step = (step * 60) / screw_translation_speed
 
     for i in range(1, number_measurements):
-        position = i * step
         voltage_1, voltage_2 = perform_step_measurement_baseline(arduino_motors, samples_per_channel, sample_rate, pulse_frequency, channels)
         voltages_photodiode_1.append(voltage_1)
         voltages_photodiode_2.append(voltage_2)
-        no_screw.append(position)
-        wavelength.append(calculate_wavelength(position))
+        position=i*step
         move_screw(arduino_motors=arduino_motors, screw_course=position, screw_translation_speed=screw_translation_speed)
         time.sleep(time_per_step)
+        no_screw.append(position)
+        wavelength.append(calculate_wavelength(position))
+
     reference_solution, sample_solution = (voltages_photodiode_1, voltages_photodiode_2) if choice == 'cuve 1' else (voltages_photodiode_2, voltages_photodiode_1)
     return list(reversed(wavelength)), list(reversed(reference_solution)), list(reversed(sample_solution)), list(reversed(no_screw))
-
-
-def baseline_acquisition(arduino_motors, arduino_sensors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, samples_per_channel, sample_rate, channels):
-    """
-    Effectue une acquisition complète et sauvegarde les données.
-    """
-    [echantillon, path, date, slot_size] = initialize_measurement(arduino_motors, arduino_sensors, screw_translation_speed)
-    data_acquisition = precision_mode_baseline(arduino_motors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, samples_per_channel, sample_rate, channels)
-    title_data_acquisition=["Longueur d\'onde (nm)", "Tension référence (Volt)", "Tension échantillon (Volt)", "pas de vis (mm)"]
-    tilte_file=date + '_' + slot_size + '_' + echantillon
-    save_data_csv(path=path, data_list=data_acquisition, title_list=title_data_acquisition, file_name=tilte_file)
-    # Gestion des états du moteur
-    wait_for_motor_idle(arduino_motors)
-    reset_screw_position(arduino_motors, screw_travel, screw_translation_speed)
-    #graph(path=path)
-# End-of-file (EOF)
 
 import numpy as np
 import serial 
@@ -131,6 +116,21 @@ CHANNELS = ['Dev1/ai0', 'Dev1/ai1']
 
 arduino_sensors = Arduino(COM_PORT_SENSORS)
 
+print(precision_mode_baseline(arduino_motors=arduino_motors, screw_travel=5, number_measurements=5, screw_translation_speed=10, pulse_frequency=Frequence_creneau, samples_per_channel=SAMPLES_PER_CHANNEL, sample_rate=SAMPLE_RATE, channels=CHANNELS))
 
-baseline_acquisition(arduino_motors=arduino_motors, arduino_sensors=arduino_sensors, screw_travel=3, number_measurements=3, screw_translation_speed=10, pulse_frequency=Frequence_creneau, samples_per_channel=SAMPLES_PER_CHANNEL, sample_rate=SAMPLE_RATE, channels=CHANNELS)
+
+def baseline_acquisition(arduino_motors, arduino_sensors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, samples_per_channel, sample_rate, channels):
+    """
+    Effectue une acquisition complète et sauvegarde les données.
+    """
+    [echantillon, path, date, slot_size] = initialize_measurement(arduino_motors, arduino_sensors, screw_translation_speed)
+    data_acquisition = precision_mode_baseline(arduino_motors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, samples_per_channel, sample_rate, channels)
+    title_data_acquisition=["Longueur d\'onde (nm)", "Tension référence (Volt)", "Tension échantillon (Volt)", "pas de vis (mm)"]
+    tilte_file=date + '_' + slot_size + '_' + echantillon
+    save_data_csv(path=path, data_list=data_acquisition, title_list=title_data_acquisition, file_name=tilte_file)
+    # Gestion des états du moteur
+    wait_for_motor_idle(arduino_motors)
+    reset_screw_position(arduino_motors, screw_travel, screw_translation_speed)
+    #graph(path=path)
+# End-of-file (EOF)
 
