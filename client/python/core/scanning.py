@@ -8,7 +8,7 @@ Define deferente speed of analysis 3 for exampl (look the exampl in the spectro 
 - slow 1nm/min
 """
 import time
-from baseline import initialize_measurement, calculate_wavelength
+from baseline import initialize_measurement, calculate_wavelength, baseline_acquisition
 from electronics_controler.ni_pci_6221 import voltage_acquisition_scanning, get_solution_cuvette
 
 # kinematic_chains
@@ -107,6 +107,13 @@ def scanning_acquisition(arduino_motors, arduino_sensors, screw_travel, number_m
         sample_rate (int): Fréquence d'échantillonnage des mesures.
         channels (list): Liste des canaux utilisés pour la mesure.
     """
+    base_line_choise=input("Avez réalisé la ligne de base ?")
+    while base_line_choise not in ['Oui', 'Non'] :
+        base_line_choise=input("Avez réalisé la ligne de base ?")
+    if base_line_choise == 'Oui' :
+        pass
+    else:
+        baseline_acquisition(arduino_motors, arduino_sensors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, samples_per_channel, sample_rate, channels)
     [echantillon, path, date, slot_size] = initialize_measurement(arduino_motors, arduino_sensors, screw_translation_speed)
     data_acquisition = precision_mode_scanning(arduino_motors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, duty_cycle, samples_per_channel, sample_rate, channels)
     title_data_acquisition=["Longueur d\'onde (nm)", "Tension référence (Volt)", "Tension échantillon (Volt)", "pas de vis (mm)"]

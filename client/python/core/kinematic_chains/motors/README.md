@@ -100,3 +100,29 @@ move_screw(arduino_motors, screw_motor=1, screw_translation_speed=10)
 print(end_stop_state(arduino_end_stop))
 initialisation_motor_screw(arduino_motors =arduino_motors, arduino_end_stop=arduino_end_stop, screw_translation_speed=10)
 ```
+## slits motor.py
+
+```
+import serial  
+from pyfirmata import Arduino, util, INPUT
+# INITIALISATION MOTEUR:
+
+COM_PORT_MOTORS = 'COM3'
+COM_PORT_SENSORS = 'COM9'
+BAUD_RATE = 115200
+INITIALIZATION_TIME = 2
+
+arduino_motors = serial.Serial(COM_PORT_MOTORS, BAUD_RATE)
+arduino_motors.write("\r\n\r\n".encode()) # encode pour convertir "\r\n\r\n" 
+time.sleep(INITIALIZATION_TIME)   # Attend initialisation un GRBL
+arduino_motors.flushInput()  # Vider le tampon d'entrée, en supprimant tout son contenu.
+
+# INITIALISATION Forche optique:
+
+arduino_optical_fork = Arduino(COM_PORT_SENSORS)
+g_code='$X' + '\n'
+arduino_motors.write(g_code.encode())
+# Test move_mirror_cuves_motor
+move_slits(arduino_motors=arduino_motors)
+
+```

@@ -32,7 +32,7 @@ def initialize_measurement(arduino_motors, arduino_sensors, screw_translation_sp
     """
  
     # Initialization of cuvettes and motors
-    echantillon_name = input("Name of the sample under study ? ")
+    echantillon_name = input("Nom de l'espèce étudié ? ")
     [path, date, slot_size] = creation_directory_date_slot()
     initialisation_mirror_cuves_motor_v2(arduino_motors=arduino_motors, arduino_optical_fork=arduino_sensors)
     wait_for_motor_idle(arduino_motors=arduino_motors) 
