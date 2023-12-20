@@ -5,7 +5,11 @@ rotation of the reflection diffraction grating of the VARIAN 634.
 
 import time
 from pyfirmata import util, INPUT
+<<<<<<< HEAD
 from all_motors import state_motors, wait_for_motor_idle #kinematic_chains.motors
+=======
+from all_motors import state_motors, wait_for_motor_idle
+>>>>>>> 860c4dbf526bc1ec6e33e425ddfc08049de33ab6
 
 def modify_screw_translation_speed(arduino_motors, screw_translation_speed):
     """
@@ -145,6 +149,7 @@ def initialisation_motor_screw(arduino_motors, arduino_end_stop, screw_translati
         digital_value=arduino_end_stop.digital[4].read()
         print("Le moteur n'est pas au départ : ",digital_value)
         time.sleep(0.1)
+    print("Moteur du réseau de diffraction est prêt pour l'acquisition !")    
     print("On est bien au départ !")    
     wait_for_motor_idle(arduino_motors=arduino_motors)
     print("Moteur du réseau de diffraction est prêt pour l'acquisition !")
