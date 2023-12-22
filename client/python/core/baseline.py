@@ -2,7 +2,7 @@
 This program will create the baseline for the absorbance analysis of the sample.
 """
 import time
-
+import numpy as np
 # Motors
 from kinematic_chains.motors.all_motors import wait_for_motor_idle
 from kinematic_chains.motors.screw_motor import (initialisation_motor_screw, move_screw, reset_screw_position)
@@ -89,36 +89,6 @@ def precision_mode_baseline(arduino_motors, screw_travel, number_measurements, s
     reference_solution, sample_solution = (voltages_photodiode_1, voltages_photodiode_2) if choice == 'cuve 1' else (voltages_photodiode_2, voltages_photodiode_1)
     return list(reversed(wavelength)), list(reversed(reference_solution)), list(reversed(sample_solution)), list(reversed(no_screw))
 
-import numpy as np
-import serial 
-from pyfirmata import Arduino
-
-# INITIALISATION MOTEUR:
-
-COM_PORT_MOTORS = 'COM3'
-COM_PORT_SENSORS = 'COM9'
-BAUD_RATE = 115200
-INITIALIZATION_TIME = 2
-
-arduino_motors = serial.Serial(COM_PORT_MOTORS, BAUD_RATE)
-arduino_motors.write("\r\n\r\n".encode()) # encode pour convertir "\r\n\r\n" 
-time.sleep(INITIALIZATION_TIME)   # Attend initialisation un GRBL
-arduino_motors.flushInput()  # Vider le tampon d'entrée, en supprimant tout son contenu.
-
-# INITIALISATION carte NI-PCI 6221:
-Frequence_creneau = np.array([20.0])
-Rapport_cyclique = np.array([0.5])
-SAMPLES_PER_CHANNEL = 30000
-SAMPLE_RATE = 250000
-CHANNELS = ['Dev1/ai0', 'Dev1/ai1']  
-
-# INITIALISATION Forche optique:
-
-arduino_sensors = Arduino(COM_PORT_SENSORS)
-
-print(precision_mode_baseline(arduino_motors=arduino_motors, screw_travel=5, number_measurements=5, screw_translation_speed=10, pulse_frequency=Frequence_creneau, samples_per_channel=SAMPLES_PER_CHANNEL, sample_rate=SAMPLE_RATE, channels=CHANNELS))
-
-
 def baseline_acquisition(arduino_motors, arduino_sensors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, samples_per_channel, sample_rate, channels):
     """
     Effectue une acquisition complète et sauvegarde les données.
@@ -131,6 +101,9 @@ def baseline_acquisition(arduino_motors, arduino_sensors, screw_travel, number_m
     # Gestion des états du moteur
     wait_for_motor_idle(arduino_motors)
     reset_screw_position(arduino_motors, screw_travel, screw_translation_speed)
+    absorbance_baseline=np.log(data_acquisition[2]/data_acquisition[1])
+    
+    return tilte_file, absorbance_baseline
     #graph(path=path)
 # End-of-file (EOF)
 

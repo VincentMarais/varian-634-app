@@ -8,6 +8,9 @@ Define deferente speed of analysis 3 for exampl (look the exampl in the spectro 
 - slow 1nm/min
 """
 import time
+import numpy as np
+import pandas as pd
+
 from baseline import initialize_measurement, calculate_wavelength, baseline_acquisition
 from electronics_controler.ni_pci_6221 import voltage_acquisition_scanning, get_solution_cuvette
 
@@ -21,7 +24,7 @@ from kinematic_chains.motors.all_motors import wait_for_motor_idle
 from utils.data_csv import save_data_csv
 from utils.draw_curve import graph
 from utils.directory_creation import creation_directory_date_slot
-
+from utils.digital_signal_processing import sample_absorbance
 
 
 
@@ -91,7 +94,7 @@ def precision_mode_scanning(arduino_motors, screw_travel, number_measurements, s
     reference_solution, sample_solution = (voltages_photodiode_1, voltages_photodiode_2) if choice == 'cuve 1' else (voltages_photodiode_2, voltages_photodiode_1)
     return list(reversed(wavelength)), list(reversed(reference_solution)), list(reversed(sample_solution)), list(reversed(no_screw))
 
-def scanning_acquisition(arduino_motors, arduino_sensors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, duty_cycle, samples_per_channel, sample_rate, channels):
+def scanning_acquisition(arduino_motors, arduino_sensors, screw_travel, number_measurements, pas_scanning, screw_translation_speed, pulse_frequency, duty_cycle, samples_per_channel, sample_rate, channels):
     """
     Effectue une acquisition complète de données, sauvegarde les résultats et gère les états du moteur.
 
@@ -111,14 +114,18 @@ def scanning_acquisition(arduino_motors, arduino_sensors, screw_travel, number_m
     while base_line_choise not in ['Oui', 'Non'] :
         base_line_choise=input("Avez réalisé la ligne de base ?")
     if base_line_choise == 'Oui' :
-        pass
+
+        data_baseline = pd.read_csv(nom_fichier_baseline, encoding='ISO-8859-1')
+        absorbance_baseline = data_baseline['Absorbance']
     else:
-        baseline_acquisition(arduino_motors, arduino_sensors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, samples_per_channel, sample_rate, channels)
+        [tilte_file, absorbance_baseline] = baseline_acquisition(arduino_motors, arduino_sensors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, samples_per_channel, sample_rate, channels)
     
     [echantillon, path, date, slot_size] = initialize_measurement(arduino_motors, arduino_sensors, screw_translation_speed)
     data_acquisition = precision_mode_scanning(arduino_motors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, duty_cycle, samples_per_channel, sample_rate, channels)
-    absorbance=
-    title_data_acquisition=["Longueur d\'onde (nm)", "Tension référence (Volt)", "Tension échantillon (Volt)", "pas de vis (mm)"]
+    absorbance_scanning=np.log(data_acquisition[2]/data_acquisition[1])
+    absorbance = sample_absorbance(absorbance_baseline, absorbance_scanning, pas_scanning, tilte_file)
+    title_data_acquisition=["Longueur d\'onde (nm)", "Absorbance", "pas de vis (mm)"]
+    data_acquisition=[data_acquisition[0], absorbance, data_acquisition[3] ]
     tilte_file=date + '_' + slot_size + '_' + echantillon
     save_data_csv(path=path, data_list=data_acquisition, title_list=title_data_acquisition, file_name=tilte_file)
     # Gestion des états du moteur

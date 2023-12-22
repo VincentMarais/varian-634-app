@@ -1,5 +1,6 @@
 from scipy.interpolate import UnivariateSpline
 import matplotlib.pyplot as plt
+import pandas as pd
 
 def spline_interpolation(data_x, data_y, tilte_data_x, title_data_y):
     """
@@ -29,5 +30,21 @@ def spline_interpolation(data_x, data_y, tilte_data_x, title_data_y):
     plt.xlabel(tilte_data_x)
     plt.ylabel(title_data_y)
     plt.show()
-
     return data_y_spline
+
+
+
+def sample_absorbance(absorbance_baseline, absorbance_scanning, pas_scanning, nom_fichier_baseline):
+    data_baseline = pd.read_csv(nom_fichier_baseline, encoding='ISO-8859-1')
+    absorbance_baseline = data_baseline['Absorbance']
+    absorbance_baseline_acquisition=[]
+    sample_absorbance=[]
+    for i in range (0,len(absorbance_baseline),pas_scanning):
+        absorbance_baseline_acquisition.append(absorbance_baseline[i])
+    for i in range(absorbance_scanning):
+        diff=absorbance_scanning[i] - absorbance_baseline_acquisition[i]
+        sample_absorbance.append(diff)
+    return sample_absorbance
+
+
+
