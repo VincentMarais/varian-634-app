@@ -43,7 +43,7 @@ def voltage_possessing(door_function_width, voltage):
     return voltage
 
 
-def correction_bruit_de_noir(noise_absorption, absorbance_solution):
+def correction_bruit_de_noir(baseline_absorbance, absorbance_solution):
     """
     Entrée : 
         - noise_absorption (liste) : L'absorbance de noir est l'absorbance mesurée pour chaque longueur d'onde avec 

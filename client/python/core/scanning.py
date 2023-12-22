@@ -114,8 +114,10 @@ def scanning_acquisition(arduino_motors, arduino_sensors, screw_travel, number_m
         pass
     else:
         baseline_acquisition(arduino_motors, arduino_sensors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, samples_per_channel, sample_rate, channels)
+    
     [echantillon, path, date, slot_size] = initialize_measurement(arduino_motors, arduino_sensors, screw_translation_speed)
     data_acquisition = precision_mode_scanning(arduino_motors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, duty_cycle, samples_per_channel, sample_rate, channels)
+    absorbance=
     title_data_acquisition=["Longueur d\'onde (nm)", "Tension référence (Volt)", "Tension échantillon (Volt)", "pas de vis (mm)"]
     tilte_file=date + '_' + slot_size + '_' + echantillon
     save_data_csv(path=path, data_list=data_acquisition, title_list=title_data_acquisition, file_name=tilte_file)
