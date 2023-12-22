@@ -149,5 +149,4 @@ def initialisation_motor_screw(arduino_motors, arduino_end_stop, screw_translati
     print("On est bien au départ !")    
     wait_for_motor_idle(arduino_motors=arduino_motors)
     print("Moteur du réseau de diffraction est prêt pour l'acquisition !")
-    # End-of-file (EOF)
-
+    # End-of-file (EOF) 

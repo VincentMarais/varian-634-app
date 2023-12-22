@@ -15,9 +15,9 @@ from electronics_controler.ni_pci_6221 import voltage_acquisition_scanning, get_
 
 from utils.data_csv import save_data_csv
 
-from baseline import initialize_measurement
+from baseline import SpectroBaseline
 
-class ChemicalKineticsAnalyzer:
+class SpectroKineticsAnalysis:
     """
     Ce programme se concentrera sur 1 ou 3 longueurs d'onde 
     dans une période définie par l'utilisateur et introduira un délai entre deux mesures 
@@ -35,7 +35,7 @@ class ChemicalKineticsAnalyzer:
         return voltage_acquisition_scanning(samples_per_channel, sample_rate, square_wave_frequency, channels, channel=channel)
 
     def run_analysis(self, temps_d_acquisition, longueurs_a_analyser, samples_per_channel, sample_rate, square_wave_frequency, channels, delay_between_measurements):
-        [echantillon, path, date, slot_size] = initialize_measurement(self.arduino_motors, self.arduino_sensors, screw_translation_speed=10)
+        [echantillon, path, date, slot_size] = SpectroBaseline.initialize_measurement(self.arduino_motors, self.arduino_sensors, screw_translation_speed=10)
 
         for longueur_d_onde in longueurs_a_analyser:
             course_vis = 1 / 31.10419907 * (800 - longueur_d_onde)

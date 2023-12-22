@@ -11,7 +11,7 @@ import time
 import numpy as np
 import pandas as pd
 
-from baseline import initialize_measurement, calculate_wavelength, baseline_acquisition
+from baseline import SpectroBaseline
 from electronics_controler.ni_pci_6221 import voltage_acquisition_scanning, get_solution_cuvette
 
 # kinematic_chains
@@ -24,15 +24,18 @@ from kinematic_chains.motors.all_motors import wait_for_motor_idle
 from utils.data_csv import save_data_csv
 from utils.draw_curve import graph
 from utils.directory_creation import creation_directory_date_slot
-from utils.digital_signal_processing import sample_absorbance
+from utils.digital_signal_processing.interpolation import sample_absorbance
 
 
 
+class SpectroScanningAnalysis:
+    def __init__(self, arduino_motors, arduino_sensors, channels):
+        self.arduino_motors = arduino_motors
+        self.arduino_sensors = arduino_sensors
+        self.channels = channels
 
-
-def perform_step_measurement_scanning(arduino_motors, samples_per_channel, sample_rate, pulse_frequency, duty_cycle, channels):
-
-    """
+    def perform_step_measurement_scanning(self, samples_per_channel, sample_rate, pulse_frequency, duty_cycle):
+        """
     Effectue une mesure à un pas donné et retourne les tensions mesurées sur deux canaux.
 
     Args:
@@ -45,93 +48,106 @@ def perform_step_measurement_scanning(arduino_motors, samples_per_channel, sampl
     Returns:
         tuple: Tensions mesurées sur les photodiodes 1 et 2.
     """
-    # Mesure pour la photodiode 1  samples_per_channel, sample_rate,
-    voltage_photodiode_1 = voltage_acquisition_scanning(samples_per_channel=samples_per_channel, sample_rate=sample_rate, square_wave_frequency=pulse_frequency, duty_cycle=duty_cycle, channels=channels, channel='ai0')
+        voltage_photodiode_1 = voltage_acquisition_scanning(samples_per_channel=samples_per_channel, sample_rate=sample_rate, square_wave_frequency=pulse_frequency, duty_cycle=duty_cycle, channels=self.channels, channel='ai0')
 
-    # Rotation du miroir et mesure pour la photodiode 2
-    move_mirror_cuves_motor(arduino_motors, 0.33334)  # Rotation de 60°
-    time.sleep(1)  # Délai pour stabilisation
-    voltage_photodiode_2 = voltage_acquisition_scanning(samples_per_channel=samples_per_channel, sample_rate=sample_rate, square_wave_frequency=pulse_frequency, duty_cycle=duty_cycle, channels=channels, channel='ai1')
+        move_mirror_cuves_motor(self.arduino_motors, 0.33334)  # 60° rotation
+        time.sleep(1)  # Stabilization delay
+        voltage_photodiode_2 = voltage_acquisition_scanning(samples_per_channel=samples_per_channel, sample_rate=sample_rate, square_wave_frequency=pulse_frequency, duty_cycle=duty_cycle, channels=self.channels, channel='ai1')
 
-    # Retour du miroir à sa position initiale
-    move_mirror_cuves_motor(arduino_motors, -0.33334)
-    time.sleep(1)
+        move_mirror_cuves_motor(self.arduino_motors, -0.33334)
+        time.sleep(1)
 
-    return voltage_photodiode_1, voltage_photodiode_2
+        return voltage_photodiode_1, voltage_photodiode_2
 
-def precision_mode_scanning(arduino_motors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, duty_cycle, samples_per_channel, sample_rate, channels):
-    """
-    Exécute le mode de précision pour les mesures en déplaçant la vis de mesure et retourne les résultats.
+    @staticmethod
+    def validate_user_input(prompt, valid_responses):
+        response = input(prompt)
+        while response not in valid_responses:
+            response = input(prompt)
+        return response
 
-    Args:
-        arduino_motors (serial.Serial): Interface de communication avec les moteurs Arduino.
-        screw_travel (float): Distance totale que la vis doit parcourir.
-        number_measurements (int): Nombre total de mesures à effectuer.
-        screw_translation_speed (int): Vitesse de déplacement de la vis.
-        pulse_frequency (float): Fréquence de la forme d'onde carrée pour la stimulation.
-        duty_cycle (float): Rapport cyclique de la forme d'onde carrée.
-        samples_per_channel (int): Nombre d'échantillons par canal à mesurer.
-        sample_rate (int): Fréquence d'échantillonnage des mesures.
-        channels (list): Liste des canaux utilisés pour la mesure.
-    Returns:
-    tuple: Données des longueurs d'onde, tensions de référence et échantillon, et positions de la vis.
-    """
-    choice = get_solution_cuvette()
-    voltages_photodiode_1, voltages_photodiode_2 = [], []
-    no_screw, wavelength = [0], []
-    step = screw_travel / number_measurements
-    time_per_step = (step * 60) / screw_translation_speed
+    def precision_mode_scanning(self, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, duty_cycle, samples_per_channel, sample_rate):
+        """
+        Exécute le mode de précision pour les mesures en déplaçant la vis de mesure et retourne les résultats.
 
-    for i in range(1, number_measurements):
-        position = i * step
-        voltage_1, voltage_2 = perform_step_measurement_scanning(arduino_motors, samples_per_channel, sample_rate, pulse_frequency, duty_cycle, channels)
-        voltages_photodiode_1.append(voltage_1)
-        voltages_photodiode_2.append(voltage_2)
-        no_screw.append(position)
-        wavelength.append(calculate_wavelength(position))
-        move_screw(arduino_motors=arduino_motors, screw_course=position, screw_translation_speed=screw_translation_speed)
-        time.sleep(time_per_step)
-    reference_solution, sample_solution = (voltages_photodiode_1, voltages_photodiode_2) if choice == 'cuve 1' else (voltages_photodiode_2, voltages_photodiode_1)
-    return list(reversed(wavelength)), list(reversed(reference_solution)), list(reversed(sample_solution)), list(reversed(no_screw))
+        Args:
+            arduino_motors (serial.Serial): Interface de communication avec les moteurs Arduino.
+            screw_travel (float): Distance totale que la vis doit parcourir.
+            number_measurements (int): Nombre total de mesures à effectuer.
+            screw_translation_speed (int): Vitesse de déplacement de la vis.
+            pulse_frequency (float): Fréquence de la forme d'onde carrée pour la stimulation.
+            duty_cycle (float): Rapport cyclique de la forme d'onde carrée.
+            samples_per_channel (int): Nombre d'échantillons par canal à mesurer.
+            sample_rate (int): Fréquence d'échantillonnage des mesures.
+            channels (list): Liste des canaux utilisés pour la mesure.
+        Returns:
+        tuple: Données des longueurs d'onde, tensions de référence et échantillon, et positions de la vis.
+        """
+        choice = get_solution_cuvette()
+        voltages_photodiode_1, voltages_photodiode_2 = [], []
+        no_screw, wavelength = [0], []
+        step = screw_travel / number_measurements
+        time_per_step = (step * 60) / screw_translation_speed
 
-def scanning_acquisition(arduino_motors, arduino_sensors, screw_travel, number_measurements, pas_scanning, screw_translation_speed, pulse_frequency, duty_cycle, samples_per_channel, sample_rate, channels):
-    """
-    Effectue une acquisition complète de données, sauvegarde les résultats et gère les états du moteur.
+        for i in range(1, number_measurements):
+            position = i * step
+            voltage_1, voltage_2 = self.perform_step_measurement_scanning(samples_per_channel, sample_rate, pulse_frequency, duty_cycle)
+            voltages_photodiode_1.append(voltage_1)
+            voltages_photodiode_2.append(voltage_2)
+            no_screw.append(position)
+            wavelength.append(SpectroBaseline.initialize_measurement(position))
+            move_screw(self.arduino_motors, position, screw_translation_speed)
+            time.sleep(time_per_step)
+        reference_solution, sample_solution = (voltages_photodiode_1, voltages_photodiode_2) if choice == 'cuve 1' else (voltages_photodiode_2, voltages_photodiode_1)
+        return list(reversed(wavelength)), list(reversed(reference_solution)), list(reversed(sample_solution)), list(reversed(no_screw))
 
-    Args:
-        arduino_motors (serial.Serial): Interface de communication avec les moteurs Arduino.
-        arduino_sensors (serial.Serial): Interface de communication avec les capteurs Arduino.
-        screw_travel (float): Distance totale que la vis doit parcourir.
-        number_measurements (int): Nombre total de mesures à effectuer.
-        screw_translation_speed (int): Vitesse de déplacement de la vis.
-        pulse_frequency (float): Fréquence de la forme d'onde carrée pour la stimulation.
-        duty_cycle (float): Rapport cyclique de la forme d'onde carrée.
-        samples_per_channel (int): Nombre d'échantillons par canal à mesurer.
-        sample_rate (int): Fréquence d'échantillonnage des mesures.
-        channels (list): Liste des canaux utilisés pour la mesure.
-    """
-    base_line_choise=input("Avez réalisé la ligne de base ?")
-    while base_line_choise not in ['Oui', 'Non'] :
-        base_line_choise=input("Avez réalisé la ligne de base ?")
-    if base_line_choise == 'Oui' :
+    def scanning_acquisition(self, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, duty_cycle, samples_per_channel, sample_rate):
+        """
+        Effectue une acquisition complète de données, sauvegarde les résultats et gère les états du moteur.
 
-        data_baseline = pd.read_csv(nom_fichier_baseline, encoding='ISO-8859-1')
-        absorbance_baseline = data_baseline['Absorbance']
-    else:
-        [tilte_file, absorbance_baseline] = baseline_acquisition(arduino_motors, arduino_sensors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, samples_per_channel, sample_rate, channels)
-    
-    [echantillon, path, date, slot_size] = initialize_measurement(arduino_motors, arduino_sensors, screw_translation_speed)
-    data_acquisition = precision_mode_scanning(arduino_motors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, duty_cycle, samples_per_channel, sample_rate, channels)
-    absorbance_scanning=np.log(data_acquisition[2]/data_acquisition[1])
-    absorbance = sample_absorbance(absorbance_baseline, absorbance_scanning, pas_scanning, tilte_file)
-    title_data_acquisition=["Longueur d\'onde (nm)", "Absorbance", "pas de vis (mm)"]
-    data_acquisition=[data_acquisition[0], absorbance, data_acquisition[3] ]
-    tilte_file=date + '_' + slot_size + '_' + echantillon
-    save_data_csv(path=path, data_list=data_acquisition, title_list=title_data_acquisition, file_name=tilte_file)
-    # Gestion des états du moteur
-    wait_for_motor_idle(arduino_motors)
-    reset_screw_position(arduino_motors, screw_travel, screw_translation_speed)
-    #graph(path=path)
-# End-of-file (EOF)
+        Args:
+            arduino_motors (serial.Serial): Interface de communication avec les moteurs Arduino.
+            arduino_sensors (serial.Serial): Interface de communication avec les capteurs Arduino.
+            screw_travel (float): Distance totale que la vis doit parcourir.
+            number_measurements (int): Nombre total de mesures à effectuer.
+            screw_translation_speed (int): Vitesse de déplacement de la vis.
+            pulse_frequency (float): Fréquence de la forme d'onde carrée pour la stimulation.
+            duty_cycle (float): Rapport cyclique de la forme d'onde carrée.
+            samples_per_channel (int): Nombre d'échantillons par canal à mesurer.
+            sample_rate (int): Fréquence d'échantillonnage des mesures.
+            channels (list): Liste des canaux utilisés pour la mesure.
+        """
+        
+        [echantillon, path, date, slot_size] = SpectroBaseline.initialize_measurement(self.arduino_motors, self.arduino_sensors, screw_translation_speed)
+        
+        base_line_choice = self.validate_user_input("Avez-vous réalisé la ligne de base ? (Oui/Non) ", ["Oui", "Non"])
+        
+        if base_line_choice == 'Oui':
+            title_file_baseline = 'baseline' + date + '_' + slot_size + '_' + echantillon
+            file_name_baseline = path + '/' + title_file_baseline + '.csv'
+            data_baseline = pd.read_csv(file_name_baseline, encoding='ISO-8859-1')
+            absorbance_baseline = data_baseline['Absorbance']
+        else:
+            [title_file, absorbance_baseline] = SpectroBaseline.baseline_acquisition(self.arduino_motors, self.arduino_sensors, screw_travel, number_measurements, screw_translation_speed, pulse_frequency, samples_per_channel, sample_rate, self.channels)
+
+        data_acquisition = self.precision_mode_scanning(screw_travel, number_measurements, screw_translation_speed, pulse_frequency, duty_cycle, samples_per_channel, sample_rate)
+        absorbance_scanning = np.log(np.divide(data_acquisition[2], data_acquisition[1]))
+        absorbance = sample_absorbance(absorbance_baseline, absorbance_scanning, title_file)
+
+        title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "pas de vis (mm)"]
+        data_acquisition = [data_acquisition[0], absorbance, data_acquisition[3]]
+        title_file = date + '_' + slot_size + '_' + echantillon
+        save_data_csv(path, data_acquisition, title_data_acquisition, title_file)
+
+        wait_for_motor_idle(self.arduino_motors)
+        reset_screw_position(self.arduino_motors, screw_travel, screw_translation_speed)
+        # graph(path) # Uncomment if graph function is needed
+
+# Example usage
+# arduino_motors = ...  # Initialize arduino_motors
+# arduino_sensors = ...  # Initialize arduino_sensors
+# channels = ...  # Define channels
+# spectro_analysis = SpectroAnalysis(arduino_motors, arduino_sensors, channels)
+# spectro_analysis.scanning_acquisition(...)
 
 
