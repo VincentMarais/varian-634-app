@@ -9,181 +9,104 @@ import numpy as np
 import nidaqmx
 from nidaqmx.constants import AcquisitionType, TerminalConfiguration
 
-# Function acquisition_tension
-
-def get_solution_cuvette():
+class VoltageAcquisition:
     """
-    Demande à l'utilisateur dans quelle cuve il a mis la référence
+    class program allows reading the voltage across the photodiodes using an NI-PCI 6221 card.
     """
-    solution = input("Dans quelle cuve numéro est la solution blanche : cuve 1 ou cuve 2 : ")
-    while solution not in ['cuve 1', 'cuve 2']:
-        solution = input("Veuillez choisir cuve 1 ou cuve 2 : ")
-    print("La solution de blanc est dans la", solution)
-    return solution
+    def __init__(self, channels, sample_rate, samples_per_channel):
+        """
+        Initialise une instance de la classe VoltageAcquisition.
+
+        Paramètres :
+        - channels : Liste des canaux d'acquisition (par exemple, ['Dev1/ai0', 'Dev1/ai1']).
+        - sample_rate : Taux d'échantillonnage en échantillons par seconde (Hz).
+        - samples_per_channel : Nombre d'échantillons à acquérir par canal.
+
+        """
+        self.channels = channels
+        self.sample_rate = sample_rate
+        self.samples_per_channel = samples_per_channel
+
+    def configure_task_voltage(self, task, channel):
+        """
+        Configure la tâche de mesure de tension analogique.
+
+        Paramètres :
+        - task : Objet de tâche nidaqmx.
+        - channel : Canal d'entrée analogique à configurer (par exemple, 'Dev1/ai0').
+
+        """
+        task.ai_channels.add_ai_voltage_chan(channel, terminal_config=TerminalConfiguration.DIFF)
+        task.timing.cfg_samp_clk_timing(self.sample_rate, samps_per_chan=self.samples_per_channel, sample_mode=AcquisitionType.FINITE)
+
+    def configure_task_impulsion(self, task, frequency, duty_cycle, device='/Dev1/ctr0'):
+        """
+        Configure la tâche de génération d'impulsion.
+
+        Paramètres :
+        - task : Objet de tâche nidaqmx.
+        - frequency : Fréquence de l'impulsion en hertz (Hz).
+        - duty_cycle : Cycle de service de l'impulsion (entre 0 et 1, où 1 est à 100%).
+        - device : Nom du périphérique de compteur à utiliser (par défaut, '/Dev1/ctr0').
+
+        """
+        task.co_channels.add_co_pulse_chan_freq(device, freq=frequency, duty_cycle=duty_cycle, initial_delay=0.0)
+        task.timing.cfg_implicit_timing(sample_mode=AcquisitionType.CONTINUOUS)
+        task.start()
+
+    def acquire_data_min_voltages(self, task, frequency, time_acquisition=None):
+        """
+        Acquiert les tensions minimales à partir de la tâche de mesure de tension.
+
+        Paramètres :
+        - task : Objet de tâche nidaqmx.
+        - frequency : Fréquence de lecture de données (nombre d'acquisitions par seconde).
+        - time_acquisition : Durée d'acquisition en secondes (facultatif).
+
+        Retourne :
+        - min_voltages : Liste des tensions minimales mesurées.
+
+        """
+        min_voltages = []
+        start_time = time.time()
+        while True:
+            if time_acquisition and (time.time() - start_time >= time_acquisition):
+                break
+            data = task.read(number_of_samples_per_channel=self.samples_per_channel)
+            min_voltages.append(np.min(data))
+            if not time_acquisition and len(min_voltages) >= frequency:
+                break
+        return min_voltages
+
+    def perform_voltage_acquisition(self, task_type, frequency, duty_cycle, channel, time_acquisition=None):
+        """
+        Effectue l'acquisition de tension en fonction du type de tâche.
+
+        Paramètres :
+        - task_type : Type de tâche ('scanning' ou 'chemical_kinetics').
+        - frequency : Fréquence de l'impulsion en hertz (Hz).
+        - duty_cycle : Cycle de service de l'impulsion (entre 0 et 1, où 1 est à 100%).
+        - channel : Index du canal à acquérir.
+        - time_acquisition : Durée d'acquisition en secondes (facultatif).
+
+        Retourne :
+        - Moyenne des tensions minimales mesurées.
+
+        """
+        with nidaqmx.Task() as task_voltage, nidaqmx.Task() as task_impulsion:
+            if task_type in ['scanning', 'chemical_kinetics']:
+                self.configure_task_impulsion(task_impulsion, frequency, duty_cycle)
+            self.configure_task_voltage(task_voltage, self.channels[channel])
+            min_voltages = self.acquire_data_min_voltages(task_voltage, frequency, time_acquisition)
+            if task_type in ['scanning', 'chemical_kinetics']:
+                task_impulsion.stop()
+        return np.mean(min_voltages)
+
+# Utilisation de la classe
+#channels = ['Dev1/ai0', 'Dev1/ai1']
+#acquisition = VoltageAcquisition(channels, sample_rate, samples_per_channel)
+#mean_voltage = acquisition.perform_voltage_acquisition(task_type, frequency, duty_cycle, channel, time_acquisition)
 
 
-def task_ni_pci_baseline(samples_per_channel, sample_rate, square_wave_frequency, channels):
-    """
-    Récupère seulement la tensions aux bornes des photodiodes pour effectuer la baseline de l'expérience
-    Args:
-        samples_per_channel (int): Nombre d'échantillons par canal.
-        sample_rate (float): Taux d'échantillonnage en Hz.
-        square_wave_frequency (float): Fréquence du signal carré.
-        channels (str): Configuration des canaux.
-    Returns:
-        mean (float): Moyenne des tensions minimales.
-    """
 
-    min_voltages= []
-    with nidaqmx.Task() as task_voltage:
-        task_voltage.ai_channels.add_ai_voltage_chan(channels, terminal_config=TerminalConfiguration.DIFF)
-        task_voltage.timing.cfg_samp_clk_timing(sample_rate, samps_per_chan=samples_per_channel, sample_mode=AcquisitionType.FINITE)
-        frequency = int(square_wave_frequency[0])
-        for _ in range(frequency):
-            # Acquisition des données
-            data = task_voltage.read(number_of_samples_per_channel=samples_per_channel)
-            # Conversion des données en un tableau numpy pour faciliter les calculs
-            np_data = np.array(data)
-            # Trouver et stocker le minimum
-            min_voltage = np.min(np_data)
-            min_voltages.append(min_voltage)
-        task_voltage.stop()
-        mean = np.mean(min_voltages)
-    return mean
-
-
-def task_ni_pci_scanning(samples_per_channel, sample_rate,
-                square_wave_frequency, duty_cycle, channels):
-    """
-    Fonction qui pilote la lampe à arc aux xénon en générant un signal créneau
-    et qui récupère les tensions aux bornes des photodiodes
-    Args:
-        samples_per_channel (int): Nombre d'échantillons par canal.
-        sample_rate (float): Taux d'échantillonnage en Hz.
-        square_wave_frequency (float): Fréquence du signal carré.
-        duty_cycle (float): Rapport cyclique du signal carré.
-        channels (str): Configuration des canaux.
-    Returns:
-        mean (float): Moyenne des tensions minimales.
-    
-    """
-    min_voltages=[]
-    with nidaqmx.Task() as task_impulsion, nidaqmx.Task() as task_voltage:
-        task_impulsion.co_channels.add_co_pulse_chan_freq('/Dev1/ctr0',
-            freq=square_wave_frequency[0], duty_cycle=duty_cycle[0], initial_delay=0.0)
-        task_impulsion.timing.cfg_implicit_timing(sample_mode=AcquisitionType.CONTINUOUS)
-
-        print(f"Génération du train d'impulsions avec une fréquence de {square_wave_frequency[0]} Hz et un rapport cyclique de {duty_cycle[0]}")
-        task_impulsion.start()
-
-        task_voltage.ai_channels.add_ai_voltage_chan(channels, terminal_config=TerminalConfiguration.DIFF)
-        task_voltage.timing.cfg_samp_clk_timing(sample_rate, samps_per_chan=samples_per_channel, sample_mode=AcquisitionType.FINITE)
-        frequency = int(square_wave_frequency[0])
-        for _ in range(frequency):
-            # Acquisition des données
-            data = task_voltage.read(number_of_samples_per_channel=samples_per_channel)
-            # Conversion des données en un tableau numpy pour faciliter les calculs
-            np_data = np.array(data)
-            # Trouver et stocker le minimum
-            min_voltage = np.min(np_data)
-            min_voltages.append(min_voltage)
-        task_impulsion.stop()
-        task_voltage.stop()
-        mean = np.mean(min_voltages)
-    return mean
-
-
-
-def task_ni_pci_chemical_kinetics(samples_per_channel, sample_rate,
-                                  square_wave_frequency, duty_cycle, channels, time_acquisition):
-    """
-    Fonction qui pilote la lampe à arc aux xénon en générant un signal créneau
-    et qui récupère les tensions aux bornes des photodiodes
-    Args:
-        samples_per_channel (int): Nombre d'échantillons par canal.
-        sample_rate (float): Taux d'échantillonnage en Hz.
-        square_wave_frequency (float): Fréquence du signal carré.
-        duty_cycle (float): Rapport cyclique du signal carré.
-        channels (str): Configuration des canaux.
-        time_acquisition (float): Durée de l'acquisition en secondes.
-    Returns:
-        mean (float): Moyenne des tensions minimales.
-    """
-    min_voltages = []
-
-    with nidaqmx.Task() as task_impulsion, nidaqmx.Task() as task_voltage:
-        task_impulsion.co_channels.add_co_pulse_chan_freq('/Dev1/ctr0',
-                                                          freq=square_wave_frequency[0], duty_cycle=duty_cycle[0],
-                                                          initial_delay=0.0)
-        task_impulsion.timing.cfg_implicit_timing(sample_mode=AcquisitionType.CONTINUOUS)
-
-        print(f"Génération du train d'impulsions avec une fréquence de {square_wave_frequency[0]} Hz et un rapport cyclique de {duty_cycle[0]}")
-        task_impulsion.start()
-
-        task_voltage.ai_channels.add_ai_voltage_chan(channels, terminal_config=TerminalConfiguration.DIFF)
-        task_voltage.timing.cfg_samp_clk_timing(sample_rate, samps_per_chan=samples_per_channel,
-                                                sample_mode=AcquisitionType.FINITE)
-
-        start_time = time.time()  # Début du comptage du temps
-        while time.time() - start_time < time_acquisition:  # Boucle pendant la durée spécifiée
-            # Acquisition des données
-            data = task_voltage.read(number_of_samples_per_channel=samples_per_channel)
-            # Conversion des données en un tableau numpy pour faciliter les calculs
-            np_data = np.array(data)
-            # Trouver et stocker le minimum
-            min_voltage = np.min(np_data)
-            min_voltages.append(min_voltage)
-
-        task_impulsion.stop()
-        task_voltage.stop()
-        mean = np.mean(min_voltages)
-
-    return mean  # Retourne la moyenne des tensions minimales
-
-
-def voltage_acquisition_baseline(samples_per_channel, sample_rate,
-                        square_wave_frequency, channels, channel):
-    """
-    Renvois la valeur de la tension entre du channel 'ai0' ou 'ai1'
-    (il faut que je développe ce commentaire avec la doc NI-PCI 6221)
-    Args:
-        samples_per_channel (int): Nombre d'échantillons par canal.
-        sample_rate (float): Taux d'échantillonnage en Hz.
-        square_wave_frequency (float): Fréquence du signal carré.
-        channels (list): Liste de configurations des canaux.
-        channel (str): Nom du canal à acquérir ('ai0' ou 'ai1').
-    Returns:
-        mean (float): Moyenne des tensions minimales.
-    """
-    if channel == 'ai0': # Acquisition sur le 1er capteur
-        mean = task_ni_pci_baseline(samples_per_channel, sample_rate, square_wave_frequency, channels[0])
-        return mean
-
-    elif channel == 'ai1': # Acquisition sur le 2ème capteur
-        mean = task_ni_pci_baseline(samples_per_channel, sample_rate, square_wave_frequency, channels[1])
-        return mean
-    
-def voltage_acquisition_scanning(samples_per_channel, sample_rate,
-                        square_wave_frequency, duty_cycle, channels, channel):
-    """
-    Renvois la valeur de la tension entre du channel 'ai0' ou 'ai1'
-    (il faut que je développe ce commentaire avec la doc NI-PCI 6221)
-    Args:
-        samples_per_channel (int): Nombre d'échantillons par canal.
-        sample_rate (float): Taux d'échantillonnage en Hz.
-        square_wave_frequency (float): Fréquence du signal carré.
-        duty_cycle (float): Rapport cyclique du signal carré.
-        channels (list): Liste de configurations des canaux.
-        channel (str): Nom du canal à acquérir ('ai0' ou 'ai1').
-    Returns:
-        mean (float): Moyenne des tensions minimales.
-    """
-    if channel == 'ai0': # Acquisition sur le 1er capteur
-        mean = task_ni_pci_scanning(samples_per_channel, sample_rate, square_wave_frequency, duty_cycle, channels[0])
-        return mean
-
-    elif channel == 'ai1': # Acquisition sur le 2ème capteur
-        mean = task_ni_pci_scanning(samples_per_channel, sample_rate, square_wave_frequency, duty_cycle, channels[1])
-        return mean
-# End-of-file (EOF)
 

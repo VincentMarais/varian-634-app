@@ -68,4 +68,14 @@ def path_creation(path, physical_data):
         print("Le répertoire existe déjà :", chemin)
 
     return chemin
+
+def get_solution_cuvette():
+    """
+    Demande à l'utilisateur dans quelle cuve il a mis la référence
+    """
+    solution = input("Dans quelle cuve numéro est la solution blanche : cuve 1 ou cuve 2 : ")
+    while solution not in ['cuve 1', 'cuve 2']:
+        solution = input("Veuillez choisir cuve 1 ou cuve 2 : ")
+    print("La solution de blanc est dans la", solution)
+    return solution
 # End-of-file (EOF)

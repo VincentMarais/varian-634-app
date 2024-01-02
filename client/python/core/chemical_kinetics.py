@@ -6,12 +6,13 @@ analysis of the sample."""
 import time
 import numpy as np
 
-# Importations depuis vos modules existants
-from kinematic_chains.motors.all_motors import wait_for_motor_idle
-from kinematic_chains.motors.screw_motor import move_screw, reset_screw_position
-from kinematic_chains.motors.mirror_cuves_motor import move_mirror_cuves_motor
+# Motors
+from kinematic_chains.motors.all_motors import GeneralMotorsController
+from kinematic_chains.motors.screw_motor import ScrewController
+from kinematic_chains.motors.mirror_cuves_motor import MirrorCuvesController
 
-from electronics_controler.ni_pci_6221 import voltage_acquisition_scanning, get_solution_cuvette
+# Voltage acquisition
+from electronics_controler.ni_pci_6221 import VoltageAcquisition
 
 from utils.data_csv import save_data_csv
 
