@@ -5,8 +5,7 @@ rotation of the reflection diffraction grating of the VARIAN 634.
 
 import time
 from pyfirmata import util, INPUT
-from all_motors import wait_for_motor_idle
-
+from all_motors import GeneralMotorsController
 
 class ScrewController:
     """
@@ -35,7 +34,7 @@ class ScrewController:
         self.arduino_motors.write(f'$110={speed}\n'.encode())
         time.sleep(0.5)
 
-    def move_screw(self, distance, speed, relative=False):
+    def move_screw(self, distance, speed=10, relative=False):
         """
         Move the screw that drives the diffraction grating.
         
@@ -87,6 +86,9 @@ class ScrewController:
             arduino_end_stop (Arduino): End stop sensor instance.
             pin (int): Digital pin number for the end stop sensor.
         """
+
+        general_motors_controller=GeneralMotorsController(self.arduino_motors)
+
         self.arduino_motors.write('G91\n'.encode())
         self.arduino_end_stop.digital[pin].mode = INPUT
         util.Iterator(self.arduino_end_stop).start()
@@ -94,13 +96,13 @@ class ScrewController:
 
         self.arduino_motors.write('$X\n$H\n'.encode())
         while self.arduino_end_stop.digital[pin].read():
-            print("Waiting for motor to reach the start position...")
+            print("Waiting for motor to reach t he start position...")
             time.sleep(0.1)
 
         print("Diffraction grating motor is ready for acquisition!")
-        wait_for_motor_idle(arduino_motors=self.arduino_motors)
+        general_motors_controller.wait_for_motor_idle()
 
 # Utilisation de la classe
 # arduino_motors et arduino_end_stop doivent être définis au préalable
-#screw_controller = ScrewController(arduino_motors, arduino_end_stop)
 #screw_controller.initialize_screw()
+

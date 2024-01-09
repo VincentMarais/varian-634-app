@@ -76,6 +76,7 @@ initialisation_mirror_cuves_motor_v2(arduino_motors=arduino_motors, arduino_opti
 
 
 ```
+
 import serial  
 from pyfirmata import Arduino, util, INPUT
 
@@ -90,15 +91,16 @@ arduino_motors = serial.Serial(COM_PORT_MOTORS, BAUD_RATE)
 arduino_motors.write("\r\n\r\n".encode()) # encode pour convertir "\r\n\r\n" 
 time.sleep(INITIALIZATION_TIME)   # Attend initialisation un GRBL
 arduino_motors.flushInput()  # Vider le tampon d'entrée, en supprimant tout son contenu.
-
-# INITIALISATION Forche optique:
+g_code='$X' + '\n'
+arduino_motors.write(g_code.encode())
+# INITIALISATION end-stop:
 
 arduino_end_stop = Arduino(COM_PORT_SENSORS)
 
-# Test move_mirror_cuves_motor
-move_screw(arduino_motors, screw_motor=1, screw_translation_speed=10)
-print(end_stop_state(arduino_end_stop))
-initialisation_motor_screw(arduino_motors =arduino_motors, arduino_end_stop=arduino_end_stop, screw_translation_speed=10)
+screw_controller = ScrewController(arduino_motors, arduino_end_stop)
+
+#screw_controller.move_screw(distance=-2)
+screw_controller.initialize_screw()
 ```
 ## slits motor.py
 
