@@ -41,10 +41,7 @@ class MirrorCuvesController:
         Args:
             position: The desired position to which the mirror motor should be moved.
         """
-        g_code = '$X' + '\n'  # Désactive la sécurité
-        arduino_motors.write(g_code.encode())
-        self.general_motors_controller.execute_g_code(g_code)
-        arduino_motors.write(g_code.encode())
+        self.general_motors_controller.execute_g_code('$X' + '\n')
         self.general_motors_controller.execute_g_code('G0Y' + str(position))
 
     def initialize_mirror_position(self):
@@ -61,13 +58,15 @@ class MirrorCuvesController:
         """
         An alternative method to initialize the mirror position based on a specific requirement.
         """
-        general_motors_controller=GeneralMotorsController(self.arduino_motors)
-        self.general_motors_controller.execute_g_code('$X\nG90\nG0Y1')
-        while self.arduino_optical_fork.digital[3].read():
-            print("Cuve 1 non atteinte")
-        pos_y = general_motors_controller.get_position_xyz(self.arduino_motors)[1]
-        self.general_motors_controller.execute_g_code("G0Y" + str(pos_y))
-        print(pos_y)
+        self.move_mirror_motor(position=2)
+        #state=self.arduino_optical_fork.digital[3].read()
+        """while state is True:
+            print("Cuve 1 non atteinte car ", state)
+            state=self.arduino_optical_fork.digital[3].read()
+
+        pos_y = self.general_motors_controller.get_position_xyz()[1]
+        self.move_mirror_motor(position=pos_y)
+        print(pos_y)"""
 
     def execute_g_code(self, g_code):
         """
@@ -101,5 +100,5 @@ arduino_optical_fork = Arduino(COM_PORT_SENSORS)
 
 screw_controller = MirrorCuvesController(arduino_motors, arduino_optical_fork)
 
-#screw_controller.move_screw(distance=-2)
-screw_controller.move_mirror_motor(position=2)
+screw_controller.move_mirror_motor(position=-2)
+#screw_controller.initialize_mirror_position_v2()
