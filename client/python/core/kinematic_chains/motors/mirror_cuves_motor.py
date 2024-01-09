@@ -60,13 +60,13 @@ class MirrorCuvesController:
         """
         self.move_mirror_motor(position=2)
         #state=self.arduino_optical_fork.digital[3].read()
-        """while state is True:
+        while state is True:
             print("Cuve 1 non atteinte car ", state)
             state=self.arduino_optical_fork.digital[3].read()
 
         pos_y = self.general_motors_controller.get_position_xyz()[1]
         self.move_mirror_motor(position=pos_y)
-        print(pos_y)"""
+        print(pos_y)
 
     def execute_g_code(self, g_code):
         """

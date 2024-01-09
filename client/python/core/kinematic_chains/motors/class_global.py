@@ -17,15 +17,16 @@ class GeneralMotorsController:
         """
         self.arduino_motors = arduino_motors
         self.arduino_sensor=arduino_sensor
-        self.screw_motor= [arduino_motors,'X', 10, False]
-        self.mirror_cuves_motor=self.move_motor(axe='Y')
-        self.slits_motor=self.move_motor(axe='Z')
+        self.screw_motor= ['X', 10, False] # [axe, speed, type de déplacement]
+        self.mirror_cuves_motor=['Y', 14, False]
+        self.slits_motor=['Z', 10, False]
 
 
-    def move_motor(self, axe, distance, speed=10, relative=False):
-        self.set_screw_speed(speed)
-        mode = 'G91\n' if relative else 'G90\n'
-        self.arduino_motors.write(f'{mode}G0{axe}{distance}\n'.encode())
+    def move_motor(self, motor_parameters, distance):
+        self.set_screw_speed(motor_parameters[1])
+        mode = 'G91\n' if motor_parameters[2] else 'G90\n'
+        self.arduino_motors.write(f'{mode}G0{motor_parameters[0]}{distance}\n'.encode())
+
     def get_motor_state(self):
         """
         Query and return the current state of the motor.
@@ -90,3 +91,25 @@ class GeneralMotorsController:
             g_code (str): The G-code command to be sent to the motor.
         """
         self.arduino_motors.write(f'{g_code}\n'.encode())
+
+    def move_mirror_motor(self, distance):
+        self.move_motor(self.mirror_cuves_motor, distance)
+    
+    def move_screw(self, distance):
+        self.move_motor(self.screw_motor, distance)
+
+
+    def initialize_mirror_position(self):
+        """
+        An alternative method to initialize the mirror position based on a specific requirement.
+        """
+        self.move_motor(self.mirror_cuves_motor,1)
+        state=self.arduino_optical_fork.digital[3].read()
+        while state is True:
+            print("Cuve 1 non atteinte car ", state)
+            state=self.arduino_optical_fork.digital[3].read()
+
+        pos_y = self.general_motors_controller.get_position_xyz()[1]
+        self.move_mirror_motor(position=pos_y)
+        print(pos_y)
+
