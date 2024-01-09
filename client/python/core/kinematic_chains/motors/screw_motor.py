@@ -95,9 +95,7 @@ class ScrewController:
         it.start()
         # Permettre à l'itérateur de démarrer
         time.sleep(1)
-        digital_value = self.arduino_end_stop.digital[pin].read()
-        g_code = '$X' + '\n'  
-        self.arduino_motors.write(g_code.encode())
+        digital_value = self.arduino_end_stop.digital[pin].read()        
         g_code = '$H' + '\n'  
         self.arduino_motors.write(g_code.encode())
         while digital_value is True:
@@ -113,28 +111,3 @@ class ScrewController:
 # Utilisation de la classe
 # arduino_motors et arduino_end_stop doivent être définis au préalable
 #screw_controller.initialize_screw()
-
-import serial  
-from pyfirmata import Arduino, util, INPUT
-
-# INITIALISATION MOTEUR:
-
-COM_PORT_MOTORS = 'COM3'
-COM_PORT_SENSORS = 'COM9'
-BAUD_RATE = 115200
-INITIALIZATION_TIME = 2
-
-arduino_motors = serial.Serial(COM_PORT_MOTORS, BAUD_RATE)
-arduino_motors.write("\r\n\r\n".encode()) # encode pour convertir "\r\n\r\n" 
-time.sleep(INITIALIZATION_TIME)   # Attend initialisation un GRBL
-arduino_motors.flushInput()  # Vider le tampon d'entrée, en supprimant tout son contenu.
-g_code='$X' + '\n'
-arduino_motors.write(g_code.encode())
-# INITIALISATION end-stop:
-
-arduino_end_stop = Arduino(COM_PORT_SENSORS)
-
-screw_controller = ScrewController(arduino_motors, arduino_end_stop)
-
-#screw_controller.move_screw(distance=-2)
-screw_controller.initialize_screw()

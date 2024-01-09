@@ -128,3 +128,28 @@ arduino_motors.write(g_code.encode())
 move_slits(arduino_motors=arduino_motors)
 
 ```
+
+## all_motors.py
+
+```
+import serial  
+
+COM_PORT_MOTORS = 'COM3'
+COM_PORT_SENSORS = 'COM9'
+BAUD_RATE = 115200
+INITIALIZATION_TIME = 2
+
+arduino_motors = serial.Serial(COM_PORT_MOTORS, BAUD_RATE)
+arduino_motors.write("\r\n\r\n".encode()) # encode pour convertir "\r\n\r\n" 
+time.sleep(INITIALIZATION_TIME)   # Attend initialisation un GRBL
+arduino_motors.flushInput()  # Vider le tampon d'entrée, en supprimant tout son contenu.
+g_code='$X' + '\n'
+arduino_motors.write(g_code.encode())
+# INITIALISATION end-stop:
+
+g_code= "?" + '\n'
+general_motors_controller=GeneralMotorsController(arduino_motors)
+general_motors_controller.execute_g_code(g_code)
+print(general_motors_controller.get_position_xyz()[0])
+
+```

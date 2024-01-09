@@ -8,7 +8,7 @@ class GeneralMotorsController:
     """
     This program controls all the motors present on the VARIAN 634.
     """
-    def __init__(self, arduino_motors):
+    def __init__(self, arduino_motors, arduino_sensor):
         """
         Initialize the controller with an Arduino motor instance.
 
@@ -16,7 +16,16 @@ class GeneralMotorsController:
             arduino_motors (object): An instance of the Arduino motor to control.
         """
         self.arduino_motors = arduino_motors
+        self.arduino_sensor=arduino_sensor
+        self.screw_motor= [arduino_motors,'X', 10, False]
+        self.mirror_cuves_motor=self.move_motor(axe='Y')
+        self.slits_motor=self.move_motor(axe='Z')
 
+
+    def move_motor(self, axe, distance, speed=10, relative=False):
+        self.set_screw_speed(speed)
+        mode = 'G91\n' if relative else 'G90\n'
+        self.arduino_motors.write(f'{mode}G0{axe}{distance}\n'.encode())
     def get_motor_state(self):
         """
         Query and return the current state of the motor.
@@ -81,5 +90,3 @@ class GeneralMotorsController:
             g_code (str): The G-code command to be sent to the motor.
         """
         self.arduino_motors.write(f'{g_code}\n'.encode())
-
-
