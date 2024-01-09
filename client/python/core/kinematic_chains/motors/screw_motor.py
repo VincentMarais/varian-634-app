@@ -77,32 +77,64 @@ class ScrewController:
         self.arduino_motors.write(b"?\n")
         return self.arduino_motors.readline().decode().strip().split(":")[1]
 
-    def initialize_screw(self, pin=4):
+    def initialize_screw(self, pin=2):
         """
         Initialize the screw for the start of the experiment.
         
         Args:
             arduino_motors (serial.Serial): Motor Arduino instance connected to the screw.
             arduino_end_stop (Arduino): End stop sensor instance.
-            pin (int): Digital pin number for the end stop sensor.
+            pin (int): Digital pin number for the end stop sensor côté buté.
         """
 
         general_motors_controller=GeneralMotorsController(self.arduino_motors)
 
         self.arduino_motors.write('G91\n'.encode())
         self.arduino_end_stop.digital[pin].mode = INPUT
-        util.Iterator(self.arduino_end_stop).start()
+        it = util.Iterator(self.arduino_end_stop)
+        it.start()
+        # Permettre à l'itérateur de démarrer
         time.sleep(1)
-
-        self.arduino_motors.write('$X\n$H\n'.encode())
-        while self.arduino_end_stop.digital[pin].read():
-            print("Waiting for motor to reach t he start position...")
+        digital_value = self.arduino_end_stop.digital[pin].read()
+        g_code = '$X' + '\n'  
+        self.arduino_motors.write(g_code.encode())
+        g_code = '$H' + '\n'  
+        self.arduino_motors.write(g_code.encode())
+        while digital_value is True:
+        #move_screw(arduino_motors=arduino_motors, screw_course=-1, screw_translation_speed=10)
+            digital_value=self.arduino_end_stop.digital[pin].read()
+            print("Le moteur n'est pas au départ : ", digital_value)
             time.sleep(0.1)
-
-        print("Diffraction grating motor is ready for acquisition!")
+        print("On est bien au départ !")    
         general_motors_controller.wait_for_motor_idle()
+        print("Moteur du réseau de diffraction est prêt pour l'acquisition !")
+        
 
 # Utilisation de la classe
 # arduino_motors et arduino_end_stop doivent être définis au préalable
 #screw_controller.initialize_screw()
 
+import serial  
+from pyfirmata import Arduino, util, INPUT
+
+# INITIALISATION MOTEUR:
+
+COM_PORT_MOTORS = 'COM3'
+COM_PORT_SENSORS = 'COM9'
+BAUD_RATE = 115200
+INITIALIZATION_TIME = 2
+
+arduino_motors = serial.Serial(COM_PORT_MOTORS, BAUD_RATE)
+arduino_motors.write("\r\n\r\n".encode()) # encode pour convertir "\r\n\r\n" 
+time.sleep(INITIALIZATION_TIME)   # Attend initialisation un GRBL
+arduino_motors.flushInput()  # Vider le tampon d'entrée, en supprimant tout son contenu.
+g_code='$X' + '\n'
+arduino_motors.write(g_code.encode())
+# INITIALISATION end-stop:
+
+arduino_end_stop = Arduino(COM_PORT_SENSORS)
+
+screw_controller = ScrewController(arduino_motors, arduino_end_stop)
+
+#screw_controller.move_screw(distance=-2)
+screw_controller.initialize_screw()
