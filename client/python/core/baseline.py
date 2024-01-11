@@ -5,9 +5,8 @@ import time
 import numpy as np
 
 # Motors
-from kinematic_chains.motors.all_motors import GeneralMotorsController
-from kinematic_chains.motors.screw_motor import ScrewController
-from kinematic_chains.motors.mirror_cuves_motor import MirrorCuvesController
+from kinematic_chains.motors.motors_varian_634 import GeneralMotorsController
+
 
 # Voltage acquisition
 from electronics_controler.ni_pci_6221 import VoltageAcquisition
