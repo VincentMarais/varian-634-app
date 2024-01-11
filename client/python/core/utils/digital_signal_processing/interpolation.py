@@ -34,9 +34,7 @@ def spline_interpolation(data_x, data_y, tilte_data_x, title_data_y):
 
 
 
-def sample_absorbance(absorbance_baseline, absorbance_scanning, pas_scanning, nom_fichier_baseline):
-    data_baseline = pd.read_csv(nom_fichier_baseline, encoding='ISO-8859-1')
-    absorbance_baseline = data_baseline['Absorbance']
+def sample_absorbance(absorbance_baseline, absorbance_scanning, pas_scanning):
     absorbance_baseline_acquisition=[]
     sample_absorbance=[]
     for i in range (0,len(absorbance_baseline),pas_scanning):

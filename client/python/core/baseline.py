@@ -2,13 +2,14 @@
 This program will create the baseline for the absorbance analysis of the sample.
 """
 import time
-import numpy as np
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
+import pandas as pd
+
+import numpy as np
 
 # Motors
 from kinematic_chains.motors.motors_varian_634 import GeneralMotorsController
-
 
 # Voltage acquisition
 from electronics_controler.ni_pci_6221 import VoltageAcquisition
@@ -16,7 +17,11 @@ from electronics_controler.ni_pci_6221 import VoltageAcquisition
 # Data processing
 from utils.data_csv import save_data_csv
 from utils.draw_curve import graph
-from utils.directory_creation import creation_directory_date_slot, get_solution_cuvette, delete_files_in_directory
+from utils.directory_creation import ExperimentManager
+from utils.digital_signal_processing.interpolation import sample_absorbance
+
+experim_manager=ExperimentManager()
+
 
 class SpectroBaseline:
     def __init__(self, arduino_motors, arduino_sensors):
@@ -41,12 +46,12 @@ class SpectroBaseline:
             slot_size (string): Size of the slot used
         """
         echantillon_name = input("Nom de l'espèce étudié ? ")
-        [path, date, slot_size] = creation_directory_date_slot()
+        [path, date, slot_size] = experim_manager.creation_directory_date_slot()
         self.motors_controller.initialisation_motors()
 
         return echantillon_name, path, date, slot_size
 
-    def perform_step_measurement_baseline(self):
+    def perform_step_measurement(self):
         """
         Effectue une mesure à un pas donné et retourne les tensions mesurées.
         """
@@ -70,18 +75,18 @@ class SpectroBaseline:
         """
         return -31.10419907 * position + 800
 
-    def precision_mode_baseline(self, screw_travel, number_measurements):
+    def precision_mode(self, screw_travel, number_measurements):
         """
         Exécute le mode de précision pour la mesure et retourne les résultats.
         """
-        choice = get_solution_cuvette()
+        choice = experim_manager.get_solution_cuvette()
         voltages_photodiode_1, voltages_photodiode_2 = [], []
         no_screw, wavelength = [0], []
         step = screw_travel / number_measurements
         time_per_step = (step * 60) / 10 # screw_translation_speed=10
 
         for i in range(1, number_measurements):
-            voltage_1, voltage_2 = self.perform_step_measurement_baseline()
+            voltage_1, voltage_2 = self.perform_step_measurement()
             voltages_photodiode_1.append(voltage_1)
             voltages_photodiode_2.append(voltage_2)
             position = i * step
@@ -91,42 +96,39 @@ class SpectroBaseline:
             wavelength.append(self.calculate_wavelength(position))
 
         reference_solution, sample_solution = (voltages_photodiode_1, voltages_photodiode_2) if choice == 'cuve 1' else (voltages_photodiode_2, voltages_photodiode_1)
-        return list(reversed(wavelength)), list(reversed(reference_solution)), list(reversed(sample_solution)), list(reversed(no_screw))
+        return step, list(reversed(wavelength)), list(reversed(reference_solution)), list(reversed(sample_solution)), list(reversed(no_screw))
 
-    def baseline_acquisition(self, screw_travel, number_measurements):
+    
+
+    def acquisition(self, screw_travel, number_measurements, mode):
         """
         Effectue une acquisition complète et sauvegarde les données.
         """
         [echantillon, path, date, slot_size] = self.initialize_measurement()
-        data_acquisition = self.precision_mode_baseline(screw_travel, number_measurements)
+        data_acquisition = self.precision_mode(screw_travel, number_measurements)
         title_data_acquisition = ["Longueur d'onde (nm)", "Tension référence (Volt)", "Tension échantillon (Volt)", "pas de vis (mm)"]
-        title_file = 'baseline' + date + '_' + slot_size + '_' + echantillon
-        save_data_csv(path=path, data_list=data_acquisition, title_list=title_data_acquisition, file_name=title_file)
+        title_file = mode + '_' + date + '_' + slot_size + '_' + echantillon
+        save_data_csv(path=path, data_list=data_acquisition[1:], title_list=title_data_acquisition, file_name=title_file)
         self.motors_controller.wait_for_idle()
-        self.motors_controller.reset_screw_position()
-        absorbance_baseline = np.log(data_acquisition[2]/data_acquisition[1])
-        return title_file, absorbance_baseline
+        self.motors_controller.reset_screw_position(screw_travel)
+        step=data_acquisition[0]
+        no_screw=data_acquisition[4]
+        wavelength=data_acquisition[1]
+        absorbance = np.log(data_acquisition[3]/data_acquisition[2])
+        return step, path, title_file, wavelength, no_screw, absorbance    
     
     def baseline_verification(self):
         """
-        verification=Vérifie si je fichier baseline_date_heure.csv est bien créé
-        
-        Si verification=False
-            print("Le fichier baseline_date_heure.csv n'est pas créé.")
-            print("Réalisation de la baseline")
-            execute baseline_acquisition
-            supprime tout les anciens dans le répertoire : ./client/python/core/data_baseline
+        Checks if a baseline file exists for the Varian 634 scanning mode.
 
-        Sinon :
-            reponse=input("Souhaitez vous réaliser une nouvelle baseline, 'Oui' ou 'Non' ")
-            Si reponse='Oui' :
-                execute  fonction acquisition baseline
-            Si reponse='Non' :
+        This function checks if a baseline file named 'data_baseline_DD_MM_YYYY.csv' exists
+        in the specified path. If the file does not exist, it prompts the user to decide
+        whether to create a new baseline by calling the 'baseline_acquisition' method. If the
+        file exists, the user is given the option to create a new baseline or proceed without
+        creating one.
 
-            Si reponse not in ['Oui', 'Non']:
-                reponse=input("Souhaitez vous réaliser une nouvelle baseline, 'Oui' ou 'Non'")
-                
-        
+        Returns:
+            None        
         """
         current_date = datetime.now() 
         current_day = current_date.strftime("%d_%m_%Y")
@@ -134,16 +136,16 @@ class SpectroBaseline:
         # Vérification si le fichier baseline_date_heure.csv existe
         if not os.path.exists(baseline_file):
             print("Le fichier baseline_date_heure.csv n'est pas créé.")
-            delete_files_in_directory(self.path_baseline)
+            experim_manager.delete_files_in_directory(self.path_baseline)
             print("Réalisation de la baseline")
-            self.baseline_acquisition(screw_travel=13.3, number_measurements=200)
+            self.acquisition(screw_travel=13.3, number_measurements=200, mode="baseline")
             print("Exécution de baseline_acquisition")
 
         else:
             reponse = input("Souhaitez-vous réaliser une nouvelle baseline, 'Oui' ou 'Non'? ").lower()
 
             if reponse == 'oui':
-                self.baseline_acquisition(screw_travel=13.3, number_measurements=200)
+                self.acquisition(screw_travel=13.3, number_measurements=200, mode="baseline")
                 print("Exécution de acquisition_baseline")
 
             elif reponse == 'non':
@@ -152,10 +154,45 @@ class SpectroBaseline:
             else:
                 while reponse not in ['oui', 'non']:
                     reponse = input("Répondez par 'Oui' ou 'Non'. Souhaitez-vous réaliser une nouvelle baseline? ").lower()
+        return baseline_file
 
+    def scanning_absorbance(self, screw_travel, number_measurements, mode):
+        baseline_file=self.baseline_verification()
+        data_baseline = pd.read_csv(baseline_file, encoding='ISO-8859-1')
+        absorbance_baseline = data_baseline['Absorbance']
 
+        data_acquisition=self.acquisition(screw_travel, number_measurements, mode)
         
+        absorbance = sample_absorbance(absorbance_baseline, data_acquisition[-1], data_acquisition[0])
 
+    
 
-# End-of-file (EOF)
+    def scanning_acquisition(self, screw_travel, number_measurements, mode='scanning'):
+        """
+        Effectue une acquisition complète de données, sauvegarde les résultats et gère les états du moteur.
 
+        Args:
+            arduino_motors (serial.Serial): Interface de communication avec les moteurs Arduino.
+            arduino_sensors (serial.Serial): Interface de communication avec les capteurs Arduino.
+            screw_travel (float): Distance totale que la vis doit parcourir.
+            number_measurements (int): Nombre total de mesures à effectuer.
+            screw_translation_speed (int): Vitesse de déplacement de la vis.
+            pulse_frequency (float): Fréquence de la forme d'onde carrée pour la stimulation.
+            duty_cycle (float): Rapport cyclique de la forme d'onde carrée.
+            samples_per_channel (int): Nombre d'échantillons par canal à mesurer.
+            sample_rate (int): Fréquence d'échantillonnage des mesures.
+            channels (list): Liste des canaux utilisés pour la mesure.
+        """
+        baseline_file=self.baseline_verification()
+        data_baseline = pd.read_csv(baseline_file, encoding='ISO-8859-1')
+        absorbance_baseline = data_baseline['Absorbance']
+
+        [step, path, title_file, wavelength, no_screw, absorbance_scanning]=self.acquisition(screw_travel, number_measurements, mode)
+        
+        absorbance = sample_absorbance(absorbance_baseline, absorbance_scanning, step)
+
+        title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "pas de vis (mm)"]
+        data_acquisition = [wavelength, absorbance, no_screw]
+        title_file= title_file + '_final'
+        path=data_acquisition[0]
+        save_data_csv(path, data_acquisition, title_data_acquisition, title_file)# End-of-file (EOF)

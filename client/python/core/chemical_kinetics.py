@@ -3,20 +3,23 @@
 of the absorbance kinetics for the absorbance 
 analysis of the sample."""
 
-import time
 import numpy as np
 
 # Motors
-from kinematic_chains.motors.all_motors import GeneralMotorsController
-from kinematic_chains.motors.screw_motor import ScrewController
-from kinematic_chains.motors.mirror_cuves_motor import MirrorCuvesController
+from kinematic_chains.motors.motors_varian_634 import GeneralMotorsController
 
 # Voltage acquisition
 from electronics_controler.ni_pci_6221 import VoltageAcquisition
 
+# Data processing
 from utils.data_csv import save_data_csv
+from utils.draw_curve import graph
+from utils.directory_creation import ExperimentManager
+from utils.digital_signal_processing.interpolation import sample_absorbance
 
 from baseline import SpectroBaseline
+
+experim_manager=ExperimentManager()
 
 class SpectroKineticsAnalysis:
     """
@@ -27,49 +30,42 @@ class SpectroKineticsAnalysis:
     def __init__(self, arduino_motors, arduino_sensors):
         self.arduino_motors = arduino_motors
         self.arduino_sensors = arduino_sensors
+        self.motors_controller = GeneralMotorsController(self.arduino_motors, self.arduino_sensors)
+        self.ni_pci_6221= VoltageAcquisition()
+        self.path_baseline="./client/python/core/data_baseline"
+        self.baseline=SpectroBaseline(self.arduino_motors, self.arduino_sensors)
+    
+    
 
-    def wait_for_user_confirmation(self, prompt):
-        while input(prompt) != 'Oui':
-            pass
-
-    def measure_voltage(self, channel, samples_per_channel, sample_rate, square_wave_frequency, channels):
-        return voltage_acquisition_scanning(samples_per_channel, sample_rate, square_wave_frequency, channels, channel=channel)
-
-    def run_analysis(self, temps_d_acquisition, longueurs_a_analyser, samples_per_channel, sample_rate, square_wave_frequency, channels, delay_between_measurements):
-        [echantillon, path, date, slot_size] = SpectroBaseline.initialize_measurement(self.arduino_motors, self.arduino_sensors, screw_translation_speed=10)
+    def run_analysis(self, time_acquisition, longueurs_a_analyser, delay_between_measurements):
+        [echantillon, path, date, slot_size] = self.baseline.initialize_measurement()
 
         for longueur_d_onde in longueurs_a_analyser:
             course_vis = 1 / 31.10419907 * (800 - longueur_d_onde)
-            move_screw(self.arduino_motors, course_vis, screw_translation_speed=12)
-            wait_for_motor_idle(self.arduino_motors)
+            self.motors_controller.move_screw(course_vis)
+            self.motors_controller.wait_for_motor_idle(self.arduino_motors)
 
-            choice = get_solution_cuvette()
-            wait_for_motor_idle(self.arduino_motors)
+            choice = experim_manager.get_solution_cuvette()
+            self.motors_controller.wait_for_idle()
 
             cuvette_prompt = "Avez-vous mis votre solution dans la cuve appropriée ? "
-            self.wait_for_user_confirmation(cuvette_prompt)
+            experim_manager.wait_for_user_confirmation(cuvette_prompt)
+            channel="ai0" if choice == "cuve 1" else "ai1"
+            tension_blanc = self.ni_pci_6221.voltage_acquisition_scanning_baseline(channel)
+            self.motors_controller.move_mirror_cuves_motor(0.33334)
 
-            tension_blanc = self.measure_voltage("ai0" if choice == "cuve 1" else "ai1", samples_per_channel, sample_rate, square_wave_frequency, channels)
-            move_mirror_cuves_motor(self.arduino_motors, 0.33334)
-
-            start_time = time.time()
             tensions_echantillon = []
             temps = []
 
-            while time.time() - start_time < temps_d_acquisition:
-                tension_echantillon_t = self.measure_voltage("ai1" if choice == "cuve 1" else "ai0", samples_per_channel, sample_rate, square_wave_frequency, channels)
-                tensions_echantillon.append(tension_echantillon_t)
-                temps.append(time.time() - start_time)
-                time.sleep(delay_between_measurements)
+            self.ni_pci_6221.voltage_acquisition_chemical_kinetics(channel, time_acquisition, delay_between_measurements)
 
-            move_mirror_cuves_motor(self.arduino_motors, 0.33334)
+            self.motors_controller.move_mirror_cuves_motor(0.33334)
 
             absorbance = np.log(np.array(tensions_echantillon) / tension_blanc)
             data_acquisition = [longueur_d_onde, temps, absorbance]
             title_file = f'{date}_{slot_size}_{echantillon}_longueur_{longueur_d_onde}'
             save_data_csv(path, data_acquisition, ["Longueur d'onde (nm)", "Temps (s)", "Absorbance"], title_file)
-
-            reset_screw_position(self.arduino_motors, course_vis, screw_translation_speed=10)
+            self.motors_controller.reset_screw_position(course_vis)
 
 # Usage
 # analyzer = ChemicalKineticsAnalyzer(arduino_motors, arduino_sensors)

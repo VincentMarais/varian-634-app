@@ -59,7 +59,7 @@ class VoltageAcquisition:
         task.timing.cfg_implicit_timing(sample_mode=AcquisitionType.CONTINUOUS)
         task.start()
     
-    def acquire_data_min_voltages(self, task):
+    def measure_voltage(self, task):
         min_voltages=[]
         frequence = int(self.frequency[0])
         for _ in range(frequence):
@@ -75,7 +75,7 @@ class VoltageAcquisition:
         mean = np.mean(min_voltages)
         return mean
         
-    def acquire_data_voltages_chemical_kinetics(self, task, time_acquisition, time_per_acquisition):
+    def acquire_data_voltages_chemical_kinetics(self, time_acquisition, delay_between_measurements):
         """
         Acquiert les tensions minimales à partir de la tâche de mesure de tension.
 
@@ -89,17 +89,22 @@ class VoltageAcquisition:
 
         """
         voltages = []
-        start_time = time.time()
-        while time.time() - start_time < time_acquisition:  # Boucle pendant la durée spécifiée
-            start_time_temp=time.time()
-            # Acquisition des données
-            data=self.acquire_data_min_voltages(task)
-            voltages.append(data)
-            intant_time=time.time() - start_time_temp
-            while intant_time < time_per_acquisition:
-                intant_time+= time.time() - start_time_temp            
-        task.stop()
-        return voltages
+        temps = [0]
+        
+        with nidaqmx.Task() as read_voltage :
+            start_time = time.time()
+
+            while time.time() - start_time < time_acquisition:  # Boucle pendant la durée spécifiée
+                start_time_temp=time.time()
+                # Acquisition des données
+                data=self.measure_voltage(read_voltage)
+                voltages.append(data)
+                intant_time=time.time() - start_time_temp
+                while intant_time < delay_between_measurements:
+                    intant_time+= time.time() - start_time_temp
+                temps.append(intant_time)            
+            read_voltage.stop()
+        return temps, voltages
 
     def voltage_acquisition_scanning_baseline(self, channel):
         """
@@ -119,7 +124,7 @@ class VoltageAcquisition:
         with nidaqmx.Task() as task_voltage, nidaqmx.Task() as task_impulsion:
             self.configure_task_impulsion(task_impulsion)
             self.configure_task_voltage(task_voltage, self.channels[channel])
-            min_voltages = self.acquire_data_min_voltages(task_voltage)
+            min_voltages = self.measure_voltage(task_voltage)
             task_impulsion.stop()
             task_voltage.stop()
         return min_voltages
@@ -142,7 +147,7 @@ class VoltageAcquisition:
         with nidaqmx.Task() as task_voltage, nidaqmx.Task() as task_impulsion:
             self.configure_task_impulsion(task_impulsion)
             self.configure_task_voltage(task_voltage, self.channels[channel])
-            voltages = self.acquire_data_voltages_chemical_kinetics(task_voltage, time_acquisition, time_per_acquisition)
+            voltages = self.acquire_data_voltages_chemical_kinetics(time_acquisition, time_per_acquisition)
             task_impulsion.stop()
             task_voltage.stop()
         return voltages

@@ -26,3 +26,11 @@ title_list = ["Liste 1", "Liste 2", "rgrzgzrgz"]
 save_data_csv(path, file_name, data_list, title_list)
 ```
 
+## 
+
+```
+experiment_manager = ExperimentManager()
+path, date, slot_size = experiment_manager.creation_directory_date_slot()
+physical_data_path = experiment_manager.path_creation(path, "physical_data")
+experiment_manager.delete_files_in_directory(physical_data_path)
+```
