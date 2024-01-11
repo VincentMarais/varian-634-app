@@ -9,7 +9,7 @@ class GeneralMotorsController:
     """
     This program controls all the motors present on the VARIAN 634.
     """
-    def __init__(self, arduino_motors, arduino_sensors):
+    def __init__(self, arduino_motors_instance, arduino_sensors_instance):
         """
         Initialize the controller with an Arduino motor instance.
 
@@ -17,11 +17,12 @@ class GeneralMotorsController:
             arduino_motors (object): An instance of the Arduino motor to control.
         """
         # Arduino
-        self.arduino_motors = arduino_motors
-        self.arduino_sensors = arduino_sensors
+        self.arduino_motors = arduino_motors_instance
+        self.arduino_sensors = arduino_sensors_instance
         # Screw motor
         self.screw_motor = ['X', '$110', 10, False]  # [axe, speed, type de déplacement]
-        self.pin_limit_switch_screw=[2, 4] # pin=2 : limit switch next to the mechanical stop at the screw
+        self.pin_limit_switch_screw=[2, 4] 
+        # pin=2 : limit switch next to the mechanical stop at the screw
         self.mirror_cuves_motor = ['Y', '$111', 14, False]
         self.pin_limit_switch_mirror_cuves=[3]
         self.slits_motor = ['Z', '$112', 10, False]
@@ -140,7 +141,8 @@ class GeneralMotorsController:
         Déplacement arrière de la vis
         
         Args:
-            arduino_motors (serial.Serial): Instance représentant le moteur Arduino connecté à la vis.
+            arduino_motors (serial.Serial): Instance représentant 
+            le moteur Arduino connecté à la vis.
             screw_course (float): Position de la vis à laquelle revenir en arrière.
             screw_translation_speed (int): Vitesse de translation de la vis à régler.
         
@@ -216,6 +218,13 @@ class GeneralMotorsController:
         print("Moteur du réseau de diffraction est prêt pour l'acquisition !")
         # End-of-file (EOF)
 
+    def initialisation_motors(self):
+        """
+        Initializes all motors to start an acquisition
+        """
+        self.initialize_mirror_position()
+        self.wait_for_idle()
+        self.initialisation_motor_screw_slipt()
 
 if __name__ == "__main__":
     import serial
@@ -234,13 +243,11 @@ if __name__ == "__main__":
     # INITIALISATION Forche optique:
 
     arduino_sensors = Arduino(COM_PORT_SENSORS)
-    arduino_motors_instance = arduino_motors  # Create an instance of the Arduino motor
-    arduino_sensors_instance = arduino_sensors  # Create an instance of the Arduino sensors
-
-    motors_controller = GeneralMotorsController(arduino_motors_instance, arduino_sensors_instance)
+    
+    motors_controller = GeneralMotorsController(arduino_motors, arduino_sensors)
 
     # Test set_motors_speed function
-    motors_controller.set_motors_speed(motors_controller.screw_motor, 10)  # Set screw motor speed to 100
+    motors_controller.set_motors_speed(motors_controller.screw_motor, 10)  # Set screw motor speed to 10
 
     # Test get_motor_state function
     motor_state = motors_controller.get_motor_state()
@@ -254,7 +261,7 @@ if __name__ == "__main__":
     print("Current Position:", current_position)
 
     # Test execute_g_code function
-    motors_controller.execute_g_code("G0 X1 Y1 Z1")  # Example G-code command
+    motors_controller.execute_g_code("G0 X1 Y1 Z0.01")  # Example G-code command
 
     # Test move_motor function
     motors_controller.move_motor(motors_controller.screw_motor, 5)  # Move screw motor by 5 units
@@ -274,9 +281,6 @@ if __name__ == "__main__":
     # Test move_screw function
     motors_controller.move_screw(3)  # Move screw motor by 3 units
 
-    # Test initialize_mirror_position function
-    motors_controller.initialize_mirror_position()
-
-    # Test initialisation_motor_screw_slipt function
-    motors_controller.initialisation_motor_screw_slipt()
+    # Test initialisation_motors function
+    motors_controller.initialisation_motors()
 

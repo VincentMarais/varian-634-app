@@ -78,4 +78,17 @@ def get_solution_cuvette():
         solution = input("Veuillez choisir cuve 1 ou cuve 2 : ")
     print("La solution de blanc est dans la", solution)
     return solution
-# End-of-file (EOF)
+
+def delete_files_in_directory(directory_path):
+    """
+    Supprime tout les fichiers dans un repertoire donné
+
+    Entry : 
+        directory_path (str) : 
+    """
+    with os.scandir(directory_path) as entries:
+        for entry in entries:
+            if entry.is_file():
+                os.remove(entry.path)
+
+

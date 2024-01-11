@@ -13,7 +13,7 @@ class VoltageAcquisition:
     """
     class program allows reading the voltage across the photodiodes using an NI-PCI 6221 card.
     """
-    def __init__(self, channels, sample_rate, samples_per_channel):
+    def __init__(self):
         """
         Initialise une instance de la classe VoltageAcquisition.
 
@@ -23,9 +23,13 @@ class VoltageAcquisition:
         - samples_per_channel : Nombre d'échantillons à acquérir par canal.
 
         """
-        self.channels = channels
-        self.sample_rate = sample_rate
-        self.samples_per_channel = samples_per_channel
+        self.channels = ['Dev1/ai0', 'Dev1/ai1']  
+        self.sample_rate = 30000
+        self.samples_per_channel = 250000
+        self.frequency = np.array([20.0])
+        self.duty_cycle = np.array([0.5])
+        self.device='/Dev1/ctr0'
+        self.path='C:/Users/admin/Desktop/GitHub/varian-634-app/client/python/core'
 
     def configure_task_voltage(self, task, channel):
         """
@@ -38,8 +42,9 @@ class VoltageAcquisition:
         """
         task.ai_channels.add_ai_voltage_chan(channel, terminal_config=TerminalConfiguration.DIFF)
         task.timing.cfg_samp_clk_timing(self.sample_rate, samps_per_chan=self.samples_per_channel, sample_mode=AcquisitionType.FINITE)
-
-    def configure_task_impulsion(self, task, frequency, duty_cycle, device='/Dev1/ctr0'):
+        
+            
+    def configure_task_impulsion(self, task):
         """
         Configure la tâche de génération d'impulsion.
 
@@ -50,11 +55,27 @@ class VoltageAcquisition:
         - device : Nom du périphérique de compteur à utiliser (par défaut, '/Dev1/ctr0').
 
         """
-        task.co_channels.add_co_pulse_chan_freq(device, freq=frequency, duty_cycle=duty_cycle, initial_delay=0.0)
+        task.co_channels.add_co_pulse_chan_freq(self.device, freq=self.frequency[0], duty_cycle=self.duty_cycle, initial_delay=0.0)
         task.timing.cfg_implicit_timing(sample_mode=AcquisitionType.CONTINUOUS)
         task.start()
-
-    def acquire_data_min_voltages(self, task, frequency, time_acquisition=None):
+    
+    def acquire_data_min_voltages(self, task):
+        min_voltages=[]
+        frequence = int(self.frequency[0])
+        for _ in range(frequence):
+                # Acquisition des données
+            data = task.read(number_of_samples_per_channel=self.samples_per_channel)
+            # Conversion des données en un tableau numpy pour faciliter les calculs
+            np_data = np.array(data)
+                
+                # Trouver et stocker le minimum
+            min_voltage = np.min(np_data)
+            min_voltages.append(min_voltage)
+        task.stop()
+        mean = np.mean(min_voltages)
+        return mean
+        
+    def acquire_data_voltages_chemical_kinetics(self, task, time_acquisition, time_per_acquisition):
         """
         Acquiert les tensions minimales à partir de la tâche de mesure de tension.
 
@@ -67,18 +88,20 @@ class VoltageAcquisition:
         - min_voltages : Liste des tensions minimales mesurées.
 
         """
-        min_voltages = []
+        voltages = []
         start_time = time.time()
-        while True:
-            if time_acquisition and (time.time() - start_time >= time_acquisition):
-                break
-            data = task.read(number_of_samples_per_channel=self.samples_per_channel)
-            min_voltages.append(np.min(data))
-            if not time_acquisition and len(min_voltages) >= frequency:
-                break
-        return min_voltages
+        while time.time() - start_time < time_acquisition:  # Boucle pendant la durée spécifiée
+            start_time_temp=time.time()
+            # Acquisition des données
+            data=self.acquire_data_min_voltages(task)
+            voltages.append(data)
+            intant_time=time.time() - start_time_temp
+            while intant_time < time_per_acquisition:
+                intant_time+= time.time() - start_time_temp            
+        task.stop()
+        return voltages
 
-    def perform_voltage_acquisition(self, task_type, frequency, duty_cycle, channel, time_acquisition=None):
+    def voltage_acquisition_scanning_baseline(self, channel):
         """
         Effectue l'acquisition de tension en fonction du type de tâche.
 
@@ -94,19 +117,38 @@ class VoltageAcquisition:
 
         """
         with nidaqmx.Task() as task_voltage, nidaqmx.Task() as task_impulsion:
-            if task_type in ['scanning', 'chemical_kinetics']:
-                self.configure_task_impulsion(task_impulsion, frequency, duty_cycle)
+            self.configure_task_impulsion(task_impulsion)
             self.configure_task_voltage(task_voltage, self.channels[channel])
-            min_voltages = self.acquire_data_min_voltages(task_voltage, frequency, time_acquisition)
-            if task_type in ['scanning', 'chemical_kinetics']:
-                task_impulsion.stop()
-        return np.mean(min_voltages)
+            min_voltages = self.acquire_data_min_voltages(task_voltage)
+            task_impulsion.stop()
+            task_voltage.stop()
+        return min_voltages
+    
+    def voltage_acquisition_chemical_kinetics(self, channel, time_acquisition, time_per_acquisition):
+        """
+        Effectue l'acquisition de tension en fonction du type de tâche.
 
+        Paramètres :
+        - task_type : Type de tâche ('scanning' ou 'chemical_kinetics').
+        - frequency : Fréquence de l'impulsion en hertz (Hz).
+        - duty_cycle : Cycle de service de l'impulsion (entre 0 et 1, où 1 est à 100%).
+        - channel : Index du canal à acquérir.
+        - time_acquisition : Durée d'acquisition en secondes (facultatif).
+
+        Retourne :
+        - Moyenne des tensions minimales mesurées.
+
+        """
+        with nidaqmx.Task() as task_voltage, nidaqmx.Task() as task_impulsion:
+            self.configure_task_impulsion(task_impulsion)
+            self.configure_task_voltage(task_voltage, self.channels[channel])
+            voltages = self.acquire_data_voltages_chemical_kinetics(task_voltage, time_acquisition, time_per_acquisition)
+            task_impulsion.stop()
+            task_voltage.stop()
+        return voltages
+    
 # Utilisation de la classe
 #channels = ['Dev1/ai0', 'Dev1/ai1']
 #acquisition = VoltageAcquisition(channels, sample_rate, samples_per_channel)
 #mean_voltage = acquisition.perform_voltage_acquisition(task_type, frequency, duty_cycle, channel, time_acquisition)
-
-
-
 
