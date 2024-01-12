@@ -1,5 +1,12 @@
 """
-This program will create the baseline for the absorbance analysis of the sample.
+This program will create the baseline for the absorbance analysis of the sample and
+scan wavelengths within a specific interval to detect the peak of absorbance in the solution.
+
+
+Define deferente speed of analysis 3 for exampl (look the exampl in the spectro use in TP GP3A) :
+- suvey 100nm/min
+- half 10nm/min
+- slow 1nm/min  
 """
 import time
 import os
@@ -16,14 +23,14 @@ from electronics_controler.ni_pci_6221 import VoltageAcquisition
 
 # Data processing
 from utils.data_csv import CSVTransformer
-from utils.draw_curve import Varian634ExperimentPlotter  
+from utils.draw_curve import Varian634ExperimentPlotter
 from utils.experiment_manager import ExperimentManager
-from utils.digital_signal_processing.interpolation import sample_absorbance
+from utils.digital_signal_processing.noise_processing import PhotodiodeNoiseReducer
 
 experim_manager=ExperimentManager()
 
 
-class SpectroBaseline:
+class SpectroBaselineScanning:
     def __init__(self, arduino_motors, arduino_sensors):
         self.arduino_motors = arduino_motors
         self.arduino_sensors = arduino_sensors
@@ -35,7 +42,7 @@ class SpectroBaseline:
         self.echantillon_name = input("Nom de l'espèce étudié ? ")
         self.title_file = self.date + '_' + self.slot_size
         self.title_file_echantillon = self.date + '_' + self.slot_size + '_' + self.echantillon_name
-
+        self.noise_processing=PhotodiodeNoiseReducer()
         self.peak_search_window=1
         self.graph=Varian634ExperimentPlotter(self.path, self.title_file_echantillon, self.echantillon_name, self.peak_search_window)
 
@@ -113,11 +120,14 @@ class SpectroBaseline:
         """
         self.initialize_measurement()
         data_acquisition = self.precision_mode(screw_travel, number_measurements)
+        
         title_data_acquisition = ["Longueur d'onde (nm)", "Tension référence (Volt)", "Tension échantillon (Volt)", "pas de vis (mm)"]
-        title_file=mode+self.title_file
-        self.csv.save_data_csv(data_acquisition[1:], title_data_acquisition, self.title_file)
+        title_file=mode + self.title_file
+        self.csv.save_data_csv(data_acquisition[1:], title_data_acquisition, title_file)
+        
         self.motors_controller.wait_for_idle()
         self.motors_controller.reset_screw_position(screw_travel)
+        
         step=data_acquisition[0]
         no_screw=data_acquisition[4]
         wavelength=data_acquisition[1]
@@ -192,7 +202,7 @@ class SpectroBaseline:
 
         [step, wavelength, no_screw, absorbance_scanning]=self.acquisition(screw_travel, number_measurements, 'scanning')
         
-        absorbance = sample_absorbance(absorbance_baseline, absorbance_scanning, step)
+        absorbance = self.noise_processing.sample_absorbance(absorbance_baseline, absorbance_scanning, step)
 
         title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "pas de vis (mm)"]
         data_acquisition = [wavelength, absorbance, no_screw]
