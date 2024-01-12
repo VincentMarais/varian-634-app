@@ -14,10 +14,10 @@ from electronics_controler.ni_pci_6221 import VoltageAcquisition
 # Data processing
 from utils.data_csv import save_data_csv
 from utils.draw_curve import graph
-from utils.directory_creation import ExperimentManager
-from utils.digital_signal_processing.interpolation import sample_absorbance
+from utils.experiment_manager import ExperimentManager
+from utils.digital_signal_processing.noise_processing import PhotodiodeNoiseReducer
 
-from baseline import SpectroBaseline
+from baseline_scanning import SpectroBaselineScanning
 
 experim_manager=ExperimentManager()
 
@@ -33,7 +33,7 @@ class SpectroKineticsAnalysis:
         self.motors_controller = GeneralMotorsController(self.arduino_motors, self.arduino_sensors)
         self.ni_pci_6221= VoltageAcquisition()
         self.path_baseline="./client/python/core/data_baseline"
-        self.baseline=SpectroBaseline(self.arduino_motors, self.arduino_sensors)
+        self.baseline=SpectroBaselineScanning(self.arduino_motors, self.arduino_sensors)
     
     
 
