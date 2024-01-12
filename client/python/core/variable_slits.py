@@ -18,14 +18,13 @@ from utils.experiment_manager import ExperimentManager
 from utils.digital_signal_processing.noise_processing import PhotodiodeNoiseReducer
 
 from baseline_scanning import SpectroBaselineScanning
+from chemical_kinetics import SpectroKineticsAnalysis
 
 experim_manager=ExperimentManager()
 
-class SpectroKineticsAnalysis:
+class SpectroVariableSlits:
     """
-    Ce programme se concentrera sur 1 ou 3 longueurs d'onde 
-    dans une période définie par l'utilisateur et introduira un délai entre deux mesures 
-    d'absorbance lors de l'analyse de la solution.
+    Ce programme executera les en faisant varier la fente variable
     """
     def __init__(self, arduino_motors, arduino_sensors):
         self.arduino_motors = arduino_motors
@@ -33,8 +32,9 @@ class SpectroKineticsAnalysis:
         self.motors_controller = GeneralMotorsController(self.arduino_motors, self.arduino_sensors)
         self.ni_pci_6221= VoltageAcquisition()
 
-        self.baseline=SpectroBaselineScanning(self.arduino_motors, self.arduino_sensors)
+        self.baseline_scanning=SpectroBaselineScanning(self.arduino_motors, self.arduino_sensors)
         self.path_baseline="./client/python/core/data_baseline"
+        self.chemical_kinetics=SpectroKineticsAnalysis(self.arduino_motors, self.arduino_sensors)
 
         self.path, self.date, self.slot_size = experim_manager.creation_directory_date_slot()
         self.echantillon_name = input("Nom de l'espèce étudié ? ")
@@ -48,38 +48,22 @@ class SpectroKineticsAnalysis:
 
         self.csv=CSVTransformer(self.path)
 
+        self.slits_position=[1,2,3,4]
+
     
-    
-
-    def run_kinetics_analysis(self, time_acquisition, longueurs_a_analyser, delay_between_measurements):
-        self.baseline.initialize_measurement()
-
-        for longueur_d_onde in longueurs_a_analyser:
-            course_vis = 1 / 31.10419907 * (800 - longueur_d_onde)
-            self.motors_controller.move_screw(course_vis)
+    def slit_variable_scanning(self, screw_travel, number_measurements):
+        for slits in self.slits_position:
+            self.motors_controller.move_slits(slits)
             self.motors_controller.wait_for_idle()
+            self.baseline_scanning.scanning_acquisition(screw_travel, number_measurements)
 
-            choice = experim_manager.get_solution_cuvette()
+    def slit_variable_chemical_kinetics(self, time_acquisition, longueurs_a_analyser, delay_between_measurements):
+        
+        for slits in self.slits_position:
+            self.motors_controller.move_slits(slits)
             self.motors_controller.wait_for_idle()
-
-            cuvette_prompt = "Avez-vous mis votre solution dans la cuve appropriée ? "
-            experim_manager.wait_for_user_confirmation(cuvette_prompt)
-            channel="ai0" if choice == "cuve 1" else "ai1"
-            tension_blanc = self.ni_pci_6221.voltage_acquisition_scanning_baseline(channel)
-            self.motors_controller.move_mirror_motor(0.33334)
-
-            tensions_echantillon = []
-            temps = []
-
-            self.ni_pci_6221.voltage_acquisition_chemical_kinetics(channel, time_acquisition, delay_between_measurements)
-
-            self.motors_controller.move_mirror_motor(-0.33334)
-
-            absorbance = np.log(np.array(tensions_echantillon) / tension_blanc)
-            data_acquisition = [longueur_d_onde, temps, absorbance]
-            title_file = f'{self.date}_{self.slot_size}_{self.echantillon_name}_longueur_{longueur_d_onde}'
-            self.csv.save_data_csv(data_acquisition, ["Longueur d'onde (nm)", "Temps (s)", "Absorbance"], title_file)
-            self.motors_controller.reset_screw_position(course_vis)
+            self.chemical_kinetics.run_kinetics_analysis(time_acquisition, longueurs_a_analyser, delay_between_measurements)
+        
 
 
 # Usage

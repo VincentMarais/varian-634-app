@@ -44,7 +44,7 @@ class SpectroBaselineScanning:
         self.title_file_echantillon = self.date + '_' + self.slot_size + '_' + self.echantillon_name
         self.noise_processing=PhotodiodeNoiseReducer()
         self.peak_search_window=1
-        self.graph=Varian634ExperimentPlotter(self.path, self.title_file_echantillon, self.echantillon_name, self.peak_search_window)
+        self.graph=Varian634ExperimentPlotter(self.path, self.echantillon_name, self.peak_search_window)
 
         self.csv=CSVTransformer(self.path)
 
@@ -208,5 +208,4 @@ class SpectroBaselineScanning:
         data_acquisition = [wavelength, absorbance, no_screw]
         title_file= self.title_file + '_final'
         self.csv.save_data_csv(data_acquisition, title_data_acquisition, title_file)
-        self.graph.graph_absorbance(title_file)
         # End-of-file (EOF)
