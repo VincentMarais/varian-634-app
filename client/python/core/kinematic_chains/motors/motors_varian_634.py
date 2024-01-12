@@ -20,12 +20,12 @@ class GeneralMotorsController:
         self.arduino_motors = arduino_motors_instance
         self.arduino_sensors = arduino_sensors_instance
         # Screw motor
-        self.screw_motor = ['X', '$110', 10, False]  # [axe, speed, type de déplacement]
+        self.screw_motor = ['X', '$110', 10, 'G91/n']  # [axe, g_code_speed, speed, gcode_type de déplacement]
         self.pin_limit_switch_screw=[2, 4] 
         # pin=2 : limit switch next to the mechanical stop at the screw
-        self.mirror_cuves_motor = ['Y', '$111', 14, False]
+        self.mirror_cuves_motor = ['Y', '$111', 14, 'G91/n']
         self.pin_limit_switch_mirror_cuves=[3]
-        self.slits_motor = ['Z', '$112', 10, False]
+        self.slits_motor = ['Z', '$112', 10, 'G91/n']
         self.pin_limit_switch_slits=[5]
         
 
@@ -38,7 +38,8 @@ class GeneralMotorsController:
             motor_parameters (list): Motor parameters [axis, speed, movement type].
             speed (int): Screw translation speed.
         """
-        self.arduino_motors.write(motor_parameters[1] + f'={speed}\n'.encode())
+        g_code=motor_parameters[1] + str(speed) + '\n'
+        self.execute_g_code(g_code)
         time.sleep(0.5)
 
     def get_motor_state(self):
@@ -104,7 +105,7 @@ class GeneralMotorsController:
         Args:
             g_code (str): The G-code command to be sent to the motor.
         """
-        self.arduino_motors.write(f'{g_code}\n'.encode())
+        self.arduino_motors.write(g_code.encode())
 
     def move_motor(self, motor_parameters, distance):
         """
@@ -114,9 +115,9 @@ class GeneralMotorsController:
             motor_parameters (list): Motor parameters [axis, speed, movement type].
             distance (float): Distance to move.
         """
-        self.set_motors_speed(motor_parameters[1], motor_parameters[2])
-        mode = 'G91\n' if motor_parameters[3] else 'G90\n'
-        self.arduino_motors.write(f'{mode}G0{motor_parameters[0]}{distance}\n'.encode())
+        mode = motor_parameters[3]
+        gcode= mode + "G0" + motor_parameters[0] + str(distance) + '\n'
+        self.execute_g_code(gcode)
 
     def move_mirror_motor(self, distance):
         """
@@ -136,6 +137,12 @@ class GeneralMotorsController:
         """
         self.move_motor(self.screw_motor, distance)
 
+    def move_slits(self, distance):
+        """
+        Move the slits motor by a specified distance.
+        """
+        self.move_motor(self.slits_motor, distance)
+
     def reset_screw_position(self, screw_course):
         """
         Déplacement arrière de la vis
@@ -149,8 +156,7 @@ class GeneralMotorsController:
         Returns:
             Aucune
         """
-        g_code = 'G91' + 'G0X-' + str(screw_course) + '\n'  # Le moteur se déplace en mode relatif
-        self.execute_g_code(g_code)
+        self.move_screw(distance=-screw_course)
 
 
     def initialize_end_stop(self, pin_list):
@@ -177,16 +183,17 @@ class GeneralMotorsController:
         time.sleep(1)
 
         
-    def initialize_mirror_position(self):
+    def initialize_mirror_position(self, pin_mirror):
         """
         An alternative method to initialize the mirror position based on a specific requirement.
         """
+        pin=pin_mirror[0]
         self.initialize_end_stop(self.pin_limit_switch_mirror_cuves)
         self.move_motor(self.mirror_cuves_motor, 1)
-        state = self.arduino_sensors.digital[3].read()
+        state = self.arduino_sensors.digital[pin].read()
         while state is True:
             print("Cuve 1 non atteinte car ", state)
-            state = self.arduino_sensors.digital[3].read()
+            state = self.arduino_sensors.digital[pin].read()
         pos_y = self.get_position_xyz()[1]
         self.move_mirror_motor(distance=pos_y)
         print(pos_y)
@@ -203,13 +210,13 @@ class GeneralMotorsController:
         """
         all_pin=self.pin_limit_switch_screw
         self.initialize_end_stop(all_pin)
-        digital_value = self.arduino_sensors.digital[self.pin_limit_switch_screw[0]].read()
+        digital_value = self.arduino_sensors.digital[all_pin[0]].read()
         g_code = '$X' + '\n'
         self.arduino_motors.write(g_code.encode())
         g_code = '$H' + '\n'
         self.arduino_motors.write(g_code.encode())
         while digital_value is True:
-            digital_value = self.arduino_sensors.digital[self.pin_limit_switch_screw[0]].read()
+            digital_value = self.arduino_sensors.digital[all_pin[0]].read()
             print("Le moteur n'est pas au départ : ", digital_value)
             time.sleep(0.1)
         print("Moteur du réseau de diffraction est prêt pour l'acquisition !")
@@ -222,7 +229,8 @@ class GeneralMotorsController:
         """
         Initializes all motors to start an acquisition
         """
-        self.initialize_mirror_position()
+        pin_mirror=self.pin_limit_switch_mirror_cuves
+        self.initialize_mirror_position(pin_mirror)
         self.wait_for_idle()
         self.initialisation_motor_screw_slipt()
 
@@ -231,7 +239,7 @@ if __name__ == "__main__":
     # INITIALISATION MOTEUR:
 
     COM_PORT_MOTORS = 'COM3'
-    COM_PORT_SENSORS = 'COM6'
+    COM_PORT_SENSORS = 'COM9'
     BAUD_RATE = 115200
     INITIALIZATION_TIME = 2
 
@@ -263,8 +271,11 @@ if __name__ == "__main__":
     # Test execute_g_code function
     motors_controller.execute_g_code("G0 X1 Y1 Z0.01")  # Example G-code command
 
+    # Test wait_for_idle function
+    motors_controller.wait_for_idle()
+
     # Test move_motor function
-    motors_controller.move_motor(motors_controller.screw_motor, 5)  # Move screw motor by 5 units
+    motors_controller.move_motor(motors_controller.screw_motor, 1)  # Move screw motor by 5 units
 
     # Test stop_motors function
     motors_controller.stop_motors()
@@ -277,9 +288,9 @@ if __name__ == "__main__":
 
     # Test move_mirror_motor function
     motors_controller.move_mirror_motor(2)  # Move mirror motor by 2 units
-
+    
     # Test move_screw function
-    motors_controller.move_screw(3)  # Move screw motor by 3 units
+    motors_controller.move_screw(1)  # Move screw motor by 3 units
 
     # Test initialisation_motors function
     motors_controller.initialisation_motors()
