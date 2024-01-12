@@ -3,7 +3,6 @@
 of the absorbance kinetics for the absorbance 
 analysis of the sample."""
 
-import numpy as np
 
 # Motors
 from kinematic_chains.motors.motors_varian_634 import GeneralMotorsController
@@ -32,9 +31,11 @@ class SpectroVariableSlits:
         self.motors_controller = GeneralMotorsController(self.arduino_motors, self.arduino_sensors)
         self.ni_pci_6221= VoltageAcquisition()
 
-        self.baseline_scanning=SpectroBaselineScanning(self.arduino_motors, self.arduino_sensors)
+        self.mode_variable_slits=True
+
+        self.baseline_scanning=SpectroBaselineScanning(self.arduino_motors, self.arduino_sensors, self.mode_variable_slits)
         self.path_baseline="./client/python/core/data_baseline"
-        self.chemical_kinetics=SpectroKineticsAnalysis(self.arduino_motors, self.arduino_sensors)
+        self.chemical_kinetics=SpectroKineticsAnalysis(self.arduino_motors, self.arduino_sensors, self.mode_variable_slits)
 
         self.path, self.date, self.slot_size = experim_manager.creation_directory_date_slot()
         self.echantillon_name = input("Nom de l'espèce étudié ? ")
@@ -52,17 +53,18 @@ class SpectroVariableSlits:
 
     
     def slit_variable_scanning(self, screw_travel, number_measurements):
+        self.motors_controller.initialisation_motors()
         for slits in self.slits_position:
             self.motors_controller.move_slits(slits)
             self.motors_controller.wait_for_idle()
-            self.baseline_scanning.scanning_acquisition(screw_travel, number_measurements)
+            self.baseline_scanning.scanning_acquisition(screw_travel, number_measurements, self.mode_variable_slits)
 
     def slit_variable_chemical_kinetics(self, time_acquisition, longueurs_a_analyser, delay_between_measurements):
-        
+        self.motors_controller.initialisation_motors()
         for slits in self.slits_position:
             self.motors_controller.move_slits(slits)
             self.motors_controller.wait_for_idle()
-            self.chemical_kinetics.run_kinetics_analysis(time_acquisition, longueurs_a_analyser, delay_between_measurements)
+            self.chemical_kinetics.run_kinetics_analysis(time_acquisition, longueurs_a_analyser, delay_between_measurements, self.mode_variable_slits)
         
 
 

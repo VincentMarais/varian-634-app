@@ -31,9 +31,10 @@ experim_manager=ExperimentManager()
 
 
 class SpectroBaselineScanning:
-    def __init__(self, arduino_motors, arduino_sensors):
+    def __init__(self, arduino_motors, arduino_sensors, mode_variable_slits):
         self.arduino_motors = arduino_motors
         self.arduino_sensors = arduino_sensors
+        self.mode_variable_slits=mode_variable_slits
         self.motors_controller = GeneralMotorsController(self.arduino_motors, self.arduino_sensors)
         self.ni_pci_6221= VoltageAcquisition()
         
@@ -118,6 +119,11 @@ class SpectroBaselineScanning:
         """
         Effectue une acquisition complète et sauvegarde les données.
         """
+        if self.mode_variable_slits :
+            pass
+        else :
+            self.initialize_measurement()
+
         self.initialize_measurement()
         data_acquisition = self.precision_mode(screw_travel, number_measurements)
         
@@ -196,10 +202,11 @@ class SpectroBaselineScanning:
             sample_rate (int): Fréquence d'échantillonnage des mesures.
             channels (list): Liste des canaux utilisés pour la mesure.
         """
+        
+
         baseline_file=self.baseline_verification()
         data_baseline = pd.read_csv(baseline_file, encoding='ISO-8859-1')
         absorbance_baseline = data_baseline['Absorbance']
-
         [step, wavelength, no_screw, absorbance_scanning]=self.acquisition(screw_travel, number_measurements, 'scanning')
         
         absorbance = self.noise_processing.sample_absorbance(absorbance_baseline, absorbance_scanning, step)

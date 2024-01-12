@@ -27,13 +27,14 @@ class SpectroKineticsAnalysis:
     dans une période définie par l'utilisateur et introduira un délai entre deux mesures 
     d'absorbance lors de l'analyse de la solution.
     """
-    def __init__(self, arduino_motors, arduino_sensors):
+    def __init__(self, arduino_motors, arduino_sensors, mode_variable_slits):
+        self.mode_variable_slits=mode_variable_slits
         self.arduino_motors = arduino_motors
         self.arduino_sensors = arduino_sensors
         self.motors_controller = GeneralMotorsController(self.arduino_motors, self.arduino_sensors)
         self.ni_pci_6221= VoltageAcquisition()
 
-        self.baseline=SpectroBaselineScanning(self.arduino_motors, self.arduino_sensors)
+        self.baseline=SpectroBaselineScanning(self.arduino_motors, self.arduino_sensors, self.mode_variable_slits)
         self.path_baseline="./client/python/core/data_baseline"
 
         self.path, self.date, self.slot_size = experim_manager.creation_directory_date_slot()
@@ -51,8 +52,11 @@ class SpectroKineticsAnalysis:
     
     
 
-    def run_kinetics_analysis(self, time_acquisition, longueurs_a_analyser, delay_between_measurements):
-        self.baseline.initialize_measurement()
+    def run_kinetics_analysis(self, time_acquisition, longueurs_a_analyser, delay_between_measurements, mode_variable_slits):
+        if mode_variable_slits :
+            pass
+        else :
+            self.baseline.initialize_measurement()
 
         for longueur_d_onde in longueurs_a_analyser:
             course_vis = 1 / 31.10419907 * (800 - longueur_d_onde)
