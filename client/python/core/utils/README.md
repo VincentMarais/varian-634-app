@@ -3,17 +3,10 @@
 ## Test python draw_curve.py
 
 ```
-    path="C:/Users/admin/Desktop/Projet_GP/Programmation_Spectro/varian-634-app/experiments/Manip_2023/Manip_06_2023/30_06_2023/Fente_2nm/"
-    sample_reference_file="Tension_blanc_30_06_2023_Fente_2nm.csv"
-    sample_analyzed_file="Tension_echantillon_30_06_2023_Fente_2nm.csv"
+    path="./experiments/experiments_2023/experiments_12_2023/experiments_15_12_2023/Fente_2nm"
     sample_analyzed_name="bleu de bromophénol"
-    graph_title="Absorbance du " + sample_analyzed_name
-    date="27/11/2023"
-
-    graph(path, sample_reference_file, sample_analyzed_file, sample_analyzed_name, graph_title, peak_search_window=20)
-    voltage_curve_display(path, title="voltage and wavelenght", sample_reference_file=sample_reference_file, sample_analyzed_file=sample_analyzed_file)
-    fourier_transformed_display(path=path, title="Transformée de Fourier", FE=250000)# fréquence d'échantillonage de la carte NI-PCI 
-
+    peak_search_window=2
+    file_experiment=15_12_2023_Fente_2nm_Gael.csv
 ```
 
 
