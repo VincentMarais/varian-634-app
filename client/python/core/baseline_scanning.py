@@ -25,29 +25,34 @@ from electronics_controler.ni_pci_6221 import VoltageAcquisition
 from utils.data_csv import CSVTransformer
 from utils.draw_curve import Varian634ExperimentPlotter
 from utils.experiment_manager import ExperimentManager
-from utils.digital_signal_processing.noise_processing import PhotodiodeNoiseReducer
+from utils.digital_signal_processing import PhotodiodeNoiseReducer
 
 experim_manager=ExperimentManager()
 
 
 class SpectroBaselineScanning:
-    def __init__(self, arduino_motors, arduino_sensors, mode_variable_slits):
-        self.arduino_motors = arduino_motors
-        self.arduino_sensors = arduino_sensors
+    """
+    class with all methods to do baseline and scanning
+    """
+    def __init__(self, arduino_motors_intance, arduino_sensors_instance, mode_variable_slits):
+        # init hardware
+        self.arduino_motors = arduino_motors_intance
+        self.arduino_sensors = arduino_sensors_instance
         self.mode_variable_slits=mode_variable_slits
         self.motors_controller = GeneralMotorsController(self.arduino_motors, self.arduino_sensors)
         self.ni_pci_6221= VoltageAcquisition()
-        
+        # init experiment tools
         self.path_baseline="./client/python/core/data_baseline"
         self.path, self.date, self.slot_size = experim_manager.creation_directory_date_slot()
         self.echantillon_name = input("Nom de l'espèce étudié ? ")
         self.title_file = self.date + '_' + self.slot_size
         self.title_file_echantillon = self.date + '_' + self.slot_size + '_' + self.echantillon_name
+        self.csv=CSVTransformer(self.path)
+        # init digital processing
         self.noise_processing=PhotodiodeNoiseReducer()
         self.peak_search_window=1
         self.graph=Varian634ExperimentPlotter(self.path, self.echantillon_name, self.peak_search_window)
 
-        self.csv=CSVTransformer(self.path)
 
     def initialize_measurement(self):
         """
@@ -109,8 +114,11 @@ class SpectroBaselineScanning:
             time.sleep(time_per_step)
             no_screw.append(position)
             wavelength.append(self.calculate_wavelength(position))
-
-        reference_solution, sample_solution = (voltages_photodiode_1, voltages_photodiode_2) if choice == 'cuve 1' else (voltages_photodiode_2, voltages_photodiode_1)
+        # reference et cuve 1
+        if choice == 'cuve 1' :
+            reference_solution, sample_solution = (voltages_photodiode_1, voltages_photodiode_2) 
+        else : 
+            reference_solution, sample_solution = (voltages_photodiode_2, voltages_photodiode_1)
         return step, list(reversed(wavelength)), list(reversed(reference_solution)), list(reversed(sample_solution)), list(reversed(no_screw))
 
     
@@ -216,3 +224,27 @@ class SpectroBaselineScanning:
         title_file= self.title_file + '_final'
         self.csv.save_data_csv(data_acquisition, title_data_acquisition, title_file)
         # End-of-file (EOF)
+
+if __name__ == "__main__":
+    import serial
+    from pyfirmata import Arduino
+
+    # INITIALISATION MOTEUR:
+
+    COM_PORT_MOTORS = 'COM3'
+    COM_PORT_SENSORS = 'COM9'
+    BAUD_RATE = 115200
+    INITIALIZATION_TIME = 2
+
+    arduino_motors = serial.Serial(COM_PORT_MOTORS, BAUD_RATE)
+    arduino_motors.write("\r\n\r\n".encode()) # encode pour convertir "\r\n\r\n" 
+    time.sleep(INITIALIZATION_TIME)   # Attend initialisation un GRBL
+    arduino_motors.flushInput()  # Vider le tampon d'entrée, en supprimant tout son contenu.
+
+    # INITIALISATION Forche optique:
+
+    arduino_sensors = Arduino(COM_PORT_SENSORS)
+    MODE_SLITS = False
+
+    baseline_scanning=SpectroBaselineScanning(arduino_motors, arduino_sensors, MODE_SLITS)
+    baseline_scanning.scanning_acquisition(screw_travel=2, number_measurements=3)

@@ -15,7 +15,7 @@ from electronics_controler.ni_pci_6221 import VoltageAcquisition
 from utils.data_csv import CSVTransformer
 from utils.draw_curve import Varian634ExperimentPlotter
 from utils.experiment_manager import ExperimentManager
-from utils.digital_signal_processing.noise_processing import PhotodiodeNoiseReducer
+from utils.digital_signal_processing import PhotodiodeNoiseReducer
 
 from baseline_scanning import SpectroBaselineScanning
 
@@ -27,39 +27,38 @@ class SpectroKineticsAnalysis:
     dans une période définie par l'utilisateur et introduira un délai entre deux mesures 
     d'absorbance lors de l'analyse de la solution.
     """
-    def __init__(self, arduino_motors, arduino_sensors, mode_variable_slits):
+    def __init__(self, arduino_motors_intance, arduino_sensors_instance, mode_variable_slits):
+        # init hardware
+        self.arduino_motors = arduino_motors_intance
+        self.arduino_sensors = arduino_sensors_instance
         self.mode_variable_slits=mode_variable_slits
-        self.arduino_motors = arduino_motors
-        self.arduino_sensors = arduino_sensors
         self.motors_controller = GeneralMotorsController(self.arduino_motors, self.arduino_sensors)
         self.ni_pci_6221= VoltageAcquisition()
-
-        self.baseline=SpectroBaselineScanning(self.arduino_motors, self.arduino_sensors, self.mode_variable_slits)
+        # init experiment tools
         self.path_baseline="./client/python/core/data_baseline"
-
         self.path, self.date, self.slot_size = experim_manager.creation_directory_date_slot()
         self.echantillon_name = input("Nom de l'espèce étudié ? ")
         self.title_file = self.date + '_' + self.slot_size
         self.title_file_echantillon = self.date + '_' + self.slot_size + '_' + self.echantillon_name
-
+        self.baseline=SpectroBaselineScanning(arduino_motors_intance, arduino_sensors_instance, mode_variable_slits)
+        self.csv=CSVTransformer(self.path)
+        # init digital processing
         self.noise_processing=PhotodiodeNoiseReducer()
         self.peak_search_window=1
-        
         self.graph=Varian634ExperimentPlotter(self.path, self.echantillon_name, self.peak_search_window)
 
-        self.csv=CSVTransformer(self.path)
 
     
     
 
-    def run_kinetics_analysis(self, time_acquisition, longueurs_a_analyser, delay_between_measurements, mode_variable_slits):
-        if mode_variable_slits :
+    def run_kinetics_analysis(self, time_acquisition, wavelengths, delay_between_measurements):
+        if self.mode_variable_slits :
             pass
         else :
             self.baseline.initialize_measurement()
 
-        for longueur_d_onde in longueurs_a_analyser:
-            course_vis = 1 / 31.10419907 * (800 - longueur_d_onde)
+        for wavelength in wavelengths:
+            course_vis = 1 / 31.10419907 * (800 - wavelength)
             self.motors_controller.move_screw(course_vis)
             self.motors_controller.wait_for_idle()
 
@@ -80,12 +79,36 @@ class SpectroKineticsAnalysis:
             self.motors_controller.move_mirror_motor(-0.33334)
 
             absorbance = np.log(np.array(tensions_echantillon) / tension_blanc)
-            data_acquisition = [longueur_d_onde, temps, absorbance]
-            title_file = f'{self.date}_{self.slot_size}_{self.echantillon_name}_longueur_{longueur_d_onde}'
+            data_acquisition = [wavelength, temps, absorbance]
+            title_file = f'{self.date}_{self.slot_size}_{self.echantillon_name}_longueur_{wavelength}'
             self.csv.save_data_csv(data_acquisition, ["Longueur d'onde (nm)", "Temps (s)", "Absorbance"], title_file)
             self.motors_controller.reset_screw_position(course_vis)
 
 
-# Usage
-# analyzer = ChemicalKineticsAnalyzer(arduino_motors, arduino_sensors)
-# analyzer.run_analysis(temps_d_acquisition, longueurs_a_analyser, samples_per_channel, sample_rate, square_wave_frequency, channels, delay_between_measurements)
+if __name__ == "__main__":
+    import serial
+    from pyfirmata import Arduino
+    import time
+
+    # INITIALISATION MOTEUR:
+
+    COM_PORT_MOTORS = 'COM3'
+    COM_PORT_SENSORS = 'COM9'
+    BAUD_RATE = 115200
+    INITIALIZATION_TIME = 2
+
+    arduino_motors = serial.Serial(COM_PORT_MOTORS, BAUD_RATE)
+    arduino_motors.write("\r\n\r\n".encode()) # encode pour convertir "\r\n\r\n" 
+    time.sleep(INITIALIZATION_TIME)   # Attend initialisation un GRBL
+    arduino_motors.flushInput()  # Vider le tampon d'entrée, en supprimant tout son contenu.
+
+    # INITIALISATION Forche optique:
+
+    arduino_sensors = Arduino(COM_PORT_SENSORS)
+    MODE_SLITS = False
+
+    kinetics_mode=SpectroKineticsAnalysis(arduino_motors, arduino_sensors, MODE_SLITS)
+    TIME_ACQUISITION=2
+    WAVELENGTHS=[400,450,500]
+    DELAY=1
+    kinetics_mode.run_kinetics_analysis(TIME_ACQUISITION, WAVELENGTHS, DELAY)
