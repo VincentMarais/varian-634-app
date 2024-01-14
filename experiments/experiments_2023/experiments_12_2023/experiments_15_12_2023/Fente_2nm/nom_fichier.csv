@@ -1,4 +1,4 @@
-Absorbance,Longueur d'onde (nm),C,NewColumn1,NewColumn2,NewColumn3,absorbance pics,longueur d'onde pics,absorbance pics,longueur d'onde pics
-1,4,1,value1,data1,info1,,,,
-2,5,,value2,data2,info2,,,,
-3,6,,value3,data3,info3,,,,
+Absorbance,Longueur d'onde (nm),C,NewColumn1,NewColumn2,NewColumn3,absorbance pics,longueur d'onde pics,absorbance pics,longueur d'onde pics,absorbance pics,longueur d'onde pics
+1,4,1,value1,data1,info1,,,,,,
+2,5,,value2,data2,info2,,,,,,
+3,6,,value3,data3,info3,,,,,,
