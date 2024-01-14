@@ -40,7 +40,7 @@ class Varian634BaselineScanning:
         self.arduino_sensors = arduino_sensors_instance
         self.mode_variable_slits=mode_variable_slits
         self.motors_controller = GeneralMotorsController(self.arduino_motors, self.arduino_sensors)
-        self.ni_pci_6221= VoltageAcquisition()
+        self.daq= VoltageAcquisition()
         # init experiment tools
         self.path_baseline="./client/python/core/data_baseline"
         self.path, self.date, self.slot_size = experim_manager.creation_directory_date_slot()
@@ -49,9 +49,9 @@ class Varian634BaselineScanning:
         self.title_file_echantillon = self.date + '_' + self.slot_size + '_' + self.echantillon_name
         self.csv=CSVTransformer(self.path)
         # init digital processing
-        self.noise_processing=PhotodiodeNoiseReducer()
+        self.noise_processing = PhotodiodeNoiseReducer()
         self.peak_search_window=1
-        self.graph=Varian634ExperimentPlotter(self.path, self.echantillon_name, self.peak_search_window)
+        self.graph = Varian634ExperimentPlotter(self.path, self.echantillon_name, self.peak_search_window)
 
 
     def initialize_measurement(self):
@@ -78,11 +78,11 @@ class Varian634BaselineScanning:
         g_code = '$X' + '\n'
         self.arduino_motors.write(g_code.encode())
 
-        voltage_photodiode_1 = self.ni_pci_6221.voltage_acquisition_scanning_baseline(channel='ai0')
+        voltage_photodiode_1 = self.daq.voltage_acquisition_scanning_baseline(channel='ai0')
 
         self.motors_controller.move_mirror_motor(0.33334)
         time.sleep(1)
-        voltage_photodiode_2 = self.ni_pci_6221.voltage_acquisition_scanning_baseline(channel='ai1')
+        voltage_photodiode_2 = self.daq.voltage_acquisition_scanning_baseline(channel='ai1')
 
         self.motors_controller.move_mirror_motor(-0.33334)
         time.sleep(1)
@@ -119,7 +119,7 @@ class Varian634BaselineScanning:
             reference_solution, sample_solution = (voltages_photodiode_1, voltages_photodiode_2) 
         else : 
             reference_solution, sample_solution = (voltages_photodiode_2, voltages_photodiode_1)
-        return step, list(reversed(wavelength)), list(reversed(reference_solution)), list(reversed(sample_solution)), list(reversed(no_screw))
+        return list(reversed(wavelength)), list(reversed(reference_solution)), list(reversed(sample_solution)), list(reversed(no_screw))
 
     
 
@@ -142,11 +142,11 @@ class Varian634BaselineScanning:
         self.motors_controller.wait_for_idle()
         self.motors_controller.reset_screw_position(screw_travel)
         
-        step=data_acquisition[0]
-        no_screw=data_acquisition[4]
-        wavelength=data_acquisition[1]
-        absorbance = np.log10(data_acquisition[3]/data_acquisition[2])
-        return step, wavelength, no_screw, absorbance
+        no_screw=data_acquisition[3]
+        wavelength=data_acquisition[0]
+        #absorbance = log(voltage_ref/voltage_sampe)
+        absorbance = np.log10(data_acquisition[1]/data_acquisition[2])
+        return wavelength, no_screw, absorbance
 
     def acquisition_baseline(self, screw_travel, number_measurements):
         """
@@ -215,9 +215,9 @@ class Varian634BaselineScanning:
         baseline_file=self.baseline_verification()
         data_baseline = pd.read_csv(baseline_file, encoding='ISO-8859-1')
         absorbance_baseline = data_baseline['Absorbance']
-        [step, wavelength, no_screw, absorbance_scanning]=self.acquisition(screw_travel, number_measurements, 'scanning')
+        [wavelength, no_screw, absorbance_scanning]=self.acquisition(screw_travel, number_measurements, 'scanning')
         
-        absorbance = self.noise_processing.sample_absorbance(absorbance_baseline, absorbance_scanning, step)
+        absorbance = self.noise_processing.sample_absorbance(absorbance_baseline, absorbance_scanning)
 
         title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "pas de vis (mm)"]
         data_acquisition = [wavelength, absorbance, no_screw]

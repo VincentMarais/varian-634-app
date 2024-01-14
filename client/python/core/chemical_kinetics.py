@@ -35,19 +35,19 @@ class Varian634KineticsAnalysis:
         self.arduino_sensors = arduino_sensors_instance
         self.mode_variable_slits=mode_variable_slits
         self.motors_controller = GeneralMotorsController(self.arduino_motors, self.arduino_sensors)
-        self.ni_pci_6221= VoltageAcquisition()
+        self.daq= VoltageAcquisition()
         # init experiment tools
         self.path_baseline="./client/python/core/data_baseline"
         self.path, self.date, self.slot_size = experim_manager.creation_directory_date_slot()
-        self.echantillon_name = input("Nom de l'espèce étudié ? ")
+        self.sample_name = input("Nom de l'espèce étudié ? ")
         self.title_file = self.date + '_' + self.slot_size
-        self.title_file_echantillon = self.date + '_' + self.slot_size + '_' + self.echantillon_name
+        self.title_file_sample = self.date + '_' + self.slot_size + '_' + self.sample_name
         self.baseline=Varian634BaselineScanning(arduino_motors_intance, arduino_sensors_instance, mode_variable_slits)
         self.csv=CSVTransformer(self.path)
         # init digital processing
         self.noise_processing=PhotodiodeNoiseReducer()
         self.peak_search_window=1
-        self.graph=Varian634ExperimentPlotter(self.path, self.echantillon_name, self.peak_search_window)
+        self.graph=Varian634ExperimentPlotter(self.path, self.sample_name, self.peak_search_window)
 
 
     
@@ -70,20 +70,18 @@ class Varian634KineticsAnalysis:
             cuvette_prompt = "Avez-vous mis votre solution dans la cuve appropriée ? "
             experim_manager.wait_for_user_confirmation(cuvette_prompt)
             channel="ai0" if choice == "cuve 1" else "ai1"
-            tension_blanc = self.ni_pci_6221.voltage_acquisition_scanning_baseline(channel)
+            voltage_ref = self.daq.voltage_acquisition_scanning_baseline(channel)
             self.motors_controller.move_mirror_motor(0.33334)
 
-            tensions_echantillon = []
-            temps = []
-
-            self.ni_pci_6221.voltage_acquisition_chemical_kinetics(channel, time_acquisition, delay_between_measurements)
+            [moment, voltages_sample] = self.daq.voltage_acquisition_chemical_kinetics(channel, time_acquisition, delay_between_measurements)
 
             self.motors_controller.move_mirror_motor(-0.33334)
 
-            absorbance = np.log(np.array(tensions_echantillon) / tension_blanc)
-            data_acquisition = [wavelength, temps, absorbance]
-            title_file = f'{self.date}_{self.slot_size}_{self.echantillon_name}_longueur_{wavelength}'
-            self.csv.save_data_csv(data_acquisition, ["Longueur d'onde (nm)", "Temps (s)", "Absorbance"], title_file)
+            absorbance = np.log10(voltage_ref/voltages_sample)
+            data_acquisition = [wavelength, moment, absorbance]
+            file_name = f'{self.date}_{self.slot_size}_{self.sample_name}_longueur_{wavelength}'
+            title_file = ["Longueur d'onde (nm)", "Temps (s)", "Absorbance"]
+            self.csv.save_data_csv(data_acquisition, title_file, file_name)
             self.motors_controller.reset_screw_position(course_vis)
 
 

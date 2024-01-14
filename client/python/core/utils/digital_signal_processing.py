@@ -132,16 +132,14 @@ class PhotodiodeNoiseReducer:
         self.graph_digital_processing(x_data, y_datas, 'spline', title_datas_y)        
         return signal_spline
 
-    def sample_absorbance(self, absorbance_baseline, absorbance_scanning, pas_scanning):
+    def sample_absorbance(self, absorbance_baseline, absorbance_scanning):
         """
         Reduce the difference betwenn too photodiode
         """
-        absorbance_baseline_acquisition = []
+        absorbance_baseline_mean=np.mean(absorbance_baseline)
         sample_absorbance = []
-        for i in range(0, len(absorbance_baseline), pas_scanning):
-            absorbance_baseline_acquisition.append(absorbance_baseline[i])
         for i in range(absorbance_scanning):
-            diff = absorbance_scanning[i] - absorbance_baseline_acquisition[i]
+            diff = absorbance_scanning[i] - absorbance_baseline_mean
             sample_absorbance.append(diff)
         return sample_absorbance
 

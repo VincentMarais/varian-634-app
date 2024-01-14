@@ -100,7 +100,7 @@ class VoltageAcquisition:
 
         """
         voltages = []
-        temps = [0]
+        moment = [0]
         
         with nidaqmx.Task() as read_voltage :
             start_time = time.time()
@@ -113,9 +113,9 @@ class VoltageAcquisition:
                 intant_time=time.time() - start_time_temp
                 while intant_time < delay_between_measurements:
                     intant_time+= time.time() - start_time_temp
-                temps.append(intant_time)            
+                moment.append(intant_time)            
             read_voltage.stop()
-        return temps, voltages
+        return moment, voltages
 
     def voltage_acquisition_scanning_baseline(self, channel):
         """
