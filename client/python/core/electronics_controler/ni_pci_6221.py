@@ -23,13 +23,16 @@ class VoltageAcquisition:
         - samples_per_channel : Nombre d'échantillons à acquérir par canal.
 
         """
+        # voltage acquisition parameters 
         self.channels = ['Dev1/ai0', 'Dev1/ai1']  
-        self.sample_rate = 30000
-        self.samples_per_channel = 250000
+        self.samples_per_channel = 250000 # sampling frequency
+        self.sample_rate = 30000 # 
+
+        # Characteristics of square wave (xenon arc lamp control signal)
         self.frequency = np.array([20.0])
         self.duty_cycle = np.array([0.5])
         self.device='/Dev1/ctr0'
-        self.path='C:/Users/admin/Desktop/GitHub/varian-634-app/client/python/core'
+
 
     def configure_task_voltage(self, task, channel):
         """

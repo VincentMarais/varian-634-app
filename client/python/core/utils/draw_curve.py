@@ -51,7 +51,15 @@ class Varian634ExperimentPlotter:
         plt.savefig(self.path + '\\' + graph_title + ".pdf")
         plt.show()
 
-    
+    def graph_digital_processing(self, data_x , datas_y, title_graph, titles_data_y):
+        plt.figure()
+        for data_y, title_data_y in zip(datas_y, titles_data_y):
+            plt.plot(data_x, data_y, '-', label=title_data_y)
+        plt.legend()
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.title(title_graph)
+        plt.show()
 
 if __name__ == "__main__":
     # Example usage:
