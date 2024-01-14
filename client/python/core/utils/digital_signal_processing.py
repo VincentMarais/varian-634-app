@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.signal import hilbert
 
+
 class PhotodiodeNoiseReducer:
     def __init__(self):
         pass
@@ -38,18 +39,23 @@ class PhotodiodeNoiseReducer:
         plt.xlabel("x")
         plt.ylabel("y")
         plt.title(title_graph)
+        plt.grid()
+
+        plt.tight_layout()
         plt.show()
 
     def fourier_transform(self, signal):
         t = np.arange(0, 1, 1/len(signal))  # Temps de 0 à 1 seconde avec un pas de 1/fs
-
+        
         # Calcul de la transformée de Fourier
-        fft_result = np.fft.fft(signal)
+        # norm='forward' me permet permet d'avoir le spectre en amplitude 
+        fft_result = np.fft.fft(a=signal, n=len(signal), norm='forward') # 
         fft_freqs = np.fft.fftfreq(len(fft_result), 1/len(signal))
-
+        # Rappel maths: fft(Asin(2pif_0t)) = A/2j [dirac(-f_0) + dirac(+f_0)]
         # Extraction des composantes fréquentielles
         positive_freqs = fft_freqs[:len(fft_result)//2]
         magnitude_spectrum = np.abs(fft_result[:len(fft_result)//2])
+        print(magnitude_spectrum)
 
         threshold=np.max(magnitude_spectrum)/2
         # Détection des pics
@@ -60,21 +66,51 @@ class PhotodiodeNoiseReducer:
         plt.subplot(2, 1, 1)
         plt.plot(t, signal)
         plt.title('Signal temporel')
+        plt.grid()
+        plt.tight_layout()
         plt.subplot(2, 1, 2)
         plt.plot(positive_freqs, magnitude_spectrum)
         plt.scatter(peaks, magnitude_spectrum[magnitude_spectrum > threshold], color='red', label='Pic détecté')
         plt.title('Transformée de Fourier du signal')
         plt.legend()
+        plt.grid()
+        plt.tight_layout()
         plt.show()
 
     def hilbert_transform(self, signal):
         analytic_signal = hilbert(signal)
-        amplitude_envelope = np.abs(signal)
+        amplitude_envelope = np.abs(analytic_signal)
         x_datas= np.arange(0, len(signal), 1)  # Temps de 0 à 1 seconde avec un pas de 1/fs
-        y_datas=[analytic_signal, amplitude_envelope]
+        y_datas=[signal, amplitude_envelope]
         titles_data_y=['signal', 'hilbert transform']
         self.graph_digital_processing(x_datas,y_datas, 'hilbert', titles_data_y)
         plt.show()
+
+    def simulation_gaussian_noise(self):
+        # Signal parameters
+        amplitude = 1.0
+        frequency = 5.0  # Frequency of the sinusoidal signal in Hz
+        duration = 1.0    # Duration of the signal in seconds
+        num_samples = 3000
+
+        # Generate the sinusoidal signal with Gaussian noise
+        time = np.linspace(0, duration, num_samples, endpoint=False)
+        sinusoidal_signal = amplitude * np.sin(2 * np.pi * frequency * time)
+        gaussian_noise = np.random.normal(0, 0.5, num_samples)  # Add Gaussian noise
+        signal = sinusoidal_signal + gaussian_noise
+
+        # Display the signal in the time domain
+        plt.figure(figsize=(12, 4))
+        plt.plot(time, sinusoidal_signal, label='Sinusoidal Signal')
+        plt.plot(time, signal, label='Signal with Noise')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Amplitude')
+        plt.legend()  
+        plt.grid()
+        plt.tight_layout()      
+        plt.show()
+        self.fourier_transform(signal)
+        self.fourier_transform(sinusoidal_signal)
 
     def spline_interpolation(self, signal, smoothing_factor):
         """
@@ -142,5 +178,6 @@ if __name__ == "__main__":
     denoise.fourier_transform(Tension_echantillon)
     denoise.hilbert_transform(Tension_echantillon)
     denoise.spline_interpolation(Tension_echantillon, 0.5)
+    denoise.simulation_gaussian_noise()
 
     

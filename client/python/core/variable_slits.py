@@ -44,7 +44,7 @@ class SpectroVariableSlits:
         self.csv=CSVTransformer(self.path)
         # init digital processing
         self.noise_processing=PhotodiodeNoiseReducer()
-        self.peak_search_window=1
+        self.peak_search_window = 1
         self.graph=Varian634ExperimentPlotter(self.path, self.echantillon_name, self.peak_search_window)       
 
     
@@ -94,8 +94,8 @@ if __name__ == "__main__":
     arduino_sensors = Arduino(COM_PORT_SENSORS)
     MODE_SLITS = False
 
-    slits_mode=SpectroVariableSlits(arduino_motors, arduino_sensors)
-    TIME_ACQUISITION=2
-    WAVELENGTHS=[400,450,500]
-    DELAY=1
+    slits_mode = SpectroVariableSlits(arduino_motors, arduino_sensors)
+    TIME_ACQUISITION = 2
+    WAVELENGTHS = [400,450,500]
+    DELAY = 1
     slits_mode.slits_variable_chemical_kinetics(TIME_ACQUISITION, WAVELENGTHS, DELAY)
