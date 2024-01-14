@@ -14,3 +14,4 @@ ax.set_title('Fruit supply by kind and color')
 ax.legend(title='Fruit color')
 
 plt.show()
+

@@ -2,6 +2,10 @@ import csv
 import itertools
 
 class CSVTransformer:
+    """
+    transforme les data en 
+    fichier csv
+    """
     def __init__(self, path):
         self.path = path
     
@@ -24,10 +28,13 @@ class CSVTransformer:
 
 
     def add_column_to_csv(self, original_file, new_column_names, new_column_data):
+        """
+        Ajouter une nouvelle colonne
+        """
         # Open the original CSV file in read mode
         original_file=f"{self.path}/{original_file}.csv"
         # Open the CSV file in read mode
-        with open(original_file, 'r') as input_file:
+        with open(original_file, 'r', encoding='utf-8') as input_file:
             # Create a CSV reader
             csv_reader = csv.reader(input_file)
             
@@ -35,8 +42,8 @@ class CSVTransformer:
             lines = list(csv_reader)
             header = lines[0]
 
-        for k in range(len(new_column_names)):
-            header.append(new_column_names[k])
+        for title in new_column_names:
+            header.append(title)
 
         # Add a new column with the specified data as much as possible
         for i in range(1, len(lines)):            
@@ -58,18 +65,18 @@ class CSVTransformer:
 
 if __name__ == "__main__":
     # Exemple d'utilisation de la classe
-    path = "./experiments/experiments_2023/experiments_12_2023/experiments_15_12_2023/Fente_2nm"
-    transformer = CSVTransformer(path=path)
+    PATH = "./experiments/experiments_2023/experiments_12_2023/experiments_15_12_2023/Fente_2nm"
+    transformer = CSVTransformer(PATH)
     # Appeler la méthode pour sauvegarder les données au format CSV
     transformer.save_data_csv(data_list=[[1, 2, 3], [4, 5, 6],[1]], title_list=['Absorbance', 'Longueur d\'onde (nm)', 'C'], file_name='nom_fichier')
     # Example usage of the function
-    original_file = 'nom_fichier'
-    new_column_names = ['NewColumn1', 'NewColumn2', 'NewColumn3']
-    new_column_data = [
+    ORIGINAL_FILE = 'nom_fichier'
+    NEW_COLUMS_NAMES = ['NewColumn1', 'NewColumn2', 'NewColumn3']
+    NEW_COLUMS_DATA = [
         ['value1', 'value2', 'value3', 'value4', 'value5'],
         ['data1', 'data2', 'data3', 'data4', 'data5'],
         ['info1', 'info2', 'info3', 'info4', 'info5']
     ]
 
-    transformer.add_column_to_csv(original_file, new_column_names, new_column_data)
+    transformer.add_column_to_csv(ORIGINAL_FILE, NEW_COLUMS_NAMES, NEW_COLUMS_DATA)
     

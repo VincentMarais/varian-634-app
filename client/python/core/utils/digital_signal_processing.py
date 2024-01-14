@@ -157,27 +157,22 @@ class PhotodiodeNoiseReducer:
         return voltage_convol
 
 if __name__ == "__main__":
-    denoise=PhotodiodeNoiseReducer()
+    denoise = PhotodiodeNoiseReducer()
     CHEMIN="C:\\Users\\admin\\Documents\\Projet_GP\\Programmation_Spectro\\Programmation_application_spectro\\Manip\\Manip_2023\\Manip_06_2023\\28_06_2023\\Fente_0_2nm"
 
-    """
-    Lecture des fichier csv créé lors de l'acquisition 
-    """
+    FILE_REF_SAMPLE =  CHEMIN + '\\'+ "Tension_de_blanc_28_06_2023_Fente_0_2nm.csv"
+    FILE_SAMPLE =  CHEMIN + '\\' + "Tension_de_echantillon_28_06_2023_Fente_0_2nm.csv"
 
-
-    fichier_blanc=  CHEMIN + '\\'+ "Tension_de_blanc_28_06_2023_Fente_0_2nm.csv"
-    fichier_echantillon=  CHEMIN + '\\' + "Tension_de_echantillon_28_06_2023_Fente_0_2nm.csv"
-
-    data_solution_blanc = pd.read_csv(fichier_blanc, encoding='ISO-8859-1')
-    data_solution_echantillon= pd.read_csv(fichier_echantillon, encoding='ISO-8859-1')
+    data_ref_sample = pd.read_csv(FILE_REF_SAMPLE, encoding='ISO-8859-1')
+    data_sample= pd.read_csv(FILE_SAMPLE, encoding='ISO-8859-1')
 
     # Obtenir les colonnes 
-    Longueur_donde = data_solution_echantillon['Longueur d\'onde (nm)']
-    Tension_blanc = data_solution_blanc['Tension blanc (Volt)']
-    Tension_echantillon= data_solution_echantillon['Tension échantillon (Volt)']
-    denoise.fourier_transform(Tension_echantillon)
-    denoise.hilbert_transform(Tension_echantillon)
-    denoise.spline_interpolation(Tension_echantillon, 0.5)
+    wavelength = data_ref_sample['Longueur d\'onde (nm)']
+    voltages_ref_sample = data_ref_sample['Tension blanc (Volt)']
+    voltages_sample = data_sample['Tension échantillon (Volt)']
+    denoise.fourier_transform(voltages_sample)
+    denoise.hilbert_transform(voltages_sample)
+    denoise.spline_interpolation(voltages_sample, 0.5)
     denoise.simulation_gaussian_noise()
 
     

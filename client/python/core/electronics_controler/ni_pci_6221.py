@@ -164,6 +164,10 @@ class VoltageAcquisition:
         return voltages
     
     def sensors_state(self, board, pin):
+        """
+        Program give the digital state of and sensor :
+            True or False
+        """
     # Configurer le port digital 3 en tant qu'entrée
         board.digital[pin].mode = INPUT  # Modifié ici
 
@@ -183,6 +187,32 @@ class VoltageAcquisition:
 
             # Attendre un peu avant de lire à nouveau
             time.sleep(0.1)
+
+if __name__ == "__main__":
+    acqui_voltage=VoltageAcquisition()
+
+    from pyfirmata import Arduino
+    #Arduino
+    BOARD = Arduino('COM9')
+    PIN_SENSOR = 2
+    acqui_voltage.sensors_state(BOARD, PIN_SENSOR)
+    
+    import matplotlib.pyplot as plt
+
+    #NI PCI 6221
+    TASK = nidaqmx.Task()
+    CHANNEL = 'ai3'
+
+    data_y=acqui_voltage.measure_voltage(TASK, CHANNEL)
+    x_data= np.arange(0, len(data_y), 1)
+    plt.plot(x_data, data_y)
+    plt.xlabel('samples')
+    plt.ylabel('Voltage (Volt)')
+    plt.legend()  
+    plt.grid()
+    plt.tight_layout()      
+    plt.show()
+
 
 # Utilisation de la classe
 #channels = ['Dev1/ai0', 'Dev1/ai1']

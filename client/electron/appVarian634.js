@@ -19,21 +19,12 @@ const printBoth = (str) => {
   terminalConsole.log(`Javascript: ${str}`);
 };
 
-const sendToProgram = (str) => {
-  child.stdin.write(str);
-  child.stdout.on("data", (data) => {
-    printBoth(
-      `Following data has been piped from python program: ${data.toString(
-        "utf8"
-      )}`
-    );
-  });
-};
+
 
 const startCodeFunction = () => {
   printBoth("Initiating program");
 
-  child = exec("python -i ./python/core/kinematic_chains/screw_motor.py", (error) => {
+  child = exec("python -i ./python/pythonExample.py", (error) => {
     if (error) {
       printBoth(`exec error: ${error}`);
     }
@@ -41,9 +32,6 @@ const startCodeFunction = () => {
 
   
 };
-
-
-
 
 document.addEventListener("DOMContentLoaded", () => {
   document

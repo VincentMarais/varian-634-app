@@ -96,6 +96,6 @@ if __name__ == "__main__":
 
     slits_mode = SpectroVariableSlits(arduino_motors, arduino_sensors)
     TIME_ACQUISITION = 2
-    WAVELENGTHS = [400,450,500]
+    WAVELENGTHS = [400, 450, 500]
     DELAY = 1
     slits_mode.slits_variable_chemical_kinetics(TIME_ACQUISITION, WAVELENGTHS, DELAY)
