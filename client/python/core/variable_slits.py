@@ -5,7 +5,7 @@ analysis of the sample."""
 
 
 # Motors
-from kinematic_chains.motors.motors_varian_634 import GeneralMotorsController
+from kinematic_chains.motors_varian_634 import GeneralMotorsController
 
 # Voltage acquisition
 from electronics_controler.ni_pci_6221 import VoltageAcquisition
@@ -16,8 +16,8 @@ from utils.draw_curve import Varian634ExperimentPlotter
 from utils.experiment_manager import ExperimentManager
 from utils.digital_signal_processing import PhotodiodeNoiseReducer
 
-from baseline_scanning import SpectroBaselineScanning
-from chemical_kinetics import SpectroKineticsAnalysis
+from baseline_scanning import Varian634BaselineScanning
+from chemical_kinetics import Varian634KineticsAnalysis
 
 experim_manager=ExperimentManager()
 
@@ -29,14 +29,14 @@ class SpectroVariableSlits:
         # init hardware
         self.arduino_motors = arduino_motors_intance
         self.arduino_sensors = arduino_sensors_instance
-        self.mode_variable_slits=True
+        self.mode_variable_slits = True
         self.motors_controller = GeneralMotorsController(self.arduino_motors, self.arduino_sensors)
-        self.slits_position=[1,2,3,4]
+        self.slits_position = [1,2,3,4]
         self.ni_pci_6221= VoltageAcquisition()
         # init experiment tools
-        self.baseline_scanning=SpectroBaselineScanning(self.arduino_motors, self.arduino_sensors, self.mode_variable_slits)
+        self.baseline_scanning = Varian634BaselineScanning(self.arduino_motors, self.arduino_sensors, self.mode_variable_slits)
         self.path_baseline="./client/python/core/data_baseline"
-        self.chemical_kinetics=SpectroKineticsAnalysis(self.arduino_motors, self.arduino_sensors, self.mode_variable_slits)
+        self.chemical_kinetics = Varian634KineticsAnalysis(self.arduino_motors, self.arduino_sensors, self.mode_variable_slits)
         self.path, self.date, self.slot_size = experim_manager.creation_directory_date_slot()
         self.echantillon_name = input("Nom de l'espèce étudié ? ")
         self.title_file = self.date + '_' + self.slot_size

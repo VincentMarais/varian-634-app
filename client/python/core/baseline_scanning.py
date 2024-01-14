@@ -16,7 +16,7 @@ import pandas as pd
 import numpy as np
 
 # Motors
-from kinematic_chains.motors.motors_varian_634 import GeneralMotorsController
+from kinematic_chains.motors_varian_634 import GeneralMotorsController
 
 # Voltage acquisition
 from electronics_controler.ni_pci_6221 import VoltageAcquisition

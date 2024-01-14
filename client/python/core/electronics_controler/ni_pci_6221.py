@@ -8,6 +8,7 @@ import time
 import numpy as np
 import nidaqmx
 from nidaqmx.constants import AcquisitionType, TerminalConfiguration
+from pyfirmata import util, INPUT
 
 class VoltageAcquisition:
     """
@@ -62,7 +63,14 @@ class VoltageAcquisition:
         task.timing.cfg_implicit_timing(sample_mode=AcquisitionType.CONTINUOUS)
         task.start()
     
-    def measure_voltage(self, task):
+    def measure_voltage(self, task, channel):
+        voltages=[]
+        self.configure_task_voltage(task, channel)        # Acquisition des données
+        voltages = task.read(number_of_samples_per_channel=self.samples_per_channel)                
+        task.stop()
+        return voltages
+
+    def measure_mean_voltage(self, task):
         min_voltages=[]
         frequence = int(self.frequency[0])
         for _ in range(frequence):
@@ -100,7 +108,7 @@ class VoltageAcquisition:
             while time.time() - start_time < time_acquisition:  # Boucle pendant la durée spécifiée
                 start_time_temp=time.time()
                 # Acquisition des données
-                data=self.measure_voltage(read_voltage)
+                data=self.measure_mean_voltage(read_voltage)
                 voltages.append(data)
                 intant_time=time.time() - start_time_temp
                 while intant_time < delay_between_measurements:
@@ -127,7 +135,7 @@ class VoltageAcquisition:
         with nidaqmx.Task() as task_voltage, nidaqmx.Task() as task_impulsion:
             self.configure_task_impulsion(task_impulsion)
             self.configure_task_voltage(task_voltage, self.channels[channel])
-            min_voltages = self.measure_voltage(task_voltage)
+            min_voltages = self.measure_mean_voltage(task_voltage)
             task_impulsion.stop()
             task_voltage.stop()
         return min_voltages
@@ -155,6 +163,27 @@ class VoltageAcquisition:
             task_voltage.stop()
         return voltages
     
+    def sensors_state(self, board, pin):
+    # Configurer le port digital 3 en tant qu'entrée
+        board.digital[pin].mode = INPUT  # Modifié ici
+
+    # Créer une instance d'Itérateur pour ne pas manquer les données entrantes
+        it = util.Iterator(board)
+        it.start()
+
+        # Permettre à l'itérateur de démarrer
+        time.sleep(1)
+
+        while True:
+            # Lire la valeur du port digital 3
+            digital_value = board.digital[pin].read()
+
+            # Afficher la valeur
+            print(f"Valeur lue sur le port digital {pin} :", digital_value)
+
+            # Attendre un peu avant de lire à nouveau
+            time.sleep(0.1)
+
 # Utilisation de la classe
 #channels = ['Dev1/ai0', 'Dev1/ai1']
 #acquisition = VoltageAcquisition(channels, sample_rate, samples_per_channel)
