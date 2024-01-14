@@ -1,7 +1,9 @@
 """
 "This program will perform an analysis 
 of the absorbance kinetics for the absorbance 
-analysis of the sample."""
+analysis of the sample.
+
+"""
 
 import numpy as np
 
@@ -17,11 +19,11 @@ from utils.draw_curve import Varian634ExperimentPlotter
 from utils.experiment_manager import ExperimentManager
 from utils.digital_signal_processing import PhotodiodeNoiseReducer
 
-from baseline_scanning import SpectroBaselineScanning
+from baseline_scanning import Varian634BaselineScanning
 
 experim_manager=ExperimentManager()
 
-class SpectroKineticsAnalysis:
+class Varian634KineticsAnalysis:
     """
     Ce programme se concentrera sur 1 ou 3 longueurs d'onde 
     dans une période définie par l'utilisateur et introduira un délai entre deux mesures 
@@ -40,7 +42,7 @@ class SpectroKineticsAnalysis:
         self.echantillon_name = input("Nom de l'espèce étudié ? ")
         self.title_file = self.date + '_' + self.slot_size
         self.title_file_echantillon = self.date + '_' + self.slot_size + '_' + self.echantillon_name
-        self.baseline=SpectroBaselineScanning(arduino_motors_intance, arduino_sensors_instance, mode_variable_slits)
+        self.baseline=Varian634BaselineScanning(arduino_motors_intance, arduino_sensors_instance, mode_variable_slits)
         self.csv=CSVTransformer(self.path)
         # init digital processing
         self.noise_processing=PhotodiodeNoiseReducer()
@@ -107,7 +109,7 @@ if __name__ == "__main__":
     arduino_sensors = Arduino(COM_PORT_SENSORS)
     MODE_SLITS = False
 
-    kinetics_mode=SpectroKineticsAnalysis(arduino_motors, arduino_sensors, MODE_SLITS)
+    kinetics_mode = Varian634KineticsAnalysis(arduino_motors, arduino_sensors, MODE_SLITS)
     TIME_ACQUISITION=2
     WAVELENGTHS=[400,450,500]
     DELAY=1

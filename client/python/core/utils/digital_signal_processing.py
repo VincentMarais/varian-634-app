@@ -153,8 +153,8 @@ class PhotodiodeNoiseReducer:
                 (Slit 0.5mm): 30 / (Slit 1mm): 15 / (Slit 2mm): 30 (# Define the smoothing window size)
         voltage (list)  
         """
-        voltage = np.convolve(voltage, np.ones(door_function_width) / door_function_width, mode='same')
-        return voltage
+        voltage_convol = np.convolve(voltage, np.ones(door_function_width) / door_function_width, mode='same')
+        return voltage_convol
 
 if __name__ == "__main__":
     denoise=PhotodiodeNoiseReducer()

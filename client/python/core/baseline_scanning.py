@@ -30,7 +30,7 @@ from utils.digital_signal_processing import PhotodiodeNoiseReducer
 experim_manager=ExperimentManager()
 
 
-class SpectroBaselineScanning:
+class Varian634BaselineScanning:
     """
     class with all methods to do baseline and scanning
     """
@@ -145,7 +145,7 @@ class SpectroBaselineScanning:
         step=data_acquisition[0]
         no_screw=data_acquisition[4]
         wavelength=data_acquisition[1]
-        absorbance = np.log(data_acquisition[3]/data_acquisition[2])
+        absorbance = np.log10(data_acquisition[3]/data_acquisition[2])
         return step, wavelength, no_screw, absorbance
 
     def acquisition_baseline(self, screw_travel, number_measurements):
@@ -246,5 +246,5 @@ if __name__ == "__main__":
     arduino_sensors = Arduino(COM_PORT_SENSORS)
     MODE_SLITS = False
 
-    baseline_scanning=SpectroBaselineScanning(arduino_motors, arduino_sensors, MODE_SLITS)
+    baseline_scanning = Varian634BaselineScanning(arduino_motors, arduino_sensors, MODE_SLITS)
     baseline_scanning.scanning_acquisition(screw_travel=2, number_measurements=3)
