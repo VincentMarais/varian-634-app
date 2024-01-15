@@ -1,44 +1,61 @@
 """
 This program controls all the motors present on the VARIAN 634.
 """
+
 import time
 import re
 from pyfirmata import util, INPUT, Arduino
 
 class GeneralMotorsController:
     """
-    This program controls all the motors present on the VARIAN 634.
+    This class represents a controller for all the motors on the VARIAN 634.
+
+    Attributes:
+        arduino_motors (object): An instance of the Arduino motor to control.
+        arduino_sensors (object): An instance of the Arduino sensors.
+
+        screw_motor (list): Motor parameters for the screw motor [axis, g_code_speed, speed, gcode_type].
+        pin_limit_switch_screw (list): Digital pins for the limit switch next to the mechanical stop at the screw.
+
+        mirror_cuves_motor (list): Motor parameters for the mirror cuves motor [axis, g_code_speed, speed, gcode_type].
+        pin_limit_switch_mirror_cuves (list): Digital pins for the limit switch for the mirror cuves.
+
+        slits_motor (list): Motor parameters for the slits motor [axis, g_code_speed, speed, gcode_type].
+        pin_limit_switch_slits (list): Digital pins for the limit switch for the slits.
     """
     def __init__(self, arduino_motors_instance, arduino_sensors_instance):
         """
-        Initialize the controller with an Arduino motor instance.
+        Initialize the controller with an Arduino motor and sensors instance.
 
         Args:
-            arduino_motors (object): An instance of the Arduino motor to control.
+            arduino_motors_instance (object): An instance of the Arduino motor to control.
+            arduino_sensors_instance (object): An instance of the Arduino sensors.
         """
         # Arduino
         self.arduino_motors = arduino_motors_instance
         self.arduino_sensors = arduino_sensors_instance
-        # Screw motor
-        self.screw_motor = ['X', '$110', 10, 'G91/n']  # [axe, g_code_speed, speed, gcode_type de déplacement]
-        self.pin_limit_switch_screw=[2, 4] 
-        # pin=2 : limit switch next to the mechanical stop at the screw
-        self.mirror_cuves_motor = ['Y', '$111', 14, 'G91/n']
-        self.pin_limit_switch_mirror_cuves=[3]
-        self.slits_motor = ['Z', '$112', 10, 'G91/n']
-        self.pin_limit_switch_slits=[5]
-        
 
+        # Screw motor
+        self.screw_motor = ['X', '$110', 10, 'G91/n']  # [axis, g_code_speed, speed, gcode_type]
+        self.pin_limit_switch_screw = [2, 4]
+
+        # Mirror cuves motor
+        self.mirror_cuves_motor = ['Y', '$111', 14, 'G91/n']
+        self.pin_limit_switch_mirror_cuves = [3]
+
+        # Slits motor
+        self.slits_motor = ['Z', '$112', 10, 'G91/n']
+        self.pin_limit_switch_slits = [5]
 
     def set_motors_speed(self, motor_parameters, speed):
         """
-        Set the screw translation speed.
+        Set the motor translation speed.
 
         Args:
             motor_parameters (list): Motor parameters [axis, speed, movement type].
-            speed (int): Screw translation speed.
+            speed (int): Motor translation speed.
         """
-        g_code=motor_parameters[1] + str(speed) + '\n'
+        g_code = motor_parameters[1] + str(speed) + '\n'
         self.execute_g_code(g_code)
         time.sleep(0.5)
 
@@ -88,12 +105,13 @@ class GeneralMotorsController:
         self.execute_g_code("?" + '\n')
         time.sleep(0.1)
 
-        # Lire et traiter la réponse
+        # Read and process the response
         response = str(self.arduino_motors.readline())
-        print("Réponse brute :", response)
+        print("Raw Response:", response)
         while 'MPos' not in response:
             response = str(self.arduino_motors.readline())
-        # Extraire les coordonnées X, Y, et Z
+
+        # Extract X, Y, and Z coordinates
         match = re.search(r"MPos:([-+]?[0-9]*\.?[0-9]+),([-+]?[0-9]*\.?[0-9]+),([-+]?[0-9]*\.?[0-9]+)", response)
         x_pos, y_pos, z_pos = [float(coordinate) for coordinate in match.groups()]
         return x_pos, y_pos, z_pos
@@ -116,7 +134,7 @@ class GeneralMotorsController:
             distance (float): Distance to move.
         """
         mode = motor_parameters[3]
-        gcode= mode + "G0" + motor_parameters[0] + str(distance) + '\n'
+        gcode = mode + "G0" + motor_parameters[0] + str(distance) + '\n'
         self.execute_g_code(gcode)
 
     def move_mirror_motor(self, distance):
@@ -145,54 +163,43 @@ class GeneralMotorsController:
 
     def reset_screw_position(self, screw_course):
         """
-        Déplacement arrière de la vis
-        
+        Move the screw motor backward.
+
         Args:
-            arduino_motors (serial.Serial): Instance représentant 
-            le moteur Arduino connecté à la vis.
-            screw_course (float): Position de la vis à laquelle revenir en arrière.
-            screw_translation_speed (int): Vitesse de translation de la vis à régler.
-        
-        Returns:
-            Aucune
+            screw_course (float): Position of the screw to move backward.
         """
         self.move_screw(distance=-screw_course)
 
-
     def initialize_end_stop(self, pin_list):
         """
-        Get the state of the end stop sensors at the screw.
-        
-        Args:
-            arduino_end_stop (Arduino): End stop sensor instance.
-            pin (int): Digital pin number for the end stop sensor.
-            pin_end_stop_1 (int): limit switch next to the mechanical stop at the screw
-        
-        Returns:
-            bool: State of the end stop sensor.
-        """
+        Initialize the end stop sensors at the screw.
 
+        Args:
+            pin_list (list): Digital pins for the end stop sensors.
+        """
         for pin in pin_list:
             self.arduino_sensors.digital[pin].mode = INPUT
 
-        # Créer une instance d'Itérateur pour ne pas manquer les données entrantes
+        # Create an Iterator instance to not miss incoming data
         it = util.Iterator(self.arduino_sensors)
         it.start()
 
-        # Permettre à l'itérateur de démarrer
+        # Allow the iterator to start
         time.sleep(1)
 
-        
     def initialize_mirror_position(self, pin_mirror):
         """
         An alternative method to initialize the mirror position based on a specific requirement.
+
+        Args:
+            pin_mirror (list): Digital pin for the mirror position.
         """
-        pin=pin_mirror[0]
+        pin = pin_mirror[0]
         self.initialize_end_stop(self.pin_limit_switch_mirror_cuves)
         self.move_motor(self.mirror_cuves_motor, 1)
         state = self.arduino_sensors.digital[pin].read()
         while state is True:
-            print("Cuve 1 non atteinte car ", state)
+            print("Cuve 1 not reached because ", state)
             state = self.arduino_sensors.digital[pin].read()
         pos_y = self.get_position_xyz()[1]
         self.move_mirror_motor(distance=pos_y)
@@ -201,14 +208,8 @@ class GeneralMotorsController:
     def initialisation_motor_screw_slipt(self):
         """
         Initialize the screw motor for the start of the experiment.
-
-        Args:
-            pin (int): Digital pin for the end-stop sensor.
-
-        Returns:
-            None
         """
-        all_pin=self.pin_limit_switch_screw
+        all_pin = self.pin_limit_switch_screw
         self.initialize_end_stop(all_pin)
         digital_value = self.arduino_sensors.digital[all_pin[0]].read()
         g_code = '$X' + '\n'
@@ -217,26 +218,27 @@ class GeneralMotorsController:
         self.arduino_motors.write(g_code.encode())
         while digital_value is True:
             digital_value = self.arduino_sensors.digital[all_pin[0]].read()
-            print("Le moteur n'est pas au départ : ", digital_value)
+            print("The motor is not at the start: ", digital_value)
             time.sleep(0.1)
-        print("Moteur du réseau de diffraction est prêt pour l'acquisition !")
-        print("On est bien au départ !")
+        print("Diffraction network motor is ready for acquisition!")
+        print("We are back to the start!")
         self.wait_for_idle()
-        print("Moteur du réseau de diffraction est prêt pour l'acquisition !")
+        print("Diffraction network motor is ready for acquisition!")
         # End-of-file (EOF)
 
     def initialisation_motors(self):
         """
-        Initializes all motors to start an acquisition
+        Initializes all motors to start an acquisition.
         """
-        pin_mirror=self.pin_limit_switch_mirror_cuves
+        pin_mirror = self.pin_limit_switch_mirror_cuves
         self.initialize_mirror_position(pin_mirror)
         self.wait_for_idle()
         self.initialisation_motor_screw_slipt()
 
 if __name__ == "__main__":
     import serial
-    # INITIALISATION MOTEUR:
+
+    # MOTOR INITIALIZATION:
 
     COM_PORT_MOTORS = 'COM3'
     COM_PORT_SENSORS = 'COM9'
@@ -244,14 +246,14 @@ if __name__ == "__main__":
     INITIALIZATION_TIME = 2
 
     arduino_motors = serial.Serial(COM_PORT_MOTORS, BAUD_RATE)
-    arduino_motors.write("\r\n\r\n".encode()) # encode pour convertir "\r\n\r\n" 
-    time.sleep(INITIALIZATION_TIME)   # Attend initialisation un GRBL
-    arduino_motors.flushInput()  # Vider le tampon d'entrée, en supprimant tout son contenu.
+    arduino_motors.write("\r\n\r\n".encode())  # encode to convert "\r\n\r\n"
+    time.sleep(INITIALIZATION_TIME)   # Wait for GRBL initialization
+    arduino_motors.flushInput()  # Flush the input buffer, removing all its contents.
 
-    # INITIALISATION Forche optique:
+    # OPTICAL FORK INITIALIZATION:
 
     arduino_sensors = Arduino(COM_PORT_SENSORS)
-    
+
     motors_controller = GeneralMotorsController(arduino_motors, arduino_sensors)
 
     # Test set_motors_speed function
@@ -262,7 +264,7 @@ if __name__ == "__main__":
     print("Motor State:", motor_state)
 
     # Test display_grbl_parameter function
-    motors_controller.display_grbl_parameter()    
+    motors_controller.display_grbl_parameter()
 
     # Test get_position_xyz function
     current_position = motors_controller.get_position_xyz()
@@ -282,16 +284,15 @@ if __name__ == "__main__":
 
     # Test resume_cycle function
     motors_controller.resume_cycle()
-    
+
     # Test wait_for_idle function
     motors_controller.wait_for_idle()
 
     # Test move_mirror_motor function
     motors_controller.move_mirror_motor(2)  # Move mirror motor by 2 units
-    
+
     # Test move_screw function
     motors_controller.move_screw(1)  # Move screw motor by 3 units
 
     # Test initialisation_motors function
     motors_controller.initialisation_motors()
-

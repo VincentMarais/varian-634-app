@@ -12,7 +12,6 @@ import time
 import os
 from datetime import datetime
 import pandas as pd
-
 import numpy as np
 
 # Motors
@@ -27,53 +26,50 @@ from utils.draw_curve import Varian634ExperimentPlotter
 from utils.experiment_manager import ExperimentManager
 from utils.digital_signal_processing import PhotodiodeNoiseReducer
 
-experim_manager=ExperimentManager()
+experim_manager = ExperimentManager()
 
 
 class Varian634BaselineScanning:
     """
-    class with all methods to do baseline and scanning
+    A class with all methods to do baseline and scanning.
     """
-    def __init__(self, arduino_motors_intance, arduino_sensors_instance, mode_variable_slits):
-        # init hardware
-        self.arduino_motors = arduino_motors_intance
+
+    def __init__(self, arduino_motors_instance, arduino_sensors_instance, mode_variable_slits):
+        """
+        Initializes the Varian634BaselineScanning class.
+
+        Parameters:
+            arduino_motors_instance: Instance representing the Arduino connected to motors.
+            arduino_sensors_instance: Instance representing the Arduino connected to the fork.
+            mode_variable_slits: Mode for variable slits.
+        """
+        # Init hardware
+        self.arduino_motors = arduino_motors_instance
         self.arduino_sensors = arduino_sensors_instance
-        self.mode_variable_slits=mode_variable_slits
+        self.mode_variable_slits = mode_variable_slits
         self.motors_controller = GeneralMotorsController(self.arduino_motors, self.arduino_sensors)
-        self.daq= VoltageAcquisition()
-        # init experiment tools
-        self.path_baseline="./client/python/core/data_baseline"
+        self.daq = VoltageAcquisition()
+        # Init experiment tools
+        self.path_baseline = "./client/python/core/data_baseline"
         self.path, self.date, self.slot_size = experim_manager.creation_directory_date_slot()
         self.echantillon_name = input("Nom de l'espèce étudié ? ")
         self.title_file = self.date + '_' + self.slot_size
         self.title_file_echantillon = self.date + '_' + self.slot_size + '_' + self.echantillon_name
-        self.csv=CSVTransformer(self.path)
-        # init digital processing
+        self.csv = CSVTransformer(self.path)
+        # Init digital processing
         self.noise_processing = PhotodiodeNoiseReducer()
-        self.peak_search_window=1
+        self.peak_search_window = 1
         self.graph = Varian634ExperimentPlotter(self.path, self.echantillon_name, self.peak_search_window)
-
 
     def initialize_measurement(self):
         """
         Initializes the necessary components for the measurement.
-        Input:
-            arduino_motors (serial.Serial): Instance représentant l'Arduino connecté aux moteurs.
-            arduino_sensors (pyfirmata.Arduino): Instance représentant l'Arduino connecté à la fourche
-            screw_translation_speed (int): Translation speed of the screw
-
-        Output:
-            echantillon_name (string): Name of the sample that the user wants to analyze
-            path (string): Working directory for the experiment
-            date (string): Today's date
-            slot_size (string): Size of the slot used
         """
         self.motors_controller.initialisation_motors()
 
-
     def perform_step_measurement(self):
         """
-        Effectue une mesure à un pas donné et retourne les tensions mesurées.
+        Performs a measurement at a given step and returns the measured voltages.
         """
         g_code = '$X' + '\n'
         self.arduino_motors.write(g_code.encode())
@@ -91,19 +87,19 @@ class Varian634BaselineScanning:
 
     def calculate_wavelength(self, position):
         """
-        Calcule la longueur d'onde en fonction de la position.
+        Calculates the wavelength based on the position.
         """
         return -31.10419907 * position + 800
 
     def precision_mode(self, screw_travel, number_measurements):
         """
-        Exécute le mode de précision pour la mesure et retourne les résultats.
+        Executes the precision mode for the measurement and returns the results.
         """
         choice = experim_manager.get_solution_cuvette()
         voltages_photodiode_1, voltages_photodiode_2 = [], []
         no_screw, wavelength = [0], []
         step = screw_travel / number_measurements
-        time_per_step = (step * 60) / 10 # screw_translation_speed=10
+        time_per_step = (step * 60) / 10  # screw_translation_speed=10
 
         for i in range(1, number_measurements):
             voltage_1, voltage_2 = self.perform_step_measurement()
@@ -114,47 +110,51 @@ class Varian634BaselineScanning:
             time.sleep(time_per_step)
             no_screw.append(position)
             wavelength.append(self.calculate_wavelength(position))
-        # reference et cuve 1
-        if choice == 'cuve 1' :
-            reference_solution, sample_solution = (voltages_photodiode_1, voltages_photodiode_2) 
-        else : 
+        # Reference and cuvette 1
+        if choice == 'cuve 1':
+            reference_solution, sample_solution = (voltages_photodiode_1, voltages_photodiode_2)
+        else:
             reference_solution, sample_solution = (voltages_photodiode_2, voltages_photodiode_1)
-        return list(reversed(wavelength)), list(reversed(reference_solution)), list(reversed(sample_solution)), list(reversed(no_screw))
-
-    
+        return list(reversed(wavelength)), list(reversed(reference_solution)), \
+               list(reversed(sample_solution)), list(reversed(no_screw))
 
     def acquisition(self, screw_travel, number_measurements, mode):
         """
-        Effectue une acquisition complète et sauvegarde les données.
+        Performs a complete acquisition and saves the data.
+
+        Args:
+            screw_travel: Total distance the screw must travel.
+            number_measurements: Total number of measurements to perform.
+            mode: Mode of the acquisition.
         """
-        if self.mode_variable_slits :
+        if self.mode_variable_slits:
             pass
-        else :
+        else:
             self.initialize_measurement()
 
         self.initialize_measurement()
         data_acquisition = self.precision_mode(screw_travel, number_measurements)
-        
-        title_data_acquisition = ["Longueur d'onde (nm)", "Tension référence (Volt)", "Tension échantillon (Volt)", "pas de vis (mm)"]
-        title_file=mode + self.title_file
+
+        title_data_acquisition = ["Longueur d'onde (nm)", "Tension référence (Volt)", "Tension échantillon (Volt)",
+                                  "pas de vis (mm)"]
+        title_file = mode + self.title_file
         self.csv.save_data_csv(data_acquisition[1:], title_data_acquisition, title_file)
-        
+
         self.motors_controller.wait_for_idle()
         self.motors_controller.reset_screw_position(screw_travel)
-        
-        no_screw=data_acquisition[3]
-        wavelength=data_acquisition[0]
-        #absorbance = log(voltage_ref/voltage_sampe)
-        absorbance = np.log10(data_acquisition[1]/data_acquisition[2])
+
+        no_screw = data_acquisition[3]
+        wavelength = data_acquisition[0]
+        # Absorbance = log(voltage_ref/voltage_sampe)
+        absorbance = np.log10(data_acquisition[1] / data_acquisition[2])
         return wavelength, no_screw, absorbance
 
     def acquisition_baseline(self, screw_travel, number_measurements):
         """
-        Effectue une acquisition complète et sauvegarde les données.
+        Performs a complete baseline acquisition and saves the data.
         """
         self.acquisition(screw_travel, number_measurements, mode='baseline')
-        
-    
+
     def baseline_verification(self):
         """
         Checks if a baseline file exists for the Varian 634 scanning mode.
@@ -164,14 +164,11 @@ class Varian634BaselineScanning:
         whether to create a new baseline by calling the 'baseline_acquisition' method. If the
         file exists, the user is given the option to create a new baseline or proceed without
         creating one.
-
-        Returns:
-            None        
         """
-        current_date = datetime.now() 
+        current_date = datetime.now()
         current_day = current_date.strftime("%d_%m_%Y")
-        baseline_file= self.path_baseline + 'baseline_' + current_day + '_'+ self.slot_size+ '.csv'
-        # Vérification si le fichier baseline_date_heure.csv existe
+        baseline_file = self.path_baseline + 'baseline_' + current_day + '_' + self.slot_size + '.csv'
+        # Verification if the baseline_date_heure.csv file exists
         if not os.path.exists(baseline_file):
             print("Le fichier baseline_date_heure.csv n'est pas créé.")
             experim_manager.delete_files_in_directory(self.path_baseline)
@@ -187,7 +184,7 @@ class Varian634BaselineScanning:
                 print("Exécution de acquisition_baseline")
 
             elif reponse == 'non':
-                pass 
+                pass
 
             else:
                 while reponse not in ['oui', 'non']:
@@ -196,40 +193,31 @@ class Varian634BaselineScanning:
 
     def scanning_acquisition(self, screw_travel, number_measurements):
         """
-        Effectue une acquisition complète de données, sauvegarde les résultats et gère les états du moteur.
+        Performs a complete data acquisition, saves the results, and manages motor states.
 
         Args:
-            arduino_motors (serial.Serial): Interface de communication avec les moteurs Arduino.
-            arduino_sensors (serial.Serial): Interface de communication avec les capteurs Arduino.
-            screw_travel (float): Distance totale que la vis doit parcourir.
-            number_measurements (int): Nombre total de mesures à effectuer.
-            screw_translation_speed (int): Vitesse de déplacement de la vis.
-            pulse_frequency (float): Fréquence de la forme d'onde carrée pour la stimulation.
-            duty_cycle (float): Rapport cyclique de la forme d'onde carrée.
-            samples_per_channel (int): Nombre d'échantillons par canal à mesurer.
-            sample_rate (int): Fréquence d'échantillonnage des mesures.
-            channels (list): Liste des canaux utilisés pour la mesure.
+            screw_travel: Total distance the screw must travel.
+            number_measurements: Total number of measurements to perform.
         """
-        
-
-        baseline_file=self.baseline_verification()
+        baseline_file = self.baseline_verification()
         data_baseline = pd.read_csv(baseline_file, encoding='ISO-8859-1')
         absorbance_baseline = data_baseline['Absorbance']
-        [wavelength, no_screw, absorbance_scanning]=self.acquisition(screw_travel, number_measurements, 'scanning')
-        
+        [wavelength, no_screw, absorbance_scanning] = self.acquisition(screw_travel, number_measurements, 'scanning')
+
         absorbance = self.noise_processing.sample_absorbance(absorbance_baseline, absorbance_scanning)
 
         title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "pas de vis (mm)"]
         data_acquisition = [wavelength, absorbance, no_screw]
-        title_file= self.title_file + '_final'
+        title_file = self.title_file + '_final'
         self.csv.save_data_csv(data_acquisition, title_data_acquisition, title_file)
         # End-of-file (EOF)
+
 
 if __name__ == "__main__":
     import serial
     from pyfirmata import Arduino
 
-    # INITIALISATION MOTEUR:
+    # INITIALIZATION MOTOR:
 
     COM_PORT_MOTORS = 'COM3'
     COM_PORT_SENSORS = 'COM9'
@@ -237,11 +225,11 @@ if __name__ == "__main__":
     INITIALIZATION_TIME = 2
 
     arduino_motors = serial.Serial(COM_PORT_MOTORS, BAUD_RATE)
-    arduino_motors.write("\r\n\r\n".encode()) # encode pour convertir "\r\n\r\n" 
-    time.sleep(INITIALIZATION_TIME)   # Attend initialisation un GRBL
-    arduino_motors.flushInput()  # Vider le tampon d'entrée, en supprimant tout son contenu.
+    arduino_motors.write("\r\n\r\n".encode())  # encode to convert "\r\n\r\n"
+    time.sleep(INITIALIZATION_TIME)  # Wait for initialization of GRBL
+    arduino_motors.flushInput()  # Clear the input buffer by discarding its current contents.
 
-    # INITIALISATION Forche optique:
+    # INITIALIZATION Optical Fork:
 
     arduino_sensors = Arduino(COM_PORT_SENSORS)
     MODE_SLITS = False
