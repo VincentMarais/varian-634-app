@@ -265,9 +265,9 @@ class GeneralMotorsController:
         """
         self.initialize_end_stop(self.all_pin)
         self.initialize_mirror_position()
-        self.wait_for_idle()
+        #self.wait_for_idle()
         self.initialisation_motor_screw()
-        self.wait_for_idle()
+        #self.wait_for_idle()
         self.initialisation_motor_slits()
 
 if __name__ == "__main__":

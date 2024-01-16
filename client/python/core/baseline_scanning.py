@@ -74,11 +74,11 @@ class Varian634BaselineScanning:
         g_code = '$X' + '\n'
         self.arduino_motors.write(g_code.encode())
 
-        voltage_photodiode_1 = self.daq.voltage_acquisition_scanning_baseline(channel='ai0')
+        voltage_photodiode_1 = self.daq.voltage_acquisition_scanning_baseline(channel='Dev1/ai0')
 
         self.motors_controller.move_mirror_motor(0.33334)
         time.sleep(1)
-        voltage_photodiode_2 = self.daq.voltage_acquisition_scanning_baseline(channel='ai1')
+        voltage_photodiode_2 = self.daq.voltage_acquisition_scanning_baseline(channel='Dev1/ai1')
 
         self.motors_controller.move_mirror_motor(-0.33334)
         time.sleep(1)
@@ -111,7 +111,7 @@ class Varian634BaselineScanning:
             no_screw.append(position)
             wavelength.append(self.calculate_wavelength(position))
         # Reference and cuvette 1
-        if choice == 'cuve 1':
+        if choice == 'cuvette 1':
             reference_solution, sample_solution = (voltages_photodiode_1, voltages_photodiode_2)
         else:
             reference_solution, sample_solution = (voltages_photodiode_2, voltages_photodiode_1)
@@ -153,7 +153,6 @@ class Varian634BaselineScanning:
         """
         Performs a complete baseline acquisition and saves the data.
         """
-        self.motors_controller.initialisation_motors()
         self.acquisition(screw_travel, number_measurements, mode='baseline')
 
     def baseline_verification(self):
@@ -174,14 +173,14 @@ class Varian634BaselineScanning:
             print('Le fichier' + baseline_file + '  n\'est pas créé.')
             experim_manager.delete_files_in_directory(self.path_baseline)
             print("Réalisation de la baseline")
-            self.acquisition_baseline(screw_travel=13.3, number_measurements=200)
+            self.acquisition_baseline(13.3, 200)
             print("Exécution de baseline_acquisition")
 
         else:
             reponse = input("Souhaitez-vous réaliser une nouvelle baseline, 'Oui' ou 'Non'? ").lower()
 
             if reponse == 'oui':
-                self.acquisition_baseline(screw_travel=13.3, number_measurements=200)
+                self.acquisition_baseline(13.3, 200)
                 print("Exécution de acquisition_baseline")
 
             elif reponse == 'non':
@@ -236,4 +235,4 @@ if __name__ == "__main__":
     MODE_SLITS = False
 
     baseline_scanning = Varian634BaselineScanning(arduino_motors, arduino_sensors, MODE_SLITS)
-    baseline_scanning.scanning_acquisition(screw_travel=2, number_measurements=3)
+    baseline_scanning.scanning_acquisition(screw_travel = 2, number_measurements = 3)
