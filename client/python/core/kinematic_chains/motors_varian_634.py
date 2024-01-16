@@ -34,19 +34,24 @@ class GeneralMotorsController:
         # Arduino
         self.arduino_motors = arduino_motors_instance
         self.arduino_sensors = arduino_sensors_instance
-        self.all_pin = [2,3,4,5]
+        # all digital pins used on the Arduino UNO 
+        # with no CNC shield 
+        self.all_pin = [2, 3, 4, 5]
         # Screw motor
-        self.screw_motor = ['X', '$110', 10, 'G91/n']  # [axis, g_code_speed, speed, gcode_type]
+        self.screw_motor = ['X', '$110', 10]  # [axis, g_code_speed, speed]
+        # pin = 2 (between limits)
         self.pin_limit_switch_screw = [2, 4]
 
         # Slits motor
-        self.slits_motor= ['Y', '$111', 14, 'G91/n']
+        self.slits_motor = ['Y', '$111', 14]  # [axis, g_code_speed, speed]
+        # pin = 5 in optical fork between slits variable
         self.pin_limit_switch_slits = [5]
 
         # Mirror cuves motor
-        self.mirror_cuves_motor  = ['Z', '$112', 10, 'G91/n']
+        self.mirror_cuves_motor = ['Z', '$112', 10]  # [axis, g_code_speed, speed]
         self.pin_limit_switch_mirror_cuves = [3]
 
+# G_CODE management of motors
     def set_motors_speed(self, motor_parameters, speed):
         """
         Set the motor translation speed.
@@ -68,6 +73,8 @@ class GeneralMotorsController:
         """
         self.execute_g_code('?')
         return self.arduino_motors.read(20)  # Read the first 20 characters for state
+    
+# G_CODE to control the kinematics of motors
 
     def display_grbl_parameter(self):
         """
@@ -127,11 +134,19 @@ class GeneralMotorsController:
 
     def unlock_motors(self):
         """
-        Unlock all the motor
+        Unlock all the motors.
         """
         g_code = '$X' + '\n'
         self.execute_g_code(g_code)
 
+    def homing(self):
+        """
+        Do the GRBL homing.
+        """
+        g_code = '$H' + '\n'
+        self.arduino_motors.write(g_code.encode())
+
+# Kinematics of motors 
     def move_motor(self, motor_parameters, distance):
         """
         Move the motor by a specified distance.
@@ -175,7 +190,9 @@ class GeneralMotorsController:
         Args:
             screw_course (float): Position of the screw to move backward.
         """
-        self.move_screw(distance = -screw_course)
+        self.move_screw(distance=-screw_course)
+
+# Initialization of Arduino  
 
     def initialize_end_stop(self, pin_list):
         """
@@ -194,9 +211,12 @@ class GeneralMotorsController:
         # Allow the iterator to start
         time.sleep(1)
 
+    
+# Initialization of all motors 
+
     def initialize_mirror_position(self):
         """
-        Iinitialize the mirror position based on a specific requirement.
+        Initialize the mirror position based on a specific requirement.
 
         Args:
             pin_mirror (list): Digital pin for the mirror position.
@@ -204,59 +224,70 @@ class GeneralMotorsController:
         pin = self.pin_limit_switch_mirror_cuves[0]
         state = self.arduino_sensors.digital[pin].read()
         time.sleep(1) 
-        if  state is True :            
+        if state is True:            
             self.unlock_motors()
             self.execute_g_code('G90\n')            
-            self.move_motor(self.mirror_cuves_motor, 1)
+            self.move_mirror_motor(1)
+
             while state is True:
-                print("Cuve 1 not reached because ", state)
+                print("Cuvette 1 not reached because ", state)
                 state = self.arduino_sensors.digital[pin].read()
                 print(self.get_position_xyz())
             
             pos_y = self.get_position_xyz()[2]
             self.move_mirror_motor(distance=pos_y)
             print(pos_y)
-        else :
-            print("Cuve 1 is reached")
+        else:
+            print("Cuvette 1 is reached")
 
     def initialisation_motor_slits(self):
+        """
+        Initialize the motor that controls the 
+        variable slit system.
+        """
         pin = self.pin_limit_switch_slits[0]
         digital_value = self.arduino_sensors.digital[pin].read()
         time.sleep(1)
         i = -0.005
-        if digital_value is False :
+        if digital_value is False:
             while digital_value is False:
                 self.unlock_motors()
                 self.move_slits(i)
                 digital_value = self.arduino_sensors.digital[pin].read()
-                i -= 0.005 # Déplacement de 0.01 du moteur
+                i -= 0.005  # Movement of 0.005 of the motor not optimal
                 time.sleep(1)            
-            print("Moteur fente a atteint le départ")
+            print("Variable slit motor has reached the start")
             self.unlock_motors()
             self.move_slits(i-0.005)
-            print("Moteur est prêt pour la mesure")
-        else :
-            print("Moteur fente est prêt pour la mesure")
+            self.wait_for_idle()
+            print("Variable slit motor is ready for measurement")
+        else:
+            print("Variable slit motor is ready for measurement")
 
 
     def initialisation_motor_screw(self):
         """
         Initialize the screw motor for the start of the experiment.
         """
-        all_pin = self.pin_limit_switch_screw
-        digital_value = self.arduino_sensors.digital[all_pin[0]].read()
-        g_code = '$X' + '\n'
-        self.arduino_motors.write(g_code.encode())
-        g_code = '$H' + '\n'
-        self.arduino_motors.write(g_code.encode())
+        # pin: limit switch between a mechanical stop of screw 
+        # opposite at diffraction grating 
+        # we initialize at this position? (question !!!)
+        pin = self.pin_limit_switch_screw[0]
+        digital_value = self.arduino_sensors.digital[pin].read()
+        # we unlock motors because homing cycle is up ($22=1)
+        # Why unlock motors in GRBL?
+        self.unlock_motors()
+        # What is the definition of homing in GRBL?
+        self.homing()
+        # Loop 
         while digital_value is True:
-            digital_value = self.arduino_sensors.digital[all_pin[0]].read()
-            print("The motor is not at the start: ", digital_value)
+            digital_value = self.arduino_sensors.digital[pin].read()
+            print("The Diffraction grating is not at the start: ", digital_value)
             time.sleep(0.1)
-        print("Diffraction network motor is ready for acquisition!")
+            
         print("We are back to the start!")
         self.wait_for_idle()
-        print("Diffraction network motor is ready for acquisition!")
+        print("Diffraction grating is ready for acquisition!")
         # End-of-file (EOF)
 
     def initialisation_motors(self):
@@ -265,9 +296,7 @@ class GeneralMotorsController:
         """
         self.initialize_end_stop(self.all_pin)
         self.initialize_mirror_position()
-        #self.wait_for_idle()
         self.initialisation_motor_screw()
-        #self.wait_for_idle()
         self.initialisation_motor_slits()
 
 if __name__ == "__main__":
@@ -300,14 +329,14 @@ if __name__ == "__main__":
 
     # Test get_motor_state function
     motor_state = motors_controller.get_motor_state()
-    print("Motor State:", motor_state)
+    print("Motors State:", motor_state)
 
     # Test display_grbl_parameter function
     motors_controller.display_grbl_parameter()
 
     # Test get_position_xyz function
     current_position = motors_controller.get_position_xyz()
-    print("Current Position:", current_position)   
+    print("Current Position of motors:", current_position)   
 
     # Test move_mirror_motor function
     motors_controller.move_screw(1)  # Move screw motor by 3 units
@@ -315,11 +344,11 @@ if __name__ == "__main__":
 
     # Test stop_motors function
     motors_controller.stop_motors()
-    print("Arrêt d'urgence")   
+    print("Emergency stop")   
     time.sleep(1)
 
     # Test resume_cycle function
-    print("Reprise du cycle moteur")
+    print("Resumption of the engine cycle")
     motors_controller.resume_cycle()
 
     # Test move_screw function
