@@ -220,7 +220,7 @@ class PhotodiodeNoiseReducer:
 
 if __name__ == "__main__":
     denoise = PhotodiodeNoiseReducer()
-    CHEMIN = "C:\\Users\\admin\\Documents\\Projet_GP\\Programmation_Spectro\\Programmation_application_spectro\\Manip\\Manip_2023\\Manip_06_2023\\28_06_2023\\Fente_0_2nm"
+    CHEMIN = "C:\\Users\\vimarais\\Documents\\GitHub\\varian-634-app\\experiments\\experiments_2023\\experiments_06_2023\\28_06_2023\\Fente_0_2nm"
 
     FILE_REF_SAMPLE = CHEMIN + '\\' + "Tension_de_blanc_28_06_2023_Fente_0_2nm.csv"
     FILE_SAMPLE = CHEMIN + '\\' + "Tension_de_echantillon_28_06_2023_Fente_0_2nm.csv"

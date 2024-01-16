@@ -131,8 +131,8 @@ class Varian634BaselineScanning:
             pass
         else:
             self.initialize_measurement()
+        
 
-        self.initialize_measurement()
         data_acquisition = self.precision_mode(screw_travel, number_measurements)
 
         title_data_acquisition = ["Longueur d'onde (nm)", "Tension référence (Volt)", "Tension échantillon (Volt)",
@@ -153,6 +153,7 @@ class Varian634BaselineScanning:
         """
         Performs a complete baseline acquisition and saves the data.
         """
+        self.motors_controller.initialisation_motors()
         self.acquisition(screw_travel, number_measurements, mode='baseline')
 
     def baseline_verification(self):
@@ -170,7 +171,7 @@ class Varian634BaselineScanning:
         baseline_file = self.path_baseline + 'baseline_' + current_day + '_' + self.slot_size + '.csv'
         # Verification if the baseline_date_heure.csv file exists
         if not os.path.exists(baseline_file):
-            print("Le fichier baseline_date_heure.csv n'est pas créé.")
+            print('Le fichier' + baseline_file + '  n\'est pas créé.')
             experim_manager.delete_files_in_directory(self.path_baseline)
             print("Réalisation de la baseline")
             self.acquisition_baseline(screw_travel=13.3, number_measurements=200)

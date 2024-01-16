@@ -5,7 +5,7 @@ Program for graphics.
 
 import matplotlib.pyplot as plt
 import numpy as np
-from data_csv import CSVTransformer
+from utils.data_csv import CSVTransformer
 from scipy.signal import find_peaks
 import pandas as pd
 
@@ -125,7 +125,7 @@ class Varian634ExperimentPlotter:
 
 if __name__ == "__main__":
     # Exemple d'utilisation:
-    PATH = "./experiments/experiments_2023/experiments_12_2023/experiments_15_12_2023/Fente_2nm"
+    PATH = "C:\\Users\\vimarais\\Documents\\GitHub\\varian-634-app\\experiments\\experiments_2023\\experiments_12_2023\\experiments_15_12_2023\\Fente_2nm"
     sample_name = input("Nom de l'espèce chimique :")
     WINDOW = 2
     FILE = 'nom_fichier'
