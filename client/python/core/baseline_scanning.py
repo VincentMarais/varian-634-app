@@ -188,7 +188,7 @@ class Varian634BaselineScanning:
 
             else:
                 while reponse not in ['oui', 'non']:
-                    reponse = input("Répondez par 'Oui' ou 'Non'. Souhaitez-vous réaliser une nouvelle baseline? ").lower()
+                    reponse = input("Répondez par 'Oui' ou 'Non'. Souhaitez-vous réaliser une nouvelle baseline ? ").lower()
         return baseline_file
 
     def scanning_acquisition(self, screw_travel, number_measurements):

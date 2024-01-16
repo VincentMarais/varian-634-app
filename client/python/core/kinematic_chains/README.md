@@ -47,3 +47,11 @@ $132=800.000
 # Test routine
 Pour tester le bon fonctionnement de l'ensemble des moteurs exécuté le programmme motors_varian_634.py
 
+    g_code = '$X' + '\n'
+    motors_controller.execute_g_code(g_code)
+    #
+    motors_controller.initialisation_motor_slits()
+    mode='G91\n'
+    time.sleep(2)
+    motors_controller.execute_g_code(mode)
+    motors_controller.move_slits(0.065)

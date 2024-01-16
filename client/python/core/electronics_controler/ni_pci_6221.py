@@ -187,16 +187,15 @@ class VoltageAcquisition:
 
         # Allow the iterator to start
         time.sleep(1)
-
-        while True:
+        
             # Read the value of digital port 3
-            digital_value = board.digital[pin].read()
+        digital_value = board.digital[pin].read()
 
             # Display the value
-            print(f"Value read on digital port {pin}:", digital_value)
+        print(f"Value read on digital port {pin}:", digital_value)
 
             # Wait a bit before reading again
-            time.sleep(0.1)
+        time.sleep(0.1)
 
 if __name__ == "__main__":
     acqui_voltage = VoltageAcquisition()
@@ -204,14 +203,14 @@ if __name__ == "__main__":
     from pyfirmata import Arduino
     # Arduino
     BOARD = Arduino('COM9')
-    PIN_SENSOR = 2
+    PIN_SENSOR = 5
     acqui_voltage.sensors_state(BOARD, PIN_SENSOR)
 
     import matplotlib.pyplot as plt
 
     # NI PCI 6221
     TASK = nidaqmx.Task()
-    CHANNEL = 'ai3'
+    CHANNEL = 'Dev1/ai0'
 
     data_y = acqui_voltage.measure_voltage(TASK, CHANNEL)
     x_data = np.arange(0, len(data_y), 1)
