@@ -133,8 +133,8 @@ class GeneralMotorsController:
             motor_parameters (list): Motor parameters [axis, speed, movement type].
             distance (float): Distance to move.
         """
-        mode = motor_parameters[3]
-        gcode = mode + "G0" + motor_parameters[0] + str(distance) + '\n'
+        gcode = "G0" + motor_parameters[0] + str(distance) + '\n'
+        print(gcode)
         self.execute_g_code(gcode)
 
     def move_mirror_motor(self, distance):
@@ -187,14 +187,14 @@ class GeneralMotorsController:
         # Allow the iterator to start
         time.sleep(1)
 
-    def initialize_mirror_position(self, pin_mirror):
+    def initialize_mirror_position(self):
         """
         An alternative method to initialize the mirror position based on a specific requirement.
 
         Args:
             pin_mirror (list): Digital pin for the mirror position.
         """
-        pin = pin_mirror[0]
+        pin = self.pin_limit_switch_mirror_cuves[0]
         self.initialize_end_stop(self.pin_limit_switch_mirror_cuves)
         self.move_motor(self.mirror_cuves_motor, 1)
         state = self.arduino_sensors.digital[pin].read()
@@ -230,8 +230,7 @@ class GeneralMotorsController:
         """
         Initializes all motors to start an acquisition.
         """
-        pin_mirror = self.pin_limit_switch_mirror_cuves
-        self.initialize_mirror_position(pin_mirror)
+        self.initialize_mirror_position()
         self.wait_for_idle()
         self.initialisation_motor_screw_slipt()
 
@@ -256,6 +255,8 @@ if __name__ == "__main__":
 
     motors_controller = GeneralMotorsController(arduino_motors, arduino_sensors)
 
+    g_code = '$X' + '\n'
+    motors_controller.execute_g_code(g_code)
     # Test set_motors_speed function
     motors_controller.set_motors_speed(motors_controller.screw_motor, 10)  # Set screw motor speed to 10
 
@@ -270,29 +271,28 @@ if __name__ == "__main__":
     current_position = motors_controller.get_position_xyz()
     print("Current Position:", current_position)
 
-    # Test execute_g_code function
-    motors_controller.execute_g_code("G0 X1 Y1 Z0.01")  # Example G-code command
 
-    # Test wait_for_idle function
-    motors_controller.wait_for_idle()
 
-    # Test move_motor function
-    motors_controller.move_motor(motors_controller.screw_motor, 1)  # Move screw motor by 5 units
+   
+
+    # Test move_mirror_motor function
+    motors_controller.move_mirror_motor(1)  # Move mirror motor by 2 units
+    time.sleep(1)
 
     # Test stop_motors function
     motors_controller.stop_motors()
+    print("Arrêt d'urgence")   
+    time.sleep(1)
 
     # Test resume_cycle function
+    print("Reprise du cycle moteur")
     motors_controller.resume_cycle()
-
-    # Test wait_for_idle function
-    motors_controller.wait_for_idle()
-
-    # Test move_mirror_motor function
-    motors_controller.move_mirror_motor(2)  # Move mirror motor by 2 units
 
     # Test move_screw function
     motors_controller.move_screw(1)  # Move screw motor by 3 units
 
+    motors_controller.initialize_mirror_position()
+    motors_controller.wait_for_idle()
+    motors_controller.initialisation_motor_screw_slipt()
     # Test initialisation_motors function
-    motors_controller.initialisation_motors()
+    #motors_controller.initialisation_motors()
