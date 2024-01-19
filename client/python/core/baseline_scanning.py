@@ -50,7 +50,7 @@ class Varian634BaselineScanning:
         self.motors_controller = GeneralMotorsController(self.arduino_motors, self.arduino_sensors)
         self.daq = VoltageAcquisition()
         # Init experiment tools
-        self.path_baseline = "./client/python/core/data_baseline"
+        self.path_baseline = experim_manager.create_data_baseline()
         self.path, self.date, self.slot_size = experim_manager.creation_directory_date_slot()
         self.echantillon_name = input("Nom de l'espèce étudié ? ")
         self.title_file = self.date + '_' + self.slot_size

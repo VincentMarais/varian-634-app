@@ -220,3 +220,24 @@ class ExperimentManager:
         """
         while input(prompt) != 'Oui':
             pass
+
+
+    @staticmethod
+    def create_data_baseline():
+        """        
+        Display the full path of a file up
+        """
+        script_root = os.path.dirname(os.path.abspath(__file__))
+
+        # Create the target directory path
+        target_directory = os.path.join(script_root, 'databaseline')
+
+        # Check if the directory exists, and create it if not
+        if not os.path.exists(target_directory):
+            os.makedirs(target_directory)
+            print(f"Directory '{target_directory}' created.")
+        else:
+            print(f"Directory '{target_directory}' already exists.") 
+
+        return target_directory
+    
