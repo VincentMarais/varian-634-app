@@ -19,7 +19,16 @@ const printBoth = (str) => {
   terminalConsole.log(`Javascript: ${str}`);
 };
 
-
+const sendToProgram = (str) => {
+  child.stdin.write(str);
+  child.stdout.on("data", (data) => {
+    printBoth(
+      `Following data has been piped from python program: ${data.toString(
+        "utf8"
+      )}`
+    );
+  });
+};
 
 const startCodeFunction = () => {
   printBoth("Initiating program");
@@ -33,6 +42,9 @@ const startCodeFunction = () => {
   
 };
 
+
+
+  
 document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("start_code")
