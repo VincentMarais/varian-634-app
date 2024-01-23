@@ -186,12 +186,3 @@ def voltage_acquisition_scanning(samples_per_channel, sample_rate,
         mean = task_ni_pci_scanning(samples_per_channel, sample_rate, square_wave_frequency, duty_cycle, channels[1])
         return mean
 # End-of-file (EOF)
-
-Frequence_creneau = np.array([20.0])
-Rapport_cyclique = np.array([0.5])
-SAMPLES_PER_CHANNEL = 30000
-SAMPLE_RATE = 250000
-CHANNELS = ['Dev1/ai0', 'Dev1/ai1']  
-
-print(task_ni_pci_scanning(samples_per_channel=SAMPLES_PER_CHANNEL, sample_rate=SAMPLE_RATE, 
-                    square_wave_frequency=Frequence_creneau, duty_cycle=Rapport_cyclique, channels=CHANNELS[0]))
