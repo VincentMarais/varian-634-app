@@ -97,6 +97,9 @@ class VoltageAcquisition:
         # But why is it better than CONTINUOUS is better for generating a square wave?
         task_impulsion.timing.cfg_implicit_timing(sample_mode=AcquisitionType.CONTINUOUS)
         task_impulsion.start()
+    
+    def clear_tasks(self, task):
+        task.close()
 
     def measure_voltage(self, task, physical_channel):
         """
@@ -113,6 +116,8 @@ class VoltageAcquisition:
         voltages = []
         self.configure_task_voltage(task, physical_channel)
         voltages = task.read(number_of_samples_per_channel=self.samples_per_channel)
+        task.stop()
+
         return voltages
 
     def measure_mean_voltage(self, task, physical_channel):
@@ -125,7 +130,10 @@ class VoltageAcquisition:
         Returns:
         - mean (float) : Mean of the measured voltages.
         """
-
+        voltages = []
+        self.configure_task_voltage(task, physical_channel)
+        voltages = task.read(number_of_samples_per_channel=self.samples_per_channel)
+        task.stop()
         voltages = np.array(self.measure_voltage(task, physical_channel))
         mean = np.mean(voltages)
         return mean
@@ -239,13 +247,13 @@ if __name__ == "__main__":
 
     # NI PCI 6221
     TASK = nidaqmx.Task()
-    CHANNEL = 'Dev1/ai0'
+    CHANNEL = ['Dev1/ai0']
     
     # display library
     import matplotlib.pyplot as plt
 
     # Test measure_voltage
-    data_y = acqui_voltage.measure_voltage(TASK, CHANNEL)
+    data_y = acqui_voltage.measure_voltage(TASK, CHANNEL[0])
     x_data = np.arange(0, len(data_y), 1)
     plt.plot(x_data, data_y)
     plt.xlabel('samples')
@@ -255,15 +263,16 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.show()
 
+    # Test measure_mean_voltage
     TASK.close()
 
-    # Test measure_mean_voltage
-    print(acqui_voltage.measure_mean_voltage(TASK, physical_channel=CHANNEL))
 
-    # Test voltage_acquisition_scanning_baseline
-    print(acqui_voltage.voltage_acquisition_scanning_baseline(CHANNEL))
 
-    # Test voltage_acquisition_chemical_kinetics
+# Test voltage_acquisition_scanning_baseline
+    #print(acqui_voltage.voltage_acquisition_scanning_baseline(CHANNEL[0]))
+
+"""    # Test voltage_acquisition_chemical_kinetics
     TIME_ACQUISITION = 10
     TIME_PER_ACQUISITION = 1
-    print(acqui_voltage.voltage_acquisition_chemical_kinetics(CHANNEL, TIME_ACQUISITION, TIME_PER_ACQUISITION))
+    print(acqui_voltage.voltage_acquisition_chemical_kinetics(CHANNEL[0], TIME_ACQUISITION, TIME_PER_ACQUISITION))
+"""

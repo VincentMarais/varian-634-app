@@ -85,11 +85,11 @@ class SpectroVariableSlits:
         self.arduino_sensors = arduino_sensors_instance
         self.mode_variable_slits = True
         self.motors_controller = GeneralMotorsController(self.arduino_motors, self.arduino_sensors)
-        self.slits_position = [1, 2, 3, 4]
+        self.slits_position = [0, 0.07, 0.07, 0.08] # position of slits [2nm, 1nm, 0.5nm, 0.2nm]
         self.ni_pci_6221 = VoltageAcquisition()
         # init experiment tools
         self.baseline_scanning = Varian634BaselineScanning(self.arduino_motors, self.arduino_sensors, self.mode_variable_slits)
-        self.path_baseline = "./client/python/core/data_baseline"
+        self.path_baseline = experim_manager.create_data_baseline()
         self.chemical_kinetics = Varian634KineticsAnalysis(self.arduino_motors, self.arduino_sensors, self.mode_variable_slits)
         self.path, self.date, self.slot_size = experim_manager.creation_directory_date_slot()
         self.echantillon_name = input("Nom de l'espèce étudié ? ")

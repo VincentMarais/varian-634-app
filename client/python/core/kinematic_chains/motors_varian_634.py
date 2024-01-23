@@ -249,6 +249,7 @@ class GeneralMotorsController:
         digital_value = self.arduino_sensors.digital[pin].read()
         time.sleep(1)
         i = -0.005
+        print(digital_value)
         if digital_value is False:
             while digital_value is False:
                 self.unlock_motors()
@@ -295,8 +296,11 @@ class GeneralMotorsController:
         Initializes all motors to start an acquisition.
         """
         self.initialize_end_stop(self.all_pin)
-        self.initialize_mirror_position()
+        time.sleep(1)
+        self.initialize_mirror_position()  
+        self.wait_for_idle()      
         self.initialisation_motor_screw()
+        self.wait_for_idle()
         self.initialisation_motor_slits()
 
 if __name__ == "__main__":
@@ -353,7 +357,8 @@ if __name__ == "__main__":
 
     # Test move_screw function
 
-    motors_controller.wait_for_idle()   
-    
+    motors_controller.wait_for_idle() 
+    motors_controller.unlock_motors()
+
     # Test initialisation_motors function
     motors_controller.initialisation_motors()
