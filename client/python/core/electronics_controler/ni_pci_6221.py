@@ -83,7 +83,7 @@ class VoltageAcquisition:
         # But why is it better than CONTINUOUS?
         # Better...
         task_voltage.timing.cfg_samp_clk_timing(self.sample_rate, samps_per_chan=self.samples_per_channel, sample_mode=AcquisitionType.FINITE)
-
+        task_voltage.start()
 
     def configure_task_impulsion(self, task_impulsion):
         """
@@ -174,8 +174,8 @@ class VoltageAcquisition:
         """
 
         with nidaqmx.Task() as task_voltage, nidaqmx.Task() as task_impulsion:
-            self.configure_task_impulsion(task_impulsion)
             self.configure_task_voltage(task_voltage, physical_channel)
+            self.configure_task_impulsion(task_impulsion)
             min_voltages = self.measure_mean_voltage(task_voltage, physical_channel)
             task_impulsion.stop()
         return min_voltages
@@ -254,6 +254,8 @@ if __name__ == "__main__":
     plt.grid()
     plt.tight_layout()
     plt.show()
+
+    TASK.close()
 
     # Test measure_mean_voltage
     print(acqui_voltage.measure_mean_voltage(TASK, physical_channel=CHANNEL))
