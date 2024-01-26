@@ -1,15 +1,8 @@
 # Bibliothèque
-import time
 import os
-from datetime import datetime
-from backend.test import fonction
-
-import tkinter
 import tkinter.messagebox
 import customtkinter
-import time # bibliothèque temps 
 from PIL import Image
-import os
 
 
 
@@ -189,15 +182,7 @@ class App(customtkinter.CTk):
         customtkinter.set_appearance_mode(new_appearance_mode)
 
     def sidebar_button_event(self):
-        print("sidebar_button click")
-   
-    # Fonction pour acquérir les données page login :
-
-    def login_event(self):
-        print("Login pressed - username:", self.username_entry.get(), "password:", self.password_entry.get())
-
-        self.login_frame.grid_forget()  # remove login frame
-        self.select_frame_by_name("home")
+        print("sidebar_button click")    
 
     def baseline_button_event(self):
         print("Hello") 
