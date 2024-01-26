@@ -71,14 +71,16 @@ class Varian634BaselineScanning:
         """
         Performs a measurement at a given step and returns the measured voltages.
         """
+        channels = ['Dev1/ai0', 'Dev1/ai1']
+
         g_code = '$X' + '\n'
         self.arduino_motors.write(g_code.encode())
 
-        voltage_photodiode_1 = self.daq.voltage_acquisition_scanning_baseline(channel='Dev1/ai0')
-
+        voltage_photodiode_1 = self.daq.voltage_acquisition_scanning_baseline(channels[0])
+        # mode relatif
         self.motors_controller.move_mirror_motor(0.33334)
         time.sleep(1)
-        voltage_photodiode_2 = self.daq.voltage_acquisition_scanning_baseline(channel='Dev1/ai1')
+        voltage_photodiode_2 = self.daq.voltage_acquisition_scanning_baseline(channels[1])
 
         self.motors_controller.move_mirror_motor(-0.33334)
         time.sleep(1)

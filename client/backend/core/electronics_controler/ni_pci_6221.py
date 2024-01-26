@@ -32,6 +32,7 @@ of the analyzed chemical sample.
 """
 
 import time
+import timeit
 import numpy as np
 import nidaqmx
 from nidaqmx.constants import AcquisitionType, TerminalConfiguration
@@ -55,8 +56,8 @@ class VoltageAcquisition:
 
         # Voltage acquisition parameters
         # cf link : Figure 8. NI PCI/PXI-6221 Pinout
-        # Dev1/ai0 : pin 68 / pin 34 (ground)
-        # Dev1/ai1 : pin 33 / pin 66 (ground)
+        # Dev1/ai0 : pin 68 / pin 34 (ground) (Capteur 2)
+        # Dev1/ai1 : pin 33 / pin 66 (ground) (Capteur 1)
         self.channels = ['Dev1/ai0', 'Dev1/ai1']
         self.samples_per_channel = 30000  # Sampling frequency
         self.sample_rate = 250000
@@ -134,44 +135,6 @@ class VoltageAcquisition:
         voltages = np.array(self.measure_voltage(task, physical_channel))
         mean = np.mean(voltages)
         return mean
-
-    def voltage_acquisition_chemical_kinetics(self, physical_channel, time_acquisition, delay_between_measurements):
-        """
-        Acquires minimum voltages from the voltage measurement task.
-
-        Parameters:
-        - time_acquisition (float) : Acquisition duration in seconds (optional).
-        - delay_between_measurements (float): Delay between consecutive measurements in seconds.
-        - physical_channel (str) : Analog input physical_channel to configure (e.g., 'Dev1/ai0').
-
-        Returns:
-        - moment (list float) : List of time instants.
-        - voltages (list float) : List of minimum measured voltages.
-        """
-
-        min_voltages = []
-        moment = []
-
-        with nidaqmx.Task() as task_impulsion, nidaqmx.Task() as task_voltage:
-            self.configure_task_impulsion(task_impulsion)
-            self.configure_task_voltage(task_voltage, physical_channel)
-            start_time = time.time()
-            while time.time() - start_time <= time_acquisition:  # Loop for the specified duration
-                # Data acquisition
-                voltage = task_voltage.read(number_of_samples_per_channel=self.samples_per_channel)
-                voltages = np.array(voltage)
-                # Trouver et stocker le minimum
-                min_voltage = np.min(voltages)
-                min_voltages.append(min_voltage)
-                moment.append(time.time() - start_time)              
-                # Loop for wait 
-                sys.stdout.flush()  # Forcer l'impression immédiate
-                time.sleep(delay_between_measurements)                
-            moment=moment[:-1]
-            task_impulsion.stop()
-            task_voltage.stop()
-        return moment, voltages
-
     def voltage_acquisition_scanning_baseline(self, physical_channel):
         """
         Performs voltage acquisition based on the task type.
@@ -201,6 +164,48 @@ class VoltageAcquisition:
             mean = np.mean(min_voltages)
         return mean
 
+    def voltage_acquisition_chemical_kinetics(self, physical_channel, time_acquisition, delay_between_measurements):
+        """
+        Acquires minimum voltages from the voltage measurement task.
+
+        Parameters:
+        - time_acquisition (float) : Acquisition duration in seconds (optional).
+        - delay_between_measurements (float): Delay between consecutive measurements in seconds.
+        - physical_channel (str) : Analog input physical_channel to configure (e.g., 'Dev1/ai0').
+
+        Returns:
+        - moment (list float) : List of time instants.
+        - voltages (list float) : List of minimum measured voltages.
+        """
+        min_voltages = []
+        moment = []
+        with nidaqmx.Task() as task_impulsion, nidaqmx.Task() as task_voltage:
+            self.configure_task_impulsion(task_impulsion)
+            self.configure_task_voltage(task_voltage, physical_channel)
+            start_time = time.time()
+            while time.time() - start_time < time_acquisition + 1:  # Loop for the specified duration
+                start_time_temp = time.time() # Data acquisition
+                voltage = task_voltage.read(number_of_samples_per_channel=self.samples_per_channel)
+                voltages = np.array(voltage)
+                # Trouver et stocker le minimum
+                min_voltage = np.min(voltages)
+                min_voltages.append(min_voltage)
+                moment.append(time.time() - start_time) 
+
+                # Loop for wait 
+                sys.stdout.flush()  # Forcer l'impression immédiate
+                delay = time.time() - start_time_temp
+                while delay <= delay_between_measurements:
+                    delay = time.time() - start_time_temp
+                    print(delay)
+            task_impulsion.stop()
+            task_voltage.stop()
+            print("len voltage", np.shape(min_voltages))
+            print("len moment", np.shape(moment))
+
+        return moment, min_voltages
+
+    
     def sensors_state(self, board, pin):
         """
         Provides the digital state of a sensor: True or False.
@@ -232,11 +237,11 @@ if __name__ == "__main__":
 
     from pyfirmata import Arduino
     # Arduino
-    #BOARD = Arduino('COM9')
+    BOARD = Arduino('COM9')
     PIN_SENSOR = 5
     # Test sensors_state 
-    #acqui_voltage.sensors_state(BOARD, PIN_SENSOR)
-
+    acqui_voltage.sensors_state(BOARD, PIN_SENSOR)
+    
 
     # NI PCI 6221
     CHANNEL = ['Dev1/ai0']
@@ -244,7 +249,6 @@ if __name__ == "__main__":
     # display library
     import matplotlib.pyplot as plt
     TASK = nidaqmx.Task()
-
     # Test measure_voltage
     data_y = acqui_voltage.measure_voltage(TASK, CHANNEL[0])
     x_data = np.arange(0, len(data_y), 1)
@@ -269,3 +273,10 @@ if __name__ == "__main__":
     TIME_PER_ACQUISITION = 1
     [moment, voltage] = acqui_voltage.voltage_acquisition_chemical_kinetics(CHANNEL[0], TIME_ACQUISITION, TIME_PER_ACQUISITION)
     print("times :", moment)
+    plt.plot(moment, voltage)
+    plt.xlabel('moment (s)')
+    plt.ylabel('Voltage (Volt)')
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    plt.show()
