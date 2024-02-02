@@ -4,7 +4,7 @@ of the absorbance kinetics for the absorbance
 analysis of the sample.
 
 """
-
+import os
 import numpy as np
 
 # Motors
@@ -49,9 +49,11 @@ class Varian634KineticsAnalysis:
         self.motors_controller = GeneralMotorsController(self.arduino_motors, self.arduino_sensors)
         self.daq = VoltageAcquisition()
         # init experiment tools
-        self.path_baseline = "./client/python/core/data_baseline"
+        self.path_baseline = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_baseline")
         self.path, self.date, self.slot_size = experim_manager.creation_directory_date_slot()
         self.sample_name = input("Nom de l'espèce étudié ? ")
+        self.choice = experim_manager.get_solution_cuvette()
+
         self.title_file = self.date + '_' + self.slot_size
         self.title_file_sample = self.date + '_' + self.slot_size + '_' + self.sample_name
         self.baseline = Varian634BaselineScanning(arduino_motors_instance, arduino_sensors_instance, mode_variable_slits)
@@ -87,13 +89,9 @@ class Varian634KineticsAnalysis:
             course_vis = 1 / 31.10419907 * (800 - wavelength)
             self.motors_controller.move_screw(course_vis)
             self.motors_controller.wait_for_idle()
-
-            choice = experim_manager.get_solution_cuvette()
-            self.motors_controller.wait_for_idle()
-
             cuvette_prompt = "Avez-vous mis votre solution dans la cuve appropriée ? "
             experim_manager.wait_for_user_confirmation(cuvette_prompt)
-            channel = "ai0" if choice == "cuve 1" else "ai1"
+            channel = "Dev1/ai0" if self.choice == "cuvette 1" else "Dev1/ai1"
             voltage_ref = self.daq.voltage_acquisition_scanning_baseline(channel)
             self.motors_controller.move_mirror_motor(0.33334)
 

@@ -32,12 +32,11 @@ of the analyzed chemical sample.
 """
 
 import time
-import timeit
+import sys
 import numpy as np
 import nidaqmx
 from nidaqmx.constants import AcquisitionType, TerminalConfiguration
 from pyfirmata import util, INPUT
-import sys
 
 class VoltageAcquisition:
     """
@@ -186,13 +185,12 @@ class VoltageAcquisition:
             while time.time() - start_time < time_acquisition + 1:  # Loop for the specified duration
                 start_time_temp = time.time() # Data acquisition
                 voltage = task_voltage.read(number_of_samples_per_channel=self.samples_per_channel)
+                moment.append(start_time_temp - start_time)
                 voltages = np.array(voltage)
                 # Trouver et stocker le minimum
                 min_voltage = np.min(voltages)
                 min_voltages.append(min_voltage)
-                moment.append(time.time() - start_time) 
-
-                # Loop for wait 
+                # Loop for wait
                 sys.stdout.flush()  # Forcer l'impression immédiate
                 delay = time.time() - start_time_temp
                 while delay <= delay_between_measurements:
@@ -200,9 +198,7 @@ class VoltageAcquisition:
                     print(delay)
             task_impulsion.stop()
             task_voltage.stop()
-            print("len voltage", np.shape(min_voltages))
-            print("len moment", np.shape(moment))
-
+            
         return moment, min_voltages
 
     
@@ -244,7 +240,7 @@ if __name__ == "__main__":
     
 
     # NI PCI 6221
-    CHANNEL = ['Dev1/ai0']
+    CHANNEL = ['Dev1/ai0', 'Dev1/ai1']
     
     # display library
     import matplotlib.pyplot as plt
@@ -271,9 +267,8 @@ if __name__ == "__main__":
    # Test voltage_acquisition_chemical_kinetics
     TIME_ACQUISITION = 10
     TIME_PER_ACQUISITION = 1
-    [moment, voltage] = acqui_voltage.voltage_acquisition_chemical_kinetics(CHANNEL[0], TIME_ACQUISITION, TIME_PER_ACQUISITION)
-    print("times :", moment)
-    plt.plot(moment, voltage)
+    [MOMENT, VOLTAGE] = acqui_voltage.voltage_acquisition_chemical_kinetics(CHANNEL[0], TIME_ACQUISITION, TIME_PER_ACQUISITION)
+    plt.plot(MOMENT, VOLTAGE)
     plt.xlabel('moment (s)')
     plt.ylabel('Voltage (Volt)')
     plt.legend()

@@ -1,4 +1,4 @@
-F"""
+"""
 This program will create the baseline for the absorbance analysis of the sample and
 scan wavelengths within a specific interval to detect the peak of absorbance in the solution.
 
@@ -53,6 +53,7 @@ class Varian634BaselineScanning:
         self.path_baseline = experim_manager.create_data_baseline()
         self.path, self.date, self.slot_size = experim_manager.creation_directory_date_slot()
         self.echantillon_name = input("Nom de l'espèce étudié ? ")
+        self.choice = experim_manager.get_solution_cuvette()
         self.title_file = self.date + '_' + self.slot_size
         self.title_file_echantillon = self.date + '_' + self.slot_size + '_' + self.echantillon_name
         self.csv = CSVTransformer(self.path)
@@ -73,17 +74,23 @@ class Varian634BaselineScanning:
         """
         channels = ['Dev1/ai0', 'Dev1/ai1']
 
-        g_code = '$X' + '\n'
-        self.arduino_motors.write(g_code.encode())
+        self.motors_controller.unlock_motors()
 
-        voltage_photodiode_1 = self.daq.voltage_acquisition_scanning_baseline(channels[0])
-        # mode relatif
-        self.motors_controller.move_mirror_motor(0.33334)
+        # mode relatif :
+        self.motors_controller.execute_g_code("G91")
+        # Laissé le temps au moteurs de recevoir la commande dans le serial
         time.sleep(1)
+        voltage_photodiode_1 = self.daq.voltage_acquisition_scanning_baseline(channels[0])
+
+        self.motors_controller.move_mirror_motor(0.33334)
+        
+        self.motors_controller.wait_for_idle()
+
         voltage_photodiode_2 = self.daq.voltage_acquisition_scanning_baseline(channels[1])
 
         self.motors_controller.move_mirror_motor(-0.33334)
-        time.sleep(1)
+
+        self.motors_controller.wait_for_idle()
 
         return voltage_photodiode_1, voltage_photodiode_2
 
@@ -97,27 +104,29 @@ class Varian634BaselineScanning:
         """
         Executes the precision mode for the measurement and returns the results.
         """
-        choice = experim_manager.get_solution_cuvette()
         voltages_photodiode_1, voltages_photodiode_2 = [], []
         no_screw, wavelength = [0], []
         step = screw_travel / number_measurements
         time_per_step = (step * 60) / 10  # screw_translation_speed=10
+        self.motors_controller.unlock_motors()
 
         for i in range(1, number_measurements):
             voltage_1, voltage_2 = self.perform_step_measurement()
             voltages_photodiode_1.append(voltage_1)
             voltages_photodiode_2.append(voltage_2)
             position = i * step
-            self.motors_controller.move_screw(position)
+            # On fait un move step car le moteur en en mode relatif (G91)
+            self.motors_controller.move_screw(step)
             time.sleep(time_per_step)
             no_screw.append(position)
             wavelength.append(self.calculate_wavelength(position))
         # Reference and cuvette 1
-        if choice == 'cuvette 1':
+        if self.choice == 'cuvette 1':
             reference_solution, sample_solution = (voltages_photodiode_1, voltages_photodiode_2)
         else:
             reference_solution, sample_solution = (voltages_photodiode_2, voltages_photodiode_1)
-        return list(reversed(wavelength)), list(reversed(reference_solution)), \
+        absorbance = np.log10(reference_solution/sample_solution)
+        return list(reversed(wavelength)), list(reversed(absorbance)), list(reversed(reference_solution)), \
                list(reversed(sample_solution)), list(reversed(no_screw))
 
     def acquisition(self, screw_travel, number_measurements, mode):
@@ -137,19 +146,15 @@ class Varian634BaselineScanning:
 
         data_acquisition = self.precision_mode(screw_travel, number_measurements)
 
-        title_data_acquisition = ["Longueur d'onde (nm)", "Tension référence (Volt)", "Tension échantillon (Volt)",
+        title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "Tension référence (Volt)", "Tension échantillon (Volt)",
                                   "pas de vis (mm)"]
         title_file = mode + self.title_file
-        self.csv.save_data_csv(data_acquisition[1:], title_data_acquisition, title_file)
+        self.csv.save_data_csv(data_acquisition, title_data_acquisition, title_file)
 
         self.motors_controller.wait_for_idle()
         self.motors_controller.reset_screw_position(screw_travel)
-
-        no_screw = data_acquisition[3]
-        wavelength = data_acquisition[0]
-        # Absorbance = log(voltage_ref/voltage_sampe)
-        absorbance = np.log10(data_acquisition[1] / data_acquisition[2])
-        return wavelength, no_screw, absorbance
+    
+        return data_acquisition
 
     def acquisition_baseline(self, screw_travel, number_measurements):
         """
@@ -204,12 +209,13 @@ class Varian634BaselineScanning:
         baseline_file = self.baseline_verification()
         data_baseline = pd.read_csv(baseline_file, encoding='ISO-8859-1')
         absorbance_baseline = data_baseline['Absorbance']
-        [wavelength, no_screw, absorbance_scanning] = self.acquisition(screw_travel, number_measurements, 'scanning')
-
+        data_acquisition=self.acquisition(screw_travel, number_measurements, 'scanning')
+        wavelength = data_acquisition[0]
+        absorbance_scanning=data_acquisition[1]
         absorbance = self.noise_processing.sample_absorbance(absorbance_baseline, absorbance_scanning)
 
-        title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "pas de vis (mm)"]
-        data_acquisition = [wavelength, absorbance, no_screw]
+        title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance"]
+        data_acquisition = [wavelength, absorbance]
         title_file = self.title_file + '_final'
         self.csv.save_data_csv(data_acquisition, title_data_acquisition, title_file)
         # End-of-file (EOF)
