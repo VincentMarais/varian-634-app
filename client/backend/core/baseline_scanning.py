@@ -7,6 +7,9 @@ Define deferente speed of analysis 3 for exampl (look the exampl in the spectro 
 - suvey 100nm/min
 - half 10nm/min
 - slow 1nm/min  
+
+Visible range with the screw pitch:
+400nm -> 5.4mm and ending at 800 nm -> 18.73nm
 """
 import time
 import os
@@ -62,11 +65,6 @@ class Varian634BaselineScanning:
         self.peak_search_window = 1
         self.graph = Varian634ExperimentPlotter(self.path, self.echantillon_name, self.peak_search_window)
 
-    def initialize_measurement(self):
-        """
-        Initializes the necessary components for the measurement.
-        """
-        self.motors_controller.initialisation_motors()
 
     def perform_step_measurement(self):
         """
@@ -75,11 +73,7 @@ class Varian634BaselineScanning:
         channels = ['Dev1/ai0', 'Dev1/ai1']
 
         self.motors_controller.unlock_motors()
-
-        # mode relatif :
-        self.motors_controller.execute_g_code("G91")
-        # Laissé le temps au moteurs de recevoir la commande dans le serial
-        time.sleep(1)
+        
         voltage_photodiode_1 = self.daq.voltage_acquisition_scanning_baseline(channels[0])
         # move mirror motor 0.333334 = 60° to switch cuvette
         self.motors_controller.move_mirror_motor(0.33334)
@@ -108,6 +102,7 @@ class Varian634BaselineScanning:
         no_screw, wavelength = [0], []
         step = screw_travel / number_measurements        
         self.motors_controller.unlock_motors()
+        # mode relatif :
         self.motors_controller.execute_g_code("G91")
         # Laissé le temps au moteurs de recevoir la commande dans le serial
         time.sleep(1)
@@ -144,9 +139,7 @@ class Varian634BaselineScanning:
         if self.mode_variable_slits:
             pass
         else:
-            self.initialize_measurement()
-        
-
+            self.motors_controller.initialisation_motors()
         data_acquisition = self.precision_mode(screw_travel, number_measurements)
 
         title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "Tension référence (Volt)", "Tension échantillon (Volt)",
@@ -177,7 +170,12 @@ class Varian634BaselineScanning:
         """
         current_date = datetime.now()
         current_day = current_date.strftime("%d_%m_%Y")
-        baseline_file = self.path_baseline + 'baseline_' + current_day + '_' + self.slot_size + '.csv'
+        baseline_file = self.path_baseline + 'baseline_' + current_day + '_' + self.slot_size 
+        # On initialise le moteur dans le domaine du visible
+        # On bouge le moteur de 4.4 car à l'initialisation il est à 1 mm de la butée
+        self.motors_controller.unlock_motors()
+        self.motors_controller.move_screw(4.4)
+        self.motors_controller.wait_for_idle()
         # Verification if the baseline_date_heure.csv file exists
         if not os.path.exists(baseline_file):
             print('Le fichier' + baseline_file + '  n\'est pas créé.')
@@ -214,7 +212,7 @@ class Varian634BaselineScanning:
         absorbance_baseline = data_baseline['Absorbance']
         data_acquisition=self.acquisition(screw_travel, number_measurements, 'scanning')
         wavelength = data_acquisition[0]
-        absorbance_scanning=data_acquisition[1]
+        absorbance_scanning = data_acquisition[1]
         absorbance = self.noise_processing.sample_absorbance(absorbance_baseline, absorbance_scanning)
 
         title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance"]
@@ -246,5 +244,5 @@ if __name__ == "__main__":
     MODE_SLITS = False
 
     baseline_scanning = Varian634BaselineScanning(arduino_motors, arduino_sensors, MODE_SLITS)
-    baseline_scanning.precision_mode(-5,5)
+    baseline_scanning.precision_mode(5,5)
     #baseline_scanning.scanning_acquisition(screw_travel = 2, number_measurements = 3)
