@@ -81,9 +81,9 @@ class Varian634BaselineScanning:
         # Laissé le temps au moteurs de recevoir la commande dans le serial
         time.sleep(1)
         voltage_photodiode_1 = self.daq.voltage_acquisition_scanning_baseline(channels[0])
-
+        # move mirror motor 0.333334 = 60° to switch cuvette
         self.motors_controller.move_mirror_motor(0.33334)
-        
+        # wait mirror motor 
         self.motors_controller.wait_for_idle()
 
         voltage_photodiode_2 = self.daq.voltage_acquisition_scanning_baseline(channels[1])
@@ -106,10 +106,11 @@ class Varian634BaselineScanning:
         """
         voltages_photodiode_1, voltages_photodiode_2 = [], []
         no_screw, wavelength = [0], []
-        step = screw_travel / number_measurements
-        time_per_step = (step * 60) / 10  # screw_translation_speed=10
+        step = screw_travel / number_measurements        
         self.motors_controller.unlock_motors()
-
+        self.motors_controller.execute_g_code("G91")
+        # Laissé le temps au moteurs de recevoir la commande dans le serial
+        time.sleep(1)
         for i in range(1, number_measurements):
             voltage_1, voltage_2 = self.perform_step_measurement()
             voltages_photodiode_1.append(voltage_1)
@@ -117,7 +118,7 @@ class Varian634BaselineScanning:
             position = i * step
             # On fait un move step car le moteur en en mode relatif (G91)
             self.motors_controller.move_screw(step)
-            time.sleep(time_per_step)
+            self.motors_controller.wait_for_idle()
             no_screw.append(position)
             wavelength.append(self.calculate_wavelength(position))
         # Reference and cuvette 1
@@ -125,6 +126,8 @@ class Varian634BaselineScanning:
             reference_solution, sample_solution = (voltages_photodiode_1, voltages_photodiode_2)
         else:
             reference_solution, sample_solution = (voltages_photodiode_2, voltages_photodiode_1)
+        reference_solution=np.array(reference_solution)
+        sample_solution=np.array(sample_solution)
         absorbance = np.log10(reference_solution/sample_solution)
         return list(reversed(wavelength)), list(reversed(absorbance)), list(reversed(reference_solution)), \
                list(reversed(sample_solution)), list(reversed(no_screw))
@@ -243,4 +246,5 @@ if __name__ == "__main__":
     MODE_SLITS = False
 
     baseline_scanning = Varian634BaselineScanning(arduino_motors, arduino_sensors, MODE_SLITS)
-    baseline_scanning.scanning_acquisition(screw_travel = 2, number_measurements = 3)
+    baseline_scanning.precision_mode(-5,5)
+    #baseline_scanning.scanning_acquisition(screw_travel = 2, number_measurements = 3)

@@ -343,7 +343,7 @@ if __name__ == "__main__":
     print("Current Position of motors:", current_position)   
 
     # Test move_mirror_motor function
-    motors_controller.move_screw(1)  # Move screw motor by 3 units
+    motors_controller.move_screw(-7)  # Move screw motor by 3 units
     time.sleep(1)
 
     # Test stop_motors function
@@ -361,4 +361,4 @@ if __name__ == "__main__":
     motors_controller.unlock_motors()
 
     # Test initialisation_motors function
-    motors_controller.initialisation_motors()
+    #motors_controller.initialisation_motors()

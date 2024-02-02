@@ -14,9 +14,7 @@ customtkinter.set_default_color_theme("dark-blue")  # Themes: "blue" (standard),
 
 class App(customtkinter.CTk):
     def __init__(self):
-        super().__init__()
-
-        
+        super().__init__()        
 
         self.title("Application VARIAN 634")
         self.geometry("700x450")
