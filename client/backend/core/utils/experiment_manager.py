@@ -241,3 +241,5 @@ class ExperimentManager:
 
         return target_directory
     
+if __name__ == "__main__":
+    ExperimentManager().create_data_baseline()

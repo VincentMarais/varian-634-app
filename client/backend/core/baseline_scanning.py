@@ -108,14 +108,25 @@ class Varian634BaselineScanning:
         time.sleep(1)
         for i in range(1, number_measurements):
             voltage_1, voltage_2 = self.perform_step_measurement()
+            # On deplace le reseau de diffraction pour 
+            # changer de longueur d'onde
+            self.motors_controller.move_screw(step)
+            # On stoke toute les datas necessaires
+            # pour tracer le graphique de l'absorbance 
+            # En fonction de la longueur d'onde
             voltages_photodiode_1.append(voltage_1)
             voltages_photodiode_2.append(voltage_2)
             position = i * step
-            # On fait un move step car le moteur en en mode relatif (G91)
-            self.motors_controller.move_screw(step)
-            self.motors_controller.wait_for_idle()
             no_screw.append(position)
             wavelength.append(self.calculate_wavelength(position))
+            # On sauvegarde les datas au fur et à mesure                
+            title_data_acquisition = ["Longueur d'onde (nm)", "Tension photodiode 1 (Volt)", "Tension photodiode 2 (Volt)", 
+                                  "pas de vis (mm)"]
+            datas = [wavelength, voltages_photodiode_1, voltages_photodiode_2, no_screw]
+            title_file = "raw_data_" + self.title_file
+            self.csv.save_data_csv(datas, title_data_acquisition, title_file)
+            # On attend que le réseau de diffraction soit bien arrivé à la longueur d'onde souhaité
+            self.motors_controller.wait_for_idle()
         # Reference and cuvette 1
         if self.choice == 'cuvette 1':
             reference_solution, sample_solution = (voltages_photodiode_1, voltages_photodiode_2)
@@ -124,8 +135,7 @@ class Varian634BaselineScanning:
         reference_solution=np.array(reference_solution)
         sample_solution=np.array(sample_solution)
         absorbance = np.log10(reference_solution/sample_solution)
-        return list(reversed(wavelength)), list(reversed(absorbance)), list(reversed(reference_solution)), \
-               list(reversed(sample_solution)), list(reversed(no_screw))
+        return wavelength, list(absorbance)
 
     def acquisition(self, screw_travel, number_measurements, mode):
         """
@@ -142,8 +152,7 @@ class Varian634BaselineScanning:
             self.motors_controller.initialisation_motors()
         data_acquisition = self.precision_mode(screw_travel, number_measurements)
 
-        title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "Tension référence (Volt)", "Tension échantillon (Volt)",
-                                  "pas de vis (mm)"]
+        title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance"]
         title_file = mode + self.title_file
         self.csv.save_data_csv(data_acquisition, title_data_acquisition, title_file)
 
@@ -170,12 +179,7 @@ class Varian634BaselineScanning:
         """
         current_date = datetime.now()
         current_day = current_date.strftime("%d_%m_%Y")
-        baseline_file = self.path_baseline + 'baseline_' + current_day + '_' + self.slot_size 
-        # On initialise le moteur dans le domaine du visible
-        # On bouge le moteur de 4.4 car à l'initialisation il est à 1 mm de la butée
-        self.motors_controller.unlock_motors()
-        self.motors_controller.move_screw(4.4)
-        self.motors_controller.wait_for_idle()
+        baseline_file = self.path_baseline + 'baseline_' + current_day + '_' + self.slot_size
         # Verification if the baseline_date_heure.csv file exists
         if not os.path.exists(baseline_file):
             print('Le fichier' + baseline_file + '  n\'est pas créé.')

@@ -190,7 +190,9 @@ class PhotodiodeNoiseReducer:
 
     def sample_absorbance(self, absorbance_baseline, absorbance_scanning):
         """
-        Reduces the difference between two photodiode signals.
+        Reduces the difference between two photodiode signals. Because 
+        theoretically the absorbance A=0 with no cuvettes but is not 
+        true because two photodiodes is differente
 
         Parameters:
             absorbance_baseline (array): Baseline absorbance signal.
