@@ -71,15 +71,13 @@ class Varian634BaselineScanning:
         Performs a measurement at a given step and returns the measured voltages.
         """
         channels = ['Dev1/ai0', 'Dev1/ai1']
-
-        self.motors_controller.unlock_motors()
-        
+        #acquiere la tension aux borne de photodiode 1
         voltage_photodiode_1 = self.daq.voltage_acquisition_scanning_baseline(channels[0])
         # move mirror motor 0.333334 = 60° to switch cuvette
         self.motors_controller.move_mirror_motor(0.33334)
         # wait mirror motor 
         self.motors_controller.wait_for_idle()
-
+        # read the voltage on photodiode 2
         voltage_photodiode_2 = self.daq.voltage_acquisition_scanning_baseline(channels[1])
 
         self.motors_controller.move_mirror_motor(-0.33334)
