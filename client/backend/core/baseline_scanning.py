@@ -58,12 +58,12 @@ class Varian634BaselineScanning:
         self.experim_manager = ExperimentManager()        
         self.path, self.date, self.slot_size = self.experim_manager.creation_directory_date_slot()
         self.path_baseline = self.experim_manager.create_data_baseline()
-        self.echantillon_name = input("Nom de l'espèce étudié ? ")
+        self.sample_name = input("Nom de l'espèce étudié ? ")
         self.choice = self.experim_manager.get_solution_cuvette()
-        self.title_file_echantillon = self.date + '_' + self.slot_size + '_' + self.echantillon_name + '_' + self.slot_size
+        self.title_file_sample = self.date + '_' + self.slot_size + '_' + self.sample_name + '_' + self.slot_size
         
         # Graph 
-        self.graph = Varian634ExperimentPlotter(self.path, self.echantillon_name, self.peak_search_window)
+        self.graph = Varian634ExperimentPlotter(self.path, self.sample_name, self.peak_search_window)
 
 
     def perform_step_measurement(self):
@@ -120,7 +120,7 @@ class Varian634BaselineScanning:
             title_data_acquisition = ["Longueur d'onde (nm)", "Tension photodiode 1 (Volt)", "Tension photodiode 2 (Volt)", 
                                   "pas de vis (mm)"]
             datas = [wavelength, voltages_photodiode_1, voltages_photodiode_2, no_screw]
-            title_file = "raw_data_" + self.title_file_echantillon
+            title_file = "raw_data_" + self.title_file_sample
             self.experim_manager.save_data_csv(datas, title_data_acquisition, title_file)
             # On attend que le réseau de diffraction soit bien arrivé à la longueur d'onde souhaité
             time.sleep(time_per_step)
@@ -150,7 +150,7 @@ class Varian634BaselineScanning:
         data_acquisition = self.precision_mode(screw_travel, number_measurements)
 
         title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance"]
-        title_file = mode + self.title_file_echantillon
+        title_file = mode + self.title_file_sample
         self.experim_manager.save_data_csv(data_acquisition, title_data_acquisition, title_file)
 
         self.motors_controller.wait_for_idle()
@@ -208,7 +208,7 @@ class Varian634BaselineScanning:
             number_measurements: Total number of measurements to perform.
         """
         self.baseline_verification()
-        file_baseline= 'baseline' + self.title_file_echantillon
+        file_baseline= 'baseline' + self.title_file_sample
         print(file_baseline)
         baseline_file = f"{self.path}/{file_baseline}.csv"
         data_baseline = pd.read_csv(baseline_file, encoding='ISO-8859-1')
@@ -222,7 +222,7 @@ class Varian634BaselineScanning:
 
         title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance"]
         data_acquisition = [wavelength, absorbance]
-        title_file = self.title_file_echantillon + '_final'
+        title_file = self.title_file_sample + '_final'
         self.experim_manager.save_data_csv(data_acquisition, title_data_acquisition, title_file)
         self.graph.graph_absorbance(title_file)
         # End-of-file (EOF)

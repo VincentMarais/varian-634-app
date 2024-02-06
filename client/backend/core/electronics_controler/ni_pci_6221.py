@@ -134,6 +134,8 @@ class VoltageAcquisition:
         voltages = np.array(self.measure_voltage(task, physical_channel))
         mean = np.mean(voltages)
         return mean
+    
+
     def voltage_acquisition_scanning_baseline(self, physical_channel):
         """
         Performs voltage acquisition based on the task type.
@@ -227,6 +229,52 @@ class VoltageAcquisition:
 
         # Wait a bit before reading again
         time.sleep(0.1)
+
+    def rising_edge_acquisition(self, task_impulsion, task_voltage, physical_channel):
+        """
+        Configures the pulse generation task and adds a digital edge trigger for voltage measurement.
+
+        Parameters:
+        - task_impulsion : nidaqmx task object.
+        """
+
+        # Configure the counter output channel to generate a square wave.
+        task_impulsion.co_channels.add_co_pulse_chan_freq(self.device, freq=self.frequency[0], duty_cycle=self.duty_cycle[0], initial_delay=0.0)
+
+        # Configure a digital input channel for voltage measurement.
+        task_voltage.ai_channels.add_ai_voltage_chan(physical_channel, terminal_config=TerminalConfiguration.DIFF)
+
+
+        # Add a digital edge trigger for rising edges.
+        task_impulsion.triggers.start_trigger.cfg_dig_edge_start_trig(trigger_source=self.device, trigger_edge=nidaqmx.constants.Edge.RISING)
+
+        # Configure timing for the measurement.
+        task_impulsion.timing.cfg_implicit_timing(sample_mode=nidaqmx.constants.AcquisitionType.FINITE, samps_per_chan=self.frequency)
+
+        # Create an array to store voltage measurements.
+        voltage_data = []
+        frequency = int(self.frequency[0])
+        # Start the task.
+        task_impulsion.start()
+
+        try:
+            # Read and plot voltage measurements in real-time.
+            while len(voltage_data) < frequency:
+                voltage = task_impulsion.read()
+                voltage_data.extend(voltage)
+                plt.plot(voltage_data)
+                plt.xlabel('Sample')
+                plt.ylabel('Voltage (V)')
+                plt.title('Voltage vs. Sample')
+                plt.pause(0.01)  # Update the plot every 10 milliseconds
+        except KeyboardInterrupt:
+            pass
+        finally:
+            # Stop and clear the task when done.
+            task_impulsion.stop()
+            task_impulsion.close()
+
+        plt.show()
 
 if __name__ == "__main__":
     acqui_voltage = VoltageAcquisition()

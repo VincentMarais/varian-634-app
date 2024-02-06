@@ -11,7 +11,6 @@ from kinematic_chains.motors_varian_634 import GeneralMotorsController
 from electronics_controler.ni_pci_6221 import VoltageAcquisition
 
 # Data processing
-from utils.data_csv import CSVTransformer
 from utils.draw_curve import Varian634ExperimentPlotter
 from utils.experiment_manager import ExperimentManager
 from utils.digital_signal_processing import PhotodiodeNoiseReducer
@@ -87,19 +86,21 @@ class SpectroVariableSlits:
         self.motors_controller = GeneralMotorsController(self.arduino_motors, self.arduino_sensors)
         self.slits_position = [0, 0.07, 0.07, 0.08] # position of slits [2nm, 1nm, 0.5nm, 0.2nm]
         self.ni_pci_6221 = VoltageAcquisition()
-        # init experiment tools
+        # init mode
         self.baseline_scanning = Varian634BaselineScanning(self.arduino_motors, self.arduino_sensors, self.mode_variable_slits)
-        self.path_baseline = experim_manager.create_data_baseline()
         self.chemical_kinetics = Varian634KineticsAnalysis(self.arduino_motors, self.arduino_sensors, self.mode_variable_slits)
-        self.path, self.date, self.slot_size = experim_manager.creation_directory_date_slot()
-        self.echantillon_name = input("Nom de l'espèce étudié ? ")
-        self.title_file = self.date + '_' + self.slot_size
-        self.title_file_echantillon = self.date + '_' + self.slot_size + '_' + self.echantillon_name
-        self.csv = CSVTransformer(self.path)
+        # init experiment tools
+        self.experim_manager = ExperimentManager()        
+        self.path, self.date, self.slot_size = self.experim_manager.creation_directory_date_slot()
+        self.path_baseline = self.experim_manager.create_data_baseline()
+        self.sample_name = input("Nom de l'espèce étudié ? ")
+        self.choice = self.experim_manager.get_solution_cuvette()
+        self.title_file_sample = self.date + '_' + self.slot_size + '_' + self.sample_name + '_' + self.slot_size
+
         # init digital processing
         self.noise_processing = PhotodiodeNoiseReducer()
         self.peak_search_window = 1
-        self.graph = Varian634ExperimentPlotter(self.path, self.echantillon_name, self.peak_search_window)
+        self.graph = Varian634ExperimentPlotter(self.path, self.sample_name, self.peak_search_window)
 
     def slits_variable_scanning(self, screw_travel, number_measurements):
         """
