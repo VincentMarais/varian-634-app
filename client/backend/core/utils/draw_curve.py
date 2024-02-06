@@ -5,7 +5,7 @@ Program for graphics.
 
 import matplotlib.pyplot as plt
 import numpy as np
-from utils.data_csv import CSVTransformer
+from data_csv import CSVTransformer
 from scipy.signal import find_peaks
 import pandas as pd
 
@@ -85,9 +85,9 @@ class Varian634ExperimentPlotter:
         peaks, _ = find_peaks(absorbance, distance=self.peak_search_window)
         titles_list_peak = ["absorbance pics", "longueur d'onde pics"]
 
-        self.csv_file.add_column_to_csv(file_experiment,
-                                        titles_list_peak,
-                                        [peaks, wavelength[peaks]])
+        #self.csv_file.add_column_to_csv(file_experiment,
+                                        #titles_list_peak,
+                                        #[peaks, wavelength[peaks]])
 
         graph_title = 'Absorbance du ' + self.sample_analyzed_name
         plt.plot(wavelength, absorbance)
@@ -125,9 +125,25 @@ class Varian634ExperimentPlotter:
 
 if __name__ == "__main__":
     # Exemple d'utilisation:
-    PATH = "C:\\Users\\vimarais\\Documents\\GitHub\\varian-634-app\\experiments\\experiments_2023\\experiments_12_2023\\experiments_15_12_2023\\Fente_2nm"
+    PATH = "C:\\Users\\vimarais\\Documents\\GitHub\\varian-634-app\\client\\backend\\core\\experiments\\experiments_2024\\experiments_02_2024\\experiments_06_02_2024\\Fente_0_2nm"
     sample_name = input("Nom de l'espèce chimique :")
     WINDOW = 2
-    FILE = 'nom_fichier'
+    FILE = 'raw_data_06_02_2024_Fente_0_2nm'
     experiment_plotter = Varian634ExperimentPlotter(PATH, sample_name, WINDOW)
-    experiment_plotter.graph_absorbance(FILE)
+    #experiment_plotter.graph_absorbance(FILE)
+    path_file = f"{PATH}/{FILE}.csv"
+    data_file_experiment = pd.read_csv(path_file, encoding='ISO-8859-1')
+    wavelength = data_file_experiment['Longueur d\'onde (nm)']
+    tension_1 = data_file_experiment['Tension photodiode 1 (Volt)']
+    tension_2 = data_file_experiment['Tension photodiode 2 (Volt)']
+    tension_1= np.array(tension_1)
+    tension_2 = np.array(tension_2)
+    absorbance= np.log10(tension_1/tension_2)
+    absorbance = list(absorbance)
+    plt.plot(wavelength, absorbance)
+    plt.show()
+
+
+
+
+

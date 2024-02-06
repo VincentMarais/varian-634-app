@@ -72,7 +72,7 @@ class GeneralMotorsController:
             str: The current state of the motor (based on the motor's response).
         """
         self.execute_g_code('?')
-        return self.arduino_motors.read(20)  # Read the first 20 characters for state
+        return self.arduino_motors.read(25)  # Read the first 20 characters for state
     
 # G_CODE to control the kinematics of motors
 
@@ -99,8 +99,11 @@ class GeneralMotorsController:
         """
         Block execution until the motor is idle.
         """
-        while 'Idle' not in str(self.get_motor_state()):
-            pass
+        state = str(self.get_motor_state())
+        while 'Idle' not in state:
+            state = str(self.get_motor_state())
+            time.sleep(0.1)
+            print(state)
 
     def get_position_xyz(self):
         """
@@ -298,7 +301,7 @@ class GeneralMotorsController:
         self.initialize_end_stop(self.all_pin)
         time.sleep(1)
         self.initialize_mirror_position()  
-        self.wait_for_idle()      
+             
         self.initialisation_motor_screw()
         self.wait_for_idle()
         self.initialisation_motor_slits()
@@ -326,9 +329,10 @@ if __name__ == "__main__":
 
     # Test set_motors_speed function
     motors_controller.unlock_motors()
+    
 
-    # 
-    motors_controller.set_motors_speed(motors_controller.screw_motor, 10)  # Set screw motor speed to 10
+    
+    """motors_controller.set_motors_speed(motors_controller.screw_motor, 10)  # Set screw motor speed to 10
 
     # Test get_motor_state function
     motor_state = motors_controller.get_motor_state()
@@ -340,9 +344,9 @@ if __name__ == "__main__":
     # Test get_position_xyz function
     current_position = motors_controller.get_position_xyz()
     print("Current Position of motors:", current_position)   
-
+"""
     # Test move_mirror_motor function
-    motors_controller.move_screw(-7)  # Move screw motor by 3 units
+    motors_controller.move_screw(4)  # Move screw motor by 3 units
     time.sleep(1)
 
     # Test stop_motors function
@@ -353,6 +357,10 @@ if __name__ == "__main__":
     # Test resume_cycle function
     print("Resumption of the engine cycle")
     motors_controller.resume_cycle()
+
+    motors_controller.execute_g_code("G0 X1 Z1")
+
+
 
     # Test move_screw function
 

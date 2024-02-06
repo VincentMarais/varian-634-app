@@ -263,7 +263,7 @@ if __name__ == "__main__":
 
 # Test voltage_acquisition_scanning_baseline
     print(acqui_voltage.voltage_acquisition_scanning_baseline(CHANNEL[0]))
-
+    """time.sleep(3)
    # Test voltage_acquisition_chemical_kinetics
     TIME_ACQUISITION = 10
     TIME_PER_ACQUISITION = 1
@@ -274,4 +274,4 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid()
     plt.tight_layout()
-    plt.show()
+    plt.show()"""

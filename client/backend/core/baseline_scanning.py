@@ -28,7 +28,7 @@ from utils.data_csv import CSVTransformer
 from utils.draw_curve import Varian634ExperimentPlotter
 from utils.experiment_manager import ExperimentManager
 from utils.digital_signal_processing import PhotodiodeNoiseReducer
-
+from utils.draw_curve import Varian634ExperimentPlotter
 experim_manager = ExperimentManager()
 
 
@@ -52,6 +52,7 @@ class Varian634BaselineScanning:
         self.mode_variable_slits = mode_variable_slits
         self.motors_controller = GeneralMotorsController(self.arduino_motors, self.arduino_sensors)
         self.daq = VoltageAcquisition()
+        self.channels = ['Dev1/ai0', 'Dev1/ai1']
         # Init experiment tools
         self.path_baseline = experim_manager.create_data_baseline()
         self.path, self.date, self.slot_size = experim_manager.creation_directory_date_slot()
@@ -59,10 +60,11 @@ class Varian634BaselineScanning:
         self.choice = experim_manager.get_solution_cuvette()
         self.title_file = self.date + '_' + self.slot_size
         self.title_file_echantillon = self.date + '_' + self.slot_size + '_' + self.echantillon_name
+        self.title_file_echantillon = self.date + '_' + self.slot_size + '_' + self.echantillon_name + '_' + self.slot_size
         self.csv = CSVTransformer(self.path)
         # Init digital processing
         self.noise_processing = PhotodiodeNoiseReducer()
-        self.peak_search_window = 1
+        self.peak_search_window = 60
         self.graph = Varian634ExperimentPlotter(self.path, self.echantillon_name, self.peak_search_window)
 
 
@@ -70,19 +72,17 @@ class Varian634BaselineScanning:
         """
         Performs a measurement at a given step and returns the measured voltages.
         """
-        channels = ['Dev1/ai0', 'Dev1/ai1']
+        print("Mesure cuvette 1")
         #acquiere la tension aux borne de photodiode 1
-        voltage_photodiode_1 = self.daq.voltage_acquisition_scanning_baseline(channels[0])
+        voltage_photodiode_1 = self.daq.voltage_acquisition_scanning_baseline(self.channels[0])
         # move mirror motor 0.333334 = 60° to switch cuvette
         self.motors_controller.move_mirror_motor(0.33334)
         # wait mirror motor 
-        self.motors_controller.wait_for_idle()
-        # read the voltage on photodiode 2
-        voltage_photodiode_2 = self.daq.voltage_acquisition_scanning_baseline(channels[1])
-
+        time.sleep(1)
+        # read the voltage on photodiode 2    
+        voltage_photodiode_2 = self.daq.voltage_acquisition_scanning_baseline(self.channels[1])
         self.motors_controller.move_mirror_motor(-0.33334)
-
-        self.motors_controller.wait_for_idle()
+        time.sleep(1)
 
         return voltage_photodiode_1, voltage_photodiode_2
 
@@ -97,14 +97,15 @@ class Varian634BaselineScanning:
         Executes the precision mode for the measurement and returns the results.
         """
         voltages_photodiode_1, voltages_photodiode_2 = [], []
-        no_screw, wavelength = [0], []
-        step = screw_travel / number_measurements        
+        no_screw, wavelength = [], []
+        step = screw_travel / number_measurements 
+        time_per_step = (step*60)/10 # [step] = mm et 10=vitesse de rotation de la vis (mm/min)       
         self.motors_controller.unlock_motors()
         # mode relatif :
         self.motors_controller.execute_g_code("G91")
         # Laissé le temps au moteurs de recevoir la commande dans le serial
         time.sleep(1)
-        for i in range(1, number_measurements):
+        for i in range(0, number_measurements):
             voltage_1, voltage_2 = self.perform_step_measurement()
             # On deplace le reseau de diffraction pour 
             # changer de longueur d'onde
@@ -115,7 +116,7 @@ class Varian634BaselineScanning:
             voltages_photodiode_1.append(voltage_1)
             voltages_photodiode_2.append(voltage_2)
             position = i * step
-            no_screw.append(position)
+            no_screw.append(position + step)
             wavelength.append(self.calculate_wavelength(position))
             # On sauvegarde les datas au fur et à mesure                
             title_data_acquisition = ["Longueur d'onde (nm)", "Tension photodiode 1 (Volt)", "Tension photodiode 2 (Volt)", 
@@ -124,14 +125,14 @@ class Varian634BaselineScanning:
             title_file = "raw_data_" + self.title_file
             self.csv.save_data_csv(datas, title_data_acquisition, title_file)
             # On attend que le réseau de diffraction soit bien arrivé à la longueur d'onde souhaité
-            self.motors_controller.wait_for_idle()
+            time.sleep(time_per_step)
         # Reference and cuvette 1
         if self.choice == 'cuvette 1':
             reference_solution, sample_solution = (voltages_photodiode_1, voltages_photodiode_2)
         else:
             reference_solution, sample_solution = (voltages_photodiode_2, voltages_photodiode_1)
-        reference_solution=np.array(reference_solution)
-        sample_solution=np.array(sample_solution)
+        reference_solution = np.array(reference_solution)
+        sample_solution = np.array(sample_solution)
         absorbance = np.log10(reference_solution/sample_solution)
         return wavelength, list(absorbance)
 
@@ -199,7 +200,6 @@ class Varian634BaselineScanning:
             else:
                 while reponse not in ['oui', 'non']:
                     reponse = input("Répondez par 'Oui' ou 'Non'. Souhaitez-vous réaliser une nouvelle baseline ? ").lower()
-        return baseline_file
 
     def scanning_acquisition(self, screw_travel, number_measurements):
         """
@@ -209,9 +209,15 @@ class Varian634BaselineScanning:
             screw_travel: Total distance the screw must travel.
             number_measurements: Total number of measurements to perform.
         """
-        baseline_file = self.baseline_verification()
+        #self.baseline_verification()
+        file_baseline= 'baseline' + self.title_file
+
+        print(file_baseline)
+        baseline_file = f"{self.path}/{file_baseline}.csv"
         data_baseline = pd.read_csv(baseline_file, encoding='ISO-8859-1')
         absorbance_baseline = data_baseline['Absorbance']
+        cuvette_prompt = "Avez-vous mis votre solution dans la cuve appropriée ? "
+        experim_manager.wait_for_user_confirmation(cuvette_prompt)
         data_acquisition=self.acquisition(screw_travel, number_measurements, 'scanning')
         wavelength = data_acquisition[0]
         absorbance_scanning = data_acquisition[1]
@@ -221,6 +227,7 @@ class Varian634BaselineScanning:
         data_acquisition = [wavelength, absorbance]
         title_file = self.title_file + '_final'
         self.csv.save_data_csv(data_acquisition, title_data_acquisition, title_file)
+        self.graph.graph_absorbance(title_file)
         # End-of-file (EOF)
 
 
@@ -246,5 +253,6 @@ if __name__ == "__main__":
     MODE_SLITS = False
 
     baseline_scanning = Varian634BaselineScanning(arduino_motors, arduino_sensors, MODE_SLITS)
-    print(baseline_scanning.precision_mode(1,5))
+    #print(baseline_scanning.precision_mode(1,5))
+    baseline_scanning.scanning_acquisition(10, 200)
     #baseline_scanning.scanning_acquisition(screw_travel = 2, number_measurements = 3)
