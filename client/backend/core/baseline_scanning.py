@@ -246,5 +246,5 @@ if __name__ == "__main__":
     MODE_SLITS = False
 
     baseline_scanning = Varian634BaselineScanning(arduino_motors, arduino_sensors, MODE_SLITS)
-    baseline_scanning.precision_mode(5,5)
+    print(baseline_scanning.precision_mode(1,5))
     #baseline_scanning.scanning_acquisition(screw_travel = 2, number_measurements = 3)

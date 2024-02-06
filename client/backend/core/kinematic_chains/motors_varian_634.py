@@ -307,7 +307,6 @@ if __name__ == "__main__":
     import serial
 
     # MOTOR INITIALIZATION:
-
     COM_PORT_MOTORS = 'COM3'
     COM_PORT_SENSORS = 'COM9'
     BAUD_RATE = 115200
@@ -357,8 +356,8 @@ if __name__ == "__main__":
 
     # Test move_screw function
 
-    motors_controller.wait_for_idle() 
-    motors_controller.unlock_motors()
+    #motors_controller.wait_for_idle() 
+    #motors_controller.unlock_motors()
 
     # Test initialisation_motors function
     #motors_controller.initialisation_motors()
