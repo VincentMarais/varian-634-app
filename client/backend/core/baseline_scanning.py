@@ -24,12 +24,9 @@ from kinematic_chains.motors_varian_634 import GeneralMotorsController
 from electronics_controler.ni_pci_6221 import VoltageAcquisition
 
 # Data processing
-from utils.data_csv import CSVTransformer
-from utils.draw_curve import Varian634ExperimentPlotter
 from utils.experiment_manager import ExperimentManager
 from utils.digital_signal_processing import PhotodiodeNoiseReducer
 from utils.draw_curve import Varian634ExperimentPlotter
-experim_manager = ExperimentManager()
 
 
 class Varian634BaselineScanning:
@@ -53,18 +50,19 @@ class Varian634BaselineScanning:
         self.motors_controller = GeneralMotorsController(self.arduino_motors, self.arduino_sensors)
         self.daq = VoltageAcquisition()
         self.channels = ['Dev1/ai0', 'Dev1/ai1']
-        # Init experiment tools
-        self.path_baseline = experim_manager.create_data_baseline()
-        self.path, self.date, self.slot_size = experim_manager.creation_directory_date_slot()
-        self.echantillon_name = input("Nom de l'espèce étudié ? ")
-        self.choice = experim_manager.get_solution_cuvette()
-        self.title_file = self.date + '_' + self.slot_size
-        self.title_file_echantillon = self.date + '_' + self.slot_size + '_' + self.echantillon_name
-        self.title_file_echantillon = self.date + '_' + self.slot_size + '_' + self.echantillon_name + '_' + self.slot_size
-        self.csv = CSVTransformer(self.path)
+
         # Init digital processing
         self.noise_processing = PhotodiodeNoiseReducer()
         self.peak_search_window = 60
+        # Init experiment tools
+        self.experim_manager = ExperimentManager()        
+        self.path, self.date, self.slot_size = self.experim_manager.creation_directory_date_slot()
+        self.path_baseline = self.experim_manager.create_data_baseline()
+        self.echantillon_name = input("Nom de l'espèce étudié ? ")
+        self.choice = self.experim_manager.get_solution_cuvette()
+        self.title_file_echantillon = self.date + '_' + self.slot_size + '_' + self.echantillon_name + '_' + self.slot_size
+        
+        # Graph 
         self.graph = Varian634ExperimentPlotter(self.path, self.echantillon_name, self.peak_search_window)
 
 
@@ -122,8 +120,8 @@ class Varian634BaselineScanning:
             title_data_acquisition = ["Longueur d'onde (nm)", "Tension photodiode 1 (Volt)", "Tension photodiode 2 (Volt)", 
                                   "pas de vis (mm)"]
             datas = [wavelength, voltages_photodiode_1, voltages_photodiode_2, no_screw]
-            title_file = "raw_data_" + self.title_file
-            self.csv.save_data_csv(datas, title_data_acquisition, title_file)
+            title_file = "raw_data_" + self.title_file_echantillon
+            self.experim_manager.save_data_csv(datas, title_data_acquisition, title_file)
             # On attend que le réseau de diffraction soit bien arrivé à la longueur d'onde souhaité
             time.sleep(time_per_step)
         # Reference and cuvette 1
@@ -152,8 +150,8 @@ class Varian634BaselineScanning:
         data_acquisition = self.precision_mode(screw_travel, number_measurements)
 
         title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance"]
-        title_file = mode + self.title_file
-        self.csv.save_data_csv(data_acquisition, title_data_acquisition, title_file)
+        title_file = mode + self.title_file_echantillon
+        self.experim_manager.save_data_csv(data_acquisition, title_data_acquisition, title_file)
 
         self.motors_controller.wait_for_idle()
         self.motors_controller.reset_screw_position(screw_travel)
@@ -182,7 +180,7 @@ class Varian634BaselineScanning:
         # Verification if the baseline_date_heure.csv file exists
         if not os.path.exists(baseline_file):
             print('Le fichier' + baseline_file + '  n\'est pas créé.')
-            experim_manager.delete_files_in_directory(self.path_baseline)
+            self.experim_manager.delete_files_in_directory(self.path_baseline)
             print("Réalisation de la baseline")
             self.acquisition_baseline(13.3, 200)
             print("Exécution de baseline_acquisition")
@@ -209,15 +207,14 @@ class Varian634BaselineScanning:
             screw_travel: Total distance the screw must travel.
             number_measurements: Total number of measurements to perform.
         """
-        #self.baseline_verification()
-        file_baseline= 'baseline' + self.title_file
-
+        self.baseline_verification()
+        file_baseline= 'baseline' + self.title_file_echantillon
         print(file_baseline)
         baseline_file = f"{self.path}/{file_baseline}.csv"
         data_baseline = pd.read_csv(baseline_file, encoding='ISO-8859-1')
         absorbance_baseline = data_baseline['Absorbance']
         cuvette_prompt = "Avez-vous mis votre solution dans la cuve appropriée ? "
-        experim_manager.wait_for_user_confirmation(cuvette_prompt)
+        self.experim_manager.wait_for_user_confirmation(cuvette_prompt)
         data_acquisition=self.acquisition(screw_travel, number_measurements, 'scanning')
         wavelength = data_acquisition[0]
         absorbance_scanning = data_acquisition[1]
@@ -225,8 +222,8 @@ class Varian634BaselineScanning:
 
         title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance"]
         data_acquisition = [wavelength, absorbance]
-        title_file = self.title_file + '_final'
-        self.csv.save_data_csv(data_acquisition, title_data_acquisition, title_file)
+        title_file = self.title_file_echantillon + '_final'
+        self.experim_manager.save_data_csv(data_acquisition, title_data_acquisition, title_file)
         self.graph.graph_absorbance(title_file)
         # End-of-file (EOF)
 

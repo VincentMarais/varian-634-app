@@ -1,10 +1,20 @@
 """
 This program provides user assistance for VARIAN 634 experiments.
 
+1) Program manage CSV data of VARIAN 634 in acquisition
+
+2) Program for graphics.
+
+
 """
 
 import os
 import datetime
+import csv
+import itertools
+
+import tkinter as tk
+from tkinter import filedialog
 
 class ExperimentManager:
     """
@@ -43,7 +53,47 @@ class ExperimentManager:
     """
 
     def __init__(self):
-        pass
+        """
+        Constructs all the necessary attributes for the CSVTransformer object.
+
+        Parameters
+        ----------
+        path : str
+            The path where the CSV files are located.
+        sample_analyzed_name (str): Le nom de l'espèce chimique analysée.
+        peak_search_window (int): La fenêtre de recherche des pics.
+        """
+        self.path = self.choose_folder()
+    
+    def save_data_csv(self, data_list, title_list, file_name):
+        """
+        Transforms and saves the provided data to a CSV file.
+
+        Parameters
+        ----------
+        data_list : list
+            List of data to be saved in the CSV file.
+        title_list : list
+            List of titles for the CSV columns.
+        file_name : str
+            The name of the CSV file to be saved.
+
+        Returns
+        -------
+        str
+            The path of the saved CSV file.
+        """
+        path_file = f"{self.path}/{file_name}.csv"
+        # Transpose the list of data
+        data_transposed = list(itertools.zip_longest(*data_list))
+        with open(path_file, 'w', newline='', encoding='utf-8') as file_csv:
+            writer = csv.writer(file_csv)
+            # Write titles as the first line
+            writer.writerow(title_list)
+            # Write transposed data
+            for row in data_transposed:
+                writer.writerow(row)
+        return path_file
 
     @staticmethod
     def detection_existence_directory(path):
@@ -83,8 +133,7 @@ class ExperimentManager:
         else:
             print("Directory already exists:", path)
 
-    @staticmethod
-    def directory_year_month_day():
+    def directory_year_month_day(self):
         """
         Create a directory with the current year_month_day.
 
@@ -98,15 +147,14 @@ class ExperimentManager:
         current_month = current_date.strftime("%m_%Y")
         current_day = current_date.strftime("%d_%m_%Y")
         path = os.path.join(
-            "./experiments",
+            self.path,
             "experiments_" + current_year,
             "experiments_" + current_month,
             "experiments_" + current_day)
-        ExperimentManager.create_directory(path)
+        self.create_directory(path)
         return path
 
-    @staticmethod
-    def creation_directory_date_slot():
+    def creation_directory_date_slot(self):
         """
         Create a directory with the length of the slot used in the experiment.
 
@@ -115,37 +163,16 @@ class ExperimentManager:
         tuple
             A tuple containing path, date_str, and slot_size.
         """
-        slot_size = ExperimentManager.validate_user_input(
+        path = self.directory_year_month_day()
+        slot_size = self.validate_user_input(
             "Slot size: Fente_2nm, Fente_1nm, Fente_0_5nm, Fente_0_2nm: ",
             ['Fente_2nm', 'Fente_1nm', 'Fente_0_5nm', 'Fente_0_2nm']
         )
         date_today = datetime.date.today()
         date_str = date_today.strftime("%d_%m_%Y")
-        path = ExperimentManager.directory_year_month_day()
         path = os.path.join(path, slot_size)
         ExperimentManager.create_directory(path)
         return path, date_str, slot_size
-
-    @staticmethod
-    def path_creation(path, physical_data):
-        """
-        Create a path for physical data.
-
-        Parameters
-        ----------
-        path : str
-            The base path.
-        physical_data : str
-            The physical data.
-
-        Returns
-        -------
-        str
-            The created path.
-        """
-        chemin = os.path.join(path, physical_data)
-        ExperimentManager.create_directory(chemin)
-        return chemin
 
     @staticmethod
     def get_solution_cuvette():
@@ -203,8 +230,22 @@ class ExperimentManager:
         response = input(prompt)
         while response not in valid_responses:
             response = input(prompt)
-        return response
+        return response 
+
     
+    def choose_folder(self):
+        """
+        Fonction qui permet de demander à l'utilisateur on il souhaite enregistrer son fichier
+        """
+        # Create an instance of Tk
+        root = tk.Tk()
+        # Hide the main window (do not use it)
+        root.withdraw()
+        # Open the folder selection dialog and store the selected folder path
+        folder = filedialog.askdirectory()
+        # Return the folder path
+        return folder
+
     def wait_for_user_confirmation(self, prompt):
         """
         Wait for user confirmation.
@@ -240,6 +281,20 @@ class ExperimentManager:
             print(f"Directory '{target_directory}' already exists.") 
 
         return target_directory
-    
+
+
+
+
 if __name__ == "__main__":
-    ExperimentManager().create_data_baseline()
+    # Exemple d'utilisation:
+    SAMPLE_NAME = "Bromo"
+    WINDOW = 2
+    experiment_manager = ExperimentManager()
+    #experiment_manager.creation_directory_date_slot()
+    experiment_manager.save_data_csv(data_list=[[1, 2, 3], [4, 5, 6], [1]], title_list=['Absorbance', 'Longueur d\'onde (nm)', 'C'], file_name='nom_fichier')
+    
+ 
+
+
+
+    

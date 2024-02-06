@@ -300,8 +300,8 @@ class GeneralMotorsController:
         """
         self.initialize_end_stop(self.all_pin)
         time.sleep(1)
-        self.initialize_mirror_position()  
-             
+        self.initialize_mirror_position()
+        self.wait_for_idle()
         self.initialisation_motor_screw()
         self.wait_for_idle()
         self.initialisation_motor_slits()
@@ -332,19 +332,14 @@ if __name__ == "__main__":
     
 
     
-    """motors_controller.set_motors_speed(motors_controller.screw_motor, 10)  # Set screw motor speed to 10
-
-    # Test get_motor_state function
-    motor_state = motors_controller.get_motor_state()
-    print("Motors State:", motor_state)
-
+    motors_controller.set_motors_speed(motors_controller.screw_motor, 10)  # Set screw motor speed to 10
+    
     # Test display_grbl_parameter function
     motors_controller.display_grbl_parameter()
 
     # Test get_position_xyz function
     current_position = motors_controller.get_position_xyz()
     print("Current Position of motors:", current_position)   
-"""
     # Test move_mirror_motor function
     motors_controller.move_screw(4)  # Move screw motor by 3 units
     time.sleep(1)
