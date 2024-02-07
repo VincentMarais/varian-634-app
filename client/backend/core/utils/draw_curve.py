@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import find_peaks
 import pandas as pd
-from experiment_manager import ExperimentManager
+from utils.experiment_manager import ExperimentManager
 
 class Varian634ExperimentPlotter:
     """

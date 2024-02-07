@@ -226,6 +226,7 @@ class GeneralMotorsController:
         """
         pin = self.pin_limit_switch_mirror_cuves[0]
         state = self.arduino_sensors.digital[pin].read()
+        self.unlock_motors()
         time.sleep(1) 
         if state is True:            
             self.unlock_motors()
@@ -328,39 +329,6 @@ if __name__ == "__main__":
 
 
     # Test set_motors_speed function
-    motors_controller.unlock_motors()
-    
-
-    
-    motors_controller.set_motors_speed(motors_controller.screw_motor, 10)  # Set screw motor speed to 10
-    
-    # Test display_grbl_parameter function
-    motors_controller.display_grbl_parameter()
-
-    # Test get_position_xyz function
-    current_position = motors_controller.get_position_xyz()
-    print("Current Position of motors:", current_position)   
-    # Test move_mirror_motor function
-    motors_controller.move_screw(4)  # Move screw motor by 3 units
-    time.sleep(1)
-
-    # Test stop_motors function
-    motors_controller.stop_motors()
-    print("Emergency stop")   
-    time.sleep(1)
-
-    # Test resume_cycle function
-    print("Resumption of the engine cycle")
-    motors_controller.resume_cycle()
-
-    motors_controller.execute_g_code("G0 X1 Z1")
-
-
-
-    # Test move_screw function
-
-    #motors_controller.wait_for_idle() 
-    #motors_controller.unlock_motors()
-
-    # Test initialisation_motors function
-    #motors_controller.initialisation_motors()
+    motors_controller.unlock_motors() 
+  
+    motors_controller.move_screw(0)

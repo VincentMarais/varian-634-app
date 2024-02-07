@@ -58,11 +58,11 @@ class VoltageAcquisition:
         # Dev1/ai0 : pin 68 / pin 34 (ground) (Capteur 2)
         # Dev1/ai1 : pin 33 / pin 66 (ground) (Capteur 1)
         self.channels = ['Dev1/ai0', 'Dev1/ai1']
-        self.samples_per_channel = 30000  # Sampling frequency
-        self.sample_rate = 250000
+        self.samples_per_channel = 100000  # Sampling frequency
+        self.sample_rate = 100000
         
         # Characteristics of square wave (xenon arc lamp control signal)
-        self.frequency = np.array([20.0])
+        self.frequency = np.array([40.0])
         self.duty_cycle = np.array([0.5])
         # cf link : Figure 8. NI PCI/PXI-6221 Pinout
         # /Dev1/ctr0 : pin 2 / pin 36 (ground)
@@ -135,6 +135,24 @@ class VoltageAcquisition:
         mean = np.mean(voltages)
         return mean
     
+    def integrate(self, values, step):
+        """
+        Integrate a list of values using the trapezoidal rule.
+        
+        Parameters:
+            values (list): List of values representing the function values.
+            step (float): Step size between values.
+            
+        Returns:
+            float: Approximation of the integral.
+        """
+        integral = 0.0
+        n = len(values)
+        
+        for i in range(1, n):
+            integral += 0.5 * (values[i-1] + values[i]) * step
+        
+        return integral
 
     def voltage_acquisition_scanning_baseline(self, physical_channel):
         """
@@ -147,23 +165,29 @@ class VoltageAcquisition:
         - min_voltages (float) :  Mean of the measured voltages.
         """
 
-        min_voltages=[]
+        mins = []
+        integrale = []
+        mean_data = []
         with nidaqmx.Task() as task_impulsion, nidaqmx.Task() as task_voltage:
             self.configure_task_impulsion(task_impulsion)
             self.configure_task_voltage(task_voltage, physical_channel)
-            frequency = int(self.frequency[0])
-            for _ in range(frequency):
-                # Acquisition des données
-                voltages = task_voltage.read(number_of_samples_per_channel=self.samples_per_channel)
-                # Conversion des données en un tableau numpy pour faciliter les calculs
-                voltages = np.array(voltages)
-                # Trouver et stocker le minimum
-                min_voltage = np.min(voltages)
-                min_voltages.append(min_voltage)
+            for _ in range (40):
+                for _ in range (20):
+                    voltages = task_voltage.read(number_of_samples_per_channel=self.samples_per_channel)
+                    # Conversion des données en un tableau numpy pour faciliter les calculs
+                    voltages = np.array(voltages)
+                    # Trouver et stocker le minimum
+                    min_voltage = np.min(voltages)
+                    inte = self.integrate(voltages,1)
+                    mins.append(min_voltage)
+                    integrale.append(inte)
+                mean_1 = np.mean(mins)
+                mean_data.append(mean_1)
+
             task_impulsion.stop()
             task_voltage.stop()
-            mean = np.mean(min_voltages)
-        return mean
+            
+        return voltages, mins, integrale, mean_data
 
     def voltage_acquisition_chemical_kinetics(self, physical_channel, time_acquisition, delay_between_measurements):
         """
@@ -294,23 +318,59 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     TASK = nidaqmx.Task()
     # Test measure_voltage
-    data_y = acqui_voltage.measure_voltage(TASK, CHANNEL[0])
+
+    [data_y, min, integrale, mean_data] = acqui_voltage.voltage_acquisition_scanning_baseline(CHANNEL[0])    
+
+    int = acqui_voltage.integrate(data_y,1)
+    print("Intégrale", int)
+    # Création de la figure et des sous-graphiques
+    fig, axs = plt.subplots(2, 2)
+
+    # Graphique 1
     x_data = np.arange(0, len(data_y), 1)
-    plt.plot(x_data, data_y)
-    plt.xlabel('samples')
-    plt.ylabel('Voltage (Volt)')
-    plt.legend()
-    plt.grid()
+    axs[0, 0].plot(x_data, data_y)
+    axs[0, 0].set_title('Data Y')
+    axs[0, 0].set_xlabel('samples')
+    axs[0, 0].set_ylabel('Voltage (Volt)')
+    axs[0, 0].grid()
+
+    # Graphique 2
+    x_data = np.arange(0, len(min), 1)
+    axs[0, 1].plot(x_data, min)
+    axs[0, 1].set_title('Min Values')
+    axs[0, 1].set_xlabel('samples')
+    axs[0, 1].set_ylabel('Voltage (Volt)')
+    axs[0, 1].grid()
+
+    # Graphique 3
+    x_data = np.arange(0, len(integrale), 1)
+    axs[1, 0].plot(x_data, integrale)
+    axs[1, 0].set_title('Integrale')
+    axs[1, 0].set_xlabel('samples')
+    axs[1, 0].set_ylabel('Integrale (Volt)')
+    axs[1, 0].grid()
+
+    # Graphique 4
+    x_data = np.arange(0, len(mean_data), 1)
+    axs[1, 1].plot(x_data, mean_data)
+    axs[1, 1].set_title('Mean Data')
+    axs[1, 1].set_xlabel('samples')
+    axs[1, 1].set_ylabel('Mean (Volt)')
+    axs[1, 1].grid()
+
+    # Ajuster automatiquement le placement des sous-graphiques
     plt.tight_layout()
+
+    # Afficher le graphique
     plt.show()
 
     # Test measure_mean_voltage
     TASK.stop()
-    time.sleep(1)
-
+    #time.sleep(1)
+    print(np.mean(min))
 
 # Test voltage_acquisition_scanning_baseline
-    print(acqui_voltage.voltage_acquisition_scanning_baseline(CHANNEL[0]))
+    #print(acqui_voltage.voltage_acquisition_scanning_baseline(CHANNEL[0]))
     """time.sleep(3)
    # Test voltage_acquisition_chemical_kinetics
     TIME_ACQUISITION = 10
