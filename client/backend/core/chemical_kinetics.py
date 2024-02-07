@@ -59,7 +59,7 @@ class Varian634KineticsAnalysis:
         self.noise_processing = PhotodiodeNoiseReducer()
         self.peak_search_window = 1
         self.graph = Varian634ExperimentPlotter(self.path, self.sample_name, self.peak_search_window)
-
+    
     def run_kinetics_analysis(self, time_acquisition, wavelengths, delay_between_measurements):
         """
         Runs the kinetics analysis.
@@ -93,7 +93,7 @@ class Varian634KineticsAnalysis:
             self.motors_controller.move_mirror_motor(0.33334)
 
             [moment, voltages_sample] = self.daq.voltage_acquisition_chemical_kinetics(channel, time_acquisition, delay_between_measurements)
-
+            
             self.motors_controller.move_mirror_motor(-0.33334)
 
             absorbance = np.log10(voltage_ref/voltages_sample)
