@@ -63,9 +63,9 @@ class ExperimentManager:
         sample_analyzed_name (str): Le nom de l'espèce chimique analysée.
         peak_search_window (int): La fenêtre de recherche des pics.
         """
-        self.path = self.choose_folder()
+        pass
     
-    def save_data_csv(self, data_list, title_list, file_name):
+    def save_data_csv(self, path, data_list, title_list, file_name):
         """
         Transforms and saves the provided data to a CSV file.
 
@@ -83,7 +83,7 @@ class ExperimentManager:
         str
             The path of the saved CSV file.
         """
-        path_file = f"{self.path}/{file_name}.csv"
+        path_file = f"{path}/{file_name}.csv"
         # Transpose the list of data
         data_transposed = list(itertools.zip_longest(*data_list))
         with open(path_file, 'w', newline='', encoding='utf-8') as file_csv:
@@ -133,7 +133,7 @@ class ExperimentManager:
         else:
             print("Directory already exists:", path)
 
-    def directory_year_month_day(self):
+    def directory_year_month_day(self, path):
         """
         Create a directory with the current year_month_day.
 
@@ -145,16 +145,16 @@ class ExperimentManager:
         current_date = datetime.datetime.now()
         current_year = current_date.strftime("%Y")
         current_month = current_date.strftime("%m_%Y")
-        current_day = current_date.strftime("%d_%m_%Y")
+        current_day = current_date.strftime("%d_%m_%Y")        
         path = os.path.join(
-            self.path,
+            path,
             "experiments_" + current_year,
             "experiments_" + current_month,
             "experiments_" + current_day)
         self.create_directory(path)
         return path
 
-    def creation_directory_date_slot(self):
+    def creation_directory_date_slot(self, path):
         """
         Create a directory with the length of the slot used in the experiment.
 
@@ -163,7 +163,7 @@ class ExperimentManager:
         tuple
             A tuple containing path, date_str, and slot_size.
         """
-        path = self.directory_year_month_day()
+        path = self.directory_year_month_day(path)
         slot_size = self.validate_user_input(
             "Slot size: Fente_2nm, Fente_1nm, Fente_0_5nm, Fente_0_2nm: ",
             ['Fente_2nm', 'Fente_1nm', 'Fente_0_5nm', 'Fente_0_2nm']
@@ -291,8 +291,10 @@ if __name__ == "__main__":
     WINDOW = 2
     experiment_manager = ExperimentManager()
     #experiment_manager.creation_directory_date_slot()
-    experiment_manager.save_data_csv(data_list=[[1, 2, 3], [4, 5, 6], [1]], title_list=['Absorbance', 'Longueur d\'onde (nm)', 'C'], file_name='nom_fichier')
-    
+    [path, date_str, slot_size] = experiment_manager.creation_directory_date_slot()
+    print(path)
+    experiment_manager.save_data_csv(path = path, data_list=[[1, 2, 3], [4, 5, 6], [1]], title_list=['Absorbance', 'Longueur d\'onde (nm)', 'C'], file_name='nom_fichier')
+
  
 
 

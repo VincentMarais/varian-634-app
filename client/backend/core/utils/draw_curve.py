@@ -85,7 +85,7 @@ class Varian634ExperimentPlotter:
         peaks, _ = find_peaks(absorbance, distance=self.peak_search_window)
         titles_data = ['Longueur d\'onde (nm)','Absorbance', "Absorbance pics", "Longueur d'onde pics (nm)"]
         data = [wavelength, absorbance, peaks, wavelength[peaks]]
-        ExperimentManager().save_data_csv(data, titles_data, file_experiment)
+        ExperimentManager().save_data_csv(self.path, data, titles_data, file_experiment)
         graph_title = 'Absorbance du ' + self.sample_analyzed_name
         plt.plot(wavelength, absorbance)
         plt.plot(wavelength[peaks], absorbance[peaks], 'ro')

@@ -154,7 +154,7 @@ class VoltageAcquisition:
         
         return integral
 
-    def voltage_acquisition_scanning_baseline(self, physical_channel):
+    def test_acqui(self, physical_channel):
         """
         Performs voltage acquisition based on the task type.
 
@@ -186,8 +186,38 @@ class VoltageAcquisition:
 
             task_impulsion.stop()
             task_voltage.stop()
-            
+        
         return voltages, mins, integrale, mean_data
+
+    def voltage_acquisition_scanning_baseline(self, physical_channel):
+        """
+        Performs voltage acquisition based on the task type.
+
+        Parameters:
+        - physical_channel (str) : Analog input physical_channel to measure (e.g., 'Dev1/ai0').
+
+        Returns:
+        - min_voltages (float) :  Mean of the measured voltages.
+        """
+
+        min_voltages=[]
+        with nidaqmx.Task() as task_impulsion, nidaqmx.Task() as task_voltage:
+            self.configure_task_impulsion(task_impulsion)
+            self.configure_task_voltage(task_voltage, physical_channel)
+            frequency = int(self.frequency[0])
+            for _ in range(3):
+                # Acquisition des données
+                voltages = task_voltage.read(number_of_samples_per_channel=self.samples_per_channel)
+                # Conversion des données en un tableau numpy pour faciliter les calculs
+                voltages = np.array(voltages)
+                # Trouver et stocker le minimum
+                min_voltage = np.min(voltages)
+                min_voltages.append(min_voltage)
+            task_impulsion.stop()
+            task_voltage.stop()
+            mean = np.mean(min_voltages)
+        return mean
+
 
     def voltage_acquisition_chemical_kinetics(self, physical_channel, time_acquisition, delay_between_measurements):
         """
