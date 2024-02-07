@@ -123,10 +123,10 @@ class Varian634ExperimentPlotter:
 if __name__ == "__main__":
     # Exemple d'utilisation:
     PATH = ExperimentManager().choose_folder()
-    sample_name = "BROMO"
+    SAMPLE_NAME = "BROMO"
     WINDOW = 2
     FILE = '06_02_2024_Fente_0_2nm_final'
-    experiment_plotter = Varian634ExperimentPlotter(PATH, sample_name, WINDOW)
+    experiment_plotter = Varian634ExperimentPlotter(PATH, SAMPLE_NAME, WINDOW)
     experiment_plotter.graph_absorbance(FILE)
     
     

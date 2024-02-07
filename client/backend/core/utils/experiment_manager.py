@@ -291,7 +291,8 @@ if __name__ == "__main__":
     WINDOW = 2
     experiment_manager = ExperimentManager()
     #experiment_manager.creation_directory_date_slot()
-    [path, date_str, slot_size] = experiment_manager.creation_directory_date_slot()
+    path = experiment_manager.choose_folder()
+    [path, date_str, slot_size] = experiment_manager.creation_directory_date_slot(path)
     print(path)
     experiment_manager.save_data_csv(path = path, data_list=[[1, 2, 3], [4, 5, 6], [1]], title_list=['Absorbance', 'Longueur d\'onde (nm)', 'C'], file_name='nom_fichier')
 

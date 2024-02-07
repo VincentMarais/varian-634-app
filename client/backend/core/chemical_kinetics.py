@@ -4,6 +4,7 @@ of the absorbance kinetics for the absorbance
 analysis of the sample.
 
 """
+import os
 import numpy as np
 
 # Motors
@@ -46,9 +47,10 @@ class Varian634KineticsAnalysis:
         self.daq = VoltageAcquisition()
 
         # init experiment tools
-        self.experim_manager = ExperimentManager()        
-        self.path, self.date, self.slot_size = self.experim_manager.creation_directory_date_slot()
-        self.path_baseline = self.experim_manager.create_data_baseline()
+        self.experim_manager = ExperimentManager()  
+        self.path_user = self.experim_manager.choose_folder()      
+        self.path, self.date, self.slot_size = self.experim_manager.creation_directory_date_slot(self.path_user)
+        self.raw_data = os.path.join(os.getcwd() ,'raw_data') 
         self.sample_name = input("Nom de l'espèce étudié ? ")
         self.choice = self.experim_manager.get_solution_cuvette()
         self.title_file_sample = self.date + '_' + self.slot_size + '_' + self.sample_name + '_' + self.slot_size
@@ -98,7 +100,7 @@ class Varian634KineticsAnalysis:
             data_acquisition = [wavelength, moment, absorbance]
             file_name = f'{self.date}_{self.slot_size}_{self.sample_name}_longueur_{wavelength}'
             title_file = ["Longueur d'onde (nm)", "Temps (s)", "Absorbance"]
-            self.experim_manager.save_data_csv(data_acquisition, title_file, file_name)
+            self.experim_manager.save_data_csv(self.path, data_acquisition, title_file, file_name)
             self.motors_controller.reset_screw_position(course_vis)
 
 if __name__ == "__main__":

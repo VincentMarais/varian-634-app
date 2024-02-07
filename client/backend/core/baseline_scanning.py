@@ -13,7 +13,6 @@ Visible range with the screw pitch:
 """
 import time
 import os
-from datetime import datetime
 import pandas as pd
 import numpy as np
 
@@ -163,7 +162,7 @@ class Varian634BaselineScanning:
         """
         Performs a complete baseline acquisition and saves the data.
         """
-        self.acquisition(screw_travel, number_measurements, mode='baseline')
+        self.acquisition(screw_travel, number_measurements, mode = 'baseline')
 
     def baseline_verification(self):
         """
@@ -173,18 +172,14 @@ class Varian634BaselineScanning:
         in the specified path. If the file does not exist, it prompts the user to decide
         whether to create a new baseline by calling the 'baseline_acquisition' method. If the
         file exists, the user is given the option to create a new baseline or proceed without
-        creating one.
-        """
-        current_date = datetime.now()
-        current_day = current_date.strftime("%d_%m_%Y")
-        baseline_file_path = os.path.join(self.raw_data ,'raw_data')
-        print(baseline_file_path)
-        self.experim_manager.create_directory(baseline_file_path)
-        baseline_file = 'baseline_' + current_day + '_' + self.slot_size
+        creating one.        """
+
+        self.experim_manager.create_directory(self.raw_data)
+        baseline_file = os.path.join(self.raw_data, 'baseline_' + self.date + '_' + self.slot_size)
         # Verification if the baseline_date_heure.csv file exists
         if not os.path.exists(baseline_file):
             print('Le fichier' + baseline_file + '  n\'est pas créé.')
-            self.experim_manager.delete_files_in_directory(baseline_file_path)
+            self.experim_manager.delete_files_in_directory(self.raw_data)
             print("Réalisation de la baseline")
             self.acquisition_baseline(1, 1)
             print("Exécution de baseline_acquisition")
@@ -212,14 +207,14 @@ class Varian634BaselineScanning:
             number_measurements: Total number of measurements to perform.
         """
         self.baseline_verification()
-        file_baseline= 'baseline' + self.title_file_sample
+        file_baseline= 'baseline_' + self.date + '_' + self.slot_size
         print(file_baseline)
         baseline_file = f"{self.raw_data}/{file_baseline}.csv"
         data_baseline = pd.read_csv(baseline_file, encoding='ISO-8859-1')
         absorbance_baseline = data_baseline['Absorbance']
         cuvette_prompt = "Avez-vous mis votre solution dans la cuve appropriée ? "
         self.experim_manager.wait_for_user_confirmation(cuvette_prompt)
-        data_acquisition=self.acquisition(screw_travel, number_measurements, 'scanning')
+        data_acquisition = self.acquisition(screw_travel, number_measurements, 'scanning')
         wavelength = data_acquisition[0]
         absorbance_scanning = data_acquisition[1]
         absorbance = self.noise_processing.sample_absorbance(absorbance_baseline, absorbance_scanning)

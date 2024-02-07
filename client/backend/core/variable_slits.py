@@ -3,6 +3,7 @@ This program will perform an analysis
 of the absorbance kinetics for the absorbance 
 analysis of the sample.
 """
+import os
 
 # Motors
 from kinematic_chains.motors_varian_634 import GeneralMotorsController
@@ -90,9 +91,10 @@ class SpectroVariableSlits:
         self.baseline_scanning = Varian634BaselineScanning(self.arduino_motors, self.arduino_sensors, self.mode_variable_slits)
         self.chemical_kinetics = Varian634KineticsAnalysis(self.arduino_motors, self.arduino_sensors, self.mode_variable_slits)
         # init experiment tools
-        self.experim_manager = ExperimentManager()        
-        self.path, self.date, self.slot_size = self.experim_manager.creation_directory_date_slot()
-        self.path_baseline = self.experim_manager.create_data_baseline()
+        self.experim_manager = ExperimentManager()  
+        self.path_user = self.experim_manager.choose_folder()      
+        self.path, self.date, self.slot_size = self.experim_manager.creation_directory_date_slot(self.path_user)
+        self.raw_data = os.path.join(os.getcwd() ,'raw_data') 
         self.sample_name = input("Nom de l'espèce étudié ? ")
         self.choice = self.experim_manager.get_solution_cuvette()
         self.title_file_sample = self.date + '_' + self.slot_size + '_' + self.sample_name + '_' + self.slot_size
