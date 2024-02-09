@@ -331,4 +331,4 @@ if __name__ == "__main__":
     # Test set_motors_speed function
     motors_controller.unlock_motors() 
   
-    motors_controller.move_screw(0)
+    motors_controller.initialisation_motors()

@@ -10,6 +10,8 @@ Define deferente speed of analysis 3 for exampl (look the exampl in the spectro 
 
 Visible range with the screw pitch:
 400nm -> 5.4mm and ending at 800 nm -> 18.73nm
+
+Course maxi : 26mm
 """
 import time
 import os
@@ -60,7 +62,7 @@ class Varian634BaselineScanning:
         self.raw_data = os.path.join(os.getcwd() ,'raw_data') 
         self.sample_name = input("Nom de l'espèce étudié ? ")
         self.choice = self.experim_manager.get_solution_cuvette()
-        self.title_file_sample = self.date + '_' + self.slot_size + '_' + self.sample_name + '_' + self.slot_size
+        self.title_file_sample = self.date + '_' + self.slot_size + '_' + self.sample_name
         
         # Graph 
         self.graph = Varian634ExperimentPlotter(self.path, self.sample_name, self.peak_search_window)
@@ -150,7 +152,7 @@ class Varian634BaselineScanning:
         data_acquisition = self.precision_mode(screw_travel, number_measurements)
 
         title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance"]
-        title_file = mode + self.title_file_sample
+        title_file = mode +"_"+ self.date
         self.experim_manager.save_data_csv(self.raw_data, data_acquisition, title_data_acquisition, title_file)
 
         self.motors_controller.wait_for_idle()
@@ -175,10 +177,11 @@ class Varian634BaselineScanning:
         creating one.        """
 
         self.experim_manager.create_directory(self.raw_data)
-        baseline_file = os.path.join(self.raw_data, 'baseline_' + self.date + '_' + self.slot_size)
+        baseline_file = os.path.join(self.raw_data, 'baseline_' + self.date)
+        print(baseline_file)
         # Verification if the baseline_date_heure.csv file exists
-        if not os.path.exists(baseline_file):
-            print('Le fichier' + baseline_file + '  n\'est pas créé.')
+        if not os.path.exists(baseline_file + ".csv"):
+            print('Le fichier : ' + baseline_file + ".csv" + '  n\'est pas créé.')
             self.experim_manager.delete_files_in_directory(self.raw_data)
             print("Réalisation de la baseline")
             self.acquisition_baseline(1, 1)
@@ -207,9 +210,9 @@ class Varian634BaselineScanning:
             number_measurements: Total number of measurements to perform.
         """
         self.baseline_verification()
-        file_baseline= 'baseline_' + self.date + '_' + self.slot_size
+        file_baseline= 'baseline_' + self.date
         print(file_baseline)
-        baseline_file = f"{self.raw_data}/{file_baseline}.csv"
+        baseline_file = f"{self.raw_data}\\{file_baseline}.csv"
         data_baseline = pd.read_csv(baseline_file, encoding='ISO-8859-1')
         absorbance_baseline = data_baseline['Absorbance']
         cuvette_prompt = "Avez-vous mis votre solution dans la cuve appropriée ? "
@@ -250,5 +253,5 @@ if __name__ == "__main__":
 
     baseline_scanning = Varian634BaselineScanning(arduino_motors, arduino_sensors, MODE_SLITS)
     #print(baseline_scanning.precision_mode(1,5))
-    baseline_scanning.scanning_acquisition(2, 2)
+    baseline_scanning.scanning_acquisition(26, 800)
     #baseline_scanning.scanning_acquisition(screw_travel = 2, number_measurements = 3)
