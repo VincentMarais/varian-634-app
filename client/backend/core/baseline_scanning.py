@@ -19,15 +19,15 @@ import pandas as pd
 import numpy as np
 
 # Motors
-from kinematic_chains.motors_varian_634 import GeneralMotorsController
+from backend.core.kinematic_chains.motors_varian_634 import GeneralMotorsController
 
 # Voltage acquisition
-from electronics_controler.ni_pci_6221 import VoltageAcquisition
+from backend.core.electronics_controler.ni_pci_6221 import VoltageAcquisition
 
 # Data processing
-from utils.experiment_manager import ExperimentManager
-from utils.digital_signal_processing import PhotodiodeNoiseReducer
-from utils.draw_curve import Varian634ExperimentPlotter
+from backend.core.utils.experiment_manager import ExperimentManager
+from backend.core.utils.digital_signal_processing import PhotodiodeNoiseReducer
+from backend.core.utils.draw_curve import Varian634ExperimentPlotter
 
 
 class Varian634BaselineScanning:
@@ -35,7 +35,7 @@ class Varian634BaselineScanning:
     A class with all methods to do baseline and scanning.
     """
 
-    def __init__(self, arduino_motors_instance, arduino_sensors_instance, mode_variable_slits):
+    def __init__(self, arduino_motors_instance, arduino_sensors_instance, path_user, mode_variable_slits):
         """
         Initializes the Varian634BaselineScanning class.
 
@@ -57,7 +57,7 @@ class Varian634BaselineScanning:
         self.peak_search_window = 60
         # Init experiment tools
         self.experim_manager = ExperimentManager()  
-        self.path_user = self.experim_manager.choose_folder()      
+        self.path_user = path_user      
         self.path, self.date, self.slot_size = self.experim_manager.creation_directory_date_slot(self.path_user)
         self.raw_data = os.path.join(os.getcwd() ,'raw_data') 
         self.sample_name = input("Nom de l'espèce étudié ? ")
@@ -122,7 +122,7 @@ class Varian634BaselineScanning:
             title_data_acquisition = ["Longueur d'onde (nm)", "Tension photodiode 1 (Volt)", "Tension photodiode 2 (Volt)", 
                                   "pas de vis (mm)"]
             datas = [wavelength, voltages_photodiode_1, voltages_photodiode_2, no_screw]
-            title_file = "raw_data_" + self.title_file_sample
+            title_file = "raw_data_" + self.date
             self.experim_manager.save_data_csv(self.raw_data, datas, title_data_acquisition, title_file)
             # On attend que le réseau de diffraction soit bien arrivé à la longueur d'onde souhaité
             time.sleep(time_per_step)
@@ -184,14 +184,14 @@ class Varian634BaselineScanning:
             print('Le fichier : ' + baseline_file + ".csv" + '  n\'est pas créé.')
             self.experim_manager.delete_files_in_directory(self.raw_data)
             print("Réalisation de la baseline")
-            self.acquisition_baseline(1, 1)
+            self.acquisition_baseline(1, 5)
             print("Exécution de baseline_acquisition")
 
         else:
             reponse = input("Souhaitez-vous réaliser une nouvelle baseline, 'Oui' ou 'Non'? ").lower()
 
             if reponse == 'oui':
-                self.acquisition_baseline(1, 1)
+                self.acquisition_baseline(1, 5)
                 print("Exécution de acquisition_baseline")
 
             elif reponse == 'non':

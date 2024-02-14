@@ -305,7 +305,7 @@ class GeneralMotorsController:
         self.wait_for_idle()
         self.initialisation_motor_screw()
         self.wait_for_idle()
-        self.initialisation_motor_slits()
+        #self.initialisation_motor_slits()
 
 if __name__ == "__main__":
     import serial
@@ -331,4 +331,4 @@ if __name__ == "__main__":
     # Test set_motors_speed function
     motors_controller.unlock_motors() 
   
-    motors_controller.initialisation_motors()
+    motors_controller.move_screw(0.1)
