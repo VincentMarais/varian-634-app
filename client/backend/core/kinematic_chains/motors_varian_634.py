@@ -40,6 +40,7 @@ class GeneralMotorsController:
         # Screw motor
         self.screw_motor = ['X', '$110', 10]  # [axis, g_code_speed, speed]
         # pin = 2 (between limits)
+        # pin = 4 ()
         self.pin_limit_switch_screw = [2, 4]
 
         # Slits motor
@@ -49,6 +50,7 @@ class GeneralMotorsController:
 
         # Mirror cuves motor
         self.mirror_cuves_motor = ['Z', '$112', 10]  # [axis, g_code_speed, speed]
+        # pin = 3 ()
         self.pin_limit_switch_mirror_cuves = [3]
 
 # G_CODE management of motors
@@ -280,9 +282,9 @@ class GeneralMotorsController:
         pin = self.pin_limit_switch_screw[0]
         digital_value = self.arduino_sensors.digital[pin].read()
         # we unlock motors because homing cycle is up ($22=1)
-        # Why unlock motors in GRBL?
+        # Why unlock motors in GRBL ?
         self.unlock_motors()
-        # What is the definition of homing in GRBL?
+        # What is the definition of homing in GRBL ?
         self.homing()
         # Loop 
         while digital_value is True:
