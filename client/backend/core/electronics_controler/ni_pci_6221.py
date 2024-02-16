@@ -35,7 +35,7 @@ import time
 import sys
 import numpy as np
 import nidaqmx
-from nidaqmx.constants import AcquisitionType, TerminalConfiguration
+from nidaqmx.constants import AcquisitionType, TerminalConfiguration, VoltageUnits
 from pyfirmata import util, INPUT
 
 class VoltageAcquisition:
@@ -79,8 +79,9 @@ class VoltageAcquisition:
         # terminal_config = TerminalConfiguration.DIFF 
         # because we measure the potential difference between two ports of the NI PCI/PXI-6221 Pinout
         # e.g., The voltage at Dev1/ai0 terminals = potential_pin_68 - potential_pin_34
-        task_voltage.ai_channels.add_ai_voltage_chan(physical_channel, terminal_config=TerminalConfiguration.DIFF)
-        # sample_mode=AcquisitionType.FINITE : Acquire or generate a finite number of samples. 
+        task_voltage.ai_channels.add_ai_voltage_chan(physical_channel, terminal_config=TerminalConfiguration.DIFF, min_val=-10.0, max_val=5.0, units=VoltageUnits.VOLTS)
+        # min_val=-10.0 because with the slit at 2nm and no cuvette the photodiode emit 10V
+        #sample_mode=AcquisitionType.FINITE : Acquire or generate a finite number of samples. 
         # But why is it better than CONTINUOUS?
         # Better...
         task_voltage.timing.cfg_samp_clk_timing(self.sample_rate, samps_per_chan=self.samples_per_channel, sample_mode=AcquisitionType.FINITE)
@@ -204,7 +205,6 @@ class VoltageAcquisition:
         with nidaqmx.Task() as task_impulsion, nidaqmx.Task() as task_voltage:
             self.configure_task_impulsion(task_impulsion)
             self.configure_task_voltage(task_voltage, physical_channel)
-            frequency = int(self.frequency[0])
             for _ in range(3):
                 # Acquisition des données
                 voltages = task_voltage.read(number_of_samples_per_channel=self.samples_per_channel)
