@@ -41,7 +41,7 @@ if __name__ == "__main__":
     SAMPLE_NAME = input("Nom de l'espèce étudié ? ")
     baseline_scanning = Varian634AcquisitionMode(arduino_motors, arduino_sensors, USER_PATH, MODE_SLITS, SAMPLE_NAME)
     
-    baseline_scanning.scanning_acquisition(17, 400)
+    baseline_scanning.scanning_acquisition(17, 200)
     ROOT.mainloop()
 
     

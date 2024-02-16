@@ -5,7 +5,7 @@ This program controls all the motors present on the VARIAN 634.
 import time
 import re
 from pyfirmata import util, INPUT, Arduino
-
+import serial
 class GeneralMotorsController:
     """
     This class represents a controller for all the motors on the VARIAN 634.
@@ -46,7 +46,7 @@ class GeneralMotorsController:
         self.slits_motor = ['Y', '$111', 14]  # [axis, g_code_speed, speed]
         # pin = 5 in optical fork between slits variable
         self.pin_limit_switch_slits = [5]
-        self.slits_position = [0, 0.07, 0.14, 0.22] # position of slits [2nm, 1nm, 0.5nm, 0.2nm]
+        self.slits_position = [0, 0.065, 0.135, 0.22] # position of slits [2nm, 1nm, 0.5nm, 0.2nm]
         self.name_slits = ["Fente_2nm", "Fente_1nm", "Fente_0_5nm", "Fente_0_2nm"]
         # Mirror cuves motor
         self.mirror_cuves_motor = ['Z', '$112', 10]  # [axis, g_code_speed, speed]
@@ -113,7 +113,7 @@ class GeneralMotorsController:
             state = str(self.get_motor_state())
             time.sleep(0.1)
             print(state)
-
+        self.arduino_motors.flushInput() 
     def get_position_xyz(self):
         """
         Get and return the current XYZ position of the motor.
@@ -280,12 +280,12 @@ class GeneralMotorsController:
                 time.sleep(1)            
             print("Variable slit motor has reached the start")
             self.unlock_motors()
-            self.move_slits(i-0.005)
+            self.move_slits(i-0.004)
             self.wait_for_idle()
             print("Variable slit motor is ready for measurement")
         else:
             print("Variable slit motor is ready for measurement")
-        
+        self.execute_g_code("G91")
         indice = self.search_word(self.name_slits, slit)
         self.move_slits(self.slits_position[indice])
         self.wait_for_idle()
@@ -309,13 +309,13 @@ class GeneralMotorsController:
         self.wait_sensor(digital_value, pin)
             
         print("We are back to the start!")
-        
+        time.sleep(6)
         self.wait_sensor(digital_value, pin)
 
         print("Diffraction grating is ready for acquisition!")
         # End-of-file (EOF)
 
-    def initialisation_motors(self, slip):
+    def initialisation_motors(self):
         """
         Initializes all motors to start an acquisition.
         """
@@ -325,7 +325,7 @@ class GeneralMotorsController:
         self.wait_for_idle()
         self.initialisation_motor_screw()
         self.wait_for_idle()
-        self.initialisation_motor_slits(slip)
+        #self.initialisation_motor_slits(slip)
 
 if __name__ == "__main__":
     import serial
@@ -350,5 +350,8 @@ if __name__ == "__main__":
 
     # Test set_motors_speed function
     motors_controller.unlock_motors() 
-  
-    motors_controller.move_screw(0.1)
+    SLIT = input("Slot size: Fente_2nm, Fente_1nm, Fente_0_5nm, Fente_0_2nm: ")
+
+    motors_controller.initialize_end_stop([2, 3, 4, 5])
+    time.sleep(5)
+    motors_controller.initialisation_motor_slits(SLIT)
