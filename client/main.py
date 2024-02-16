@@ -35,13 +35,13 @@ if __name__ == "__main__":
     current_date = datetime.datetime.now()
     current_day = current_date.strftime("%d_%m_%Y")        
     PHYSICAL_DATAS = ["Longueur d'onde (nm)", "Tension photodiode 1 (Volt)"]
-    USER_PATH =  experim_manager.choose_folder()
+    ROOT = tk.Tk()
+    USER_PATH =  experim_manager.choose_folder(ROOT)
     RAW_DATA_FILE = os.path.join(os.getcwd() ,'raw_data\\raw_data' + current_day + '.csv' ) 
     print(RAW_DATA_FILE)
     baseline_scanning = Varian634BaselineScanning(arduino_motors, arduino_sensors, USER_PATH, MODE_SLITS)
-    ROOT = tk.Tk()
-    real_time_graph = RealTimeGraphApp(ROOT, RAW_DATA_FILE, PHYSICAL_DATAS)
-    baseline_scanning.scanning_acquisition(26, 400)
+    
+    baseline_scanning.scanning_acquisition(17, 400)
     ROOT.mainloop()
 
     

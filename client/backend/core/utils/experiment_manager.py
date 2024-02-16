@@ -233,16 +233,18 @@ class ExperimentManager:
         return response 
 
     
-    def choose_folder(self):
+    def choose_folder(self, root):
         """
         Fonction qui permet de demander à l'utilisateur on il souhaite enregistrer son fichier
         """
         # Create an instance of Tk
-        root = tk.Tk()
+        
         # Hide the main window (do not use it)
-        root.withdraw()
+        root.iconify()
         # Open the folder selection dialog and store the selected folder path
         folder = filedialog.askdirectory()
+
+        root.destroy()
         # Return the folder path
         return folder
 
