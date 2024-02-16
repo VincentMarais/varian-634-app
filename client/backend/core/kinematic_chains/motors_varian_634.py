@@ -47,12 +47,21 @@ class GeneralMotorsController:
         self.slits_motor = ['Y', '$111', 14]  # [axis, g_code_speed, speed]
         # pin = 5 in optical fork between slits variable
         self.pin_limit_switch_slits = [5]
-
+        self.slits_position = [0, 0.07, 0.14, 0.22] # position of slits [2nm, 1nm, 0.5nm, 0.2nm]
+        self.name_slits = ["Fente_2nm", "Fente_1nm", "Fente_0_5nm", "Fente_0_2nm"]
         # Mirror cuves motor
         self.mirror_cuves_motor = ['Z', '$112', 10]  # [axis, g_code_speed, speed]
         # pin = 3 ()
         self.pin_limit_switch_mirror_cuves = [3]
 
+
+    def search_word(self, list, word):
+        """
+        Rearch a word in the list
+        """
+        for index, element in enumerate(list):
+            if word in element:
+                return index
 # G_CODE management of motors
     def set_motors_speed(self, motor_parameters, speed):
         """
@@ -216,7 +225,15 @@ class GeneralMotorsController:
         # Allow the iterator to start
         time.sleep(1)
 
-    
+    def wait_sensor(self, digital_value, pin):
+        """
+        Attend que le capteur change d'état
+        """
+        while digital_value is True:
+            digital_value = self.arduino_sensors.digital[pin].read()
+            print("The motor don't touch the : ", digital_value)
+            time.sleep(0.1)
+
 # Initialization of all motors 
 
     def initialize_mirror_position(self):
@@ -246,7 +263,7 @@ class GeneralMotorsController:
         else:
             print("Cuvette 1 is reached")
 
-    def initialisation_motor_slits(self):
+    def initialisation_motor_slits(self, slit):
         """
         Initialize the motor that controls the 
         variable slit system.
@@ -270,6 +287,10 @@ class GeneralMotorsController:
             print("Variable slit motor is ready for measurement")
         else:
             print("Variable slit motor is ready for measurement")
+        
+        indice = self.search_word(self.name_slits, slit)
+        self.move_slits(self.slits_position[indice])
+        self.wait_for_idle()
 
 
     def initialisation_motor_screw(self):
@@ -287,17 +308,16 @@ class GeneralMotorsController:
         # What is the definition of homing in GRBL ?
         self.homing()
         # Loop 
-        while digital_value is True:
-            digital_value = self.arduino_sensors.digital[pin].read()
-            print("The Diffraction grating is not at the start: ", digital_value)
-            time.sleep(0.1)
+        self.wait_sensor(digital_value, pin)
             
         print("We are back to the start!")
-        self.wait_for_idle()
+        
+        self.wait_sensor(digital_value, pin)
+
         print("Diffraction grating is ready for acquisition!")
         # End-of-file (EOF)
 
-    def initialisation_motors(self):
+    def initialisation_motors(self, slip):
         """
         Initializes all motors to start an acquisition.
         """
@@ -307,7 +327,7 @@ class GeneralMotorsController:
         self.wait_for_idle()
         self.initialisation_motor_screw()
         self.wait_for_idle()
-        #self.initialisation_motor_slits()
+        self.initialisation_motor_slits(slip)
 
 if __name__ == "__main__":
     import serial

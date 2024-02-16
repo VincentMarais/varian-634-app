@@ -4,10 +4,9 @@ import tkinter as tk
 import datetime
 
 # MODES
-from backend.core.baseline_scanning import Varian634BaselineScanning
+from backend.core.acquisition_mode import Varian634AcquisitionMode
 
 # TOOLS
-from frontend.real_time_graph import RealTimeGraphApp
 from backend.core.utils.experiment_manager import ExperimentManager
 
 
@@ -39,7 +38,8 @@ if __name__ == "__main__":
     USER_PATH =  experim_manager.choose_folder(ROOT)
     RAW_DATA_FILE = os.path.join(os.getcwd() ,'raw_data\\raw_data' + current_day + '.csv' ) 
     print(RAW_DATA_FILE)
-    baseline_scanning = Varian634BaselineScanning(arduino_motors, arduino_sensors, USER_PATH, MODE_SLITS)
+    SAMPLE_NAME = input("Nom de l'espèce étudié ? ")
+    baseline_scanning = Varian634AcquisitionMode(arduino_motors, arduino_sensors, USER_PATH, MODE_SLITS, SAMPLE_NAME)
     
     baseline_scanning.scanning_acquisition(17, 400)
     ROOT.mainloop()
