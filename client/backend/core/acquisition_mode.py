@@ -29,7 +29,6 @@ from backend.core.electronics_controler.ni_pci_6221 import VoltageAcquisition
 # Data processing
 from backend.core.utils.experiment_manager import ExperimentManager
 from backend.core.utils.digital_signal_processing import PhotodiodeNoiseReducer
-from backend.core.utils.draw_curve import Varian634ExperimentPlotter
 
 
 class Varian634AcquisitionMode:
@@ -59,7 +58,7 @@ class Varian634AcquisitionMode:
         self.noise_processing = PhotodiodeNoiseReducer()
         self.peak_search_window = 60
         # Init experiment tools
-        self.experim_manager = ExperimentManager()  
+        self.experim_manager = ExperimentManager(self.peak_search_window, sample_name)  
         self.path_user = path_user      
         self.path, self.date, self.slot_size = self.experim_manager.creation_directory_date_slot(self.path_user)
         self.raw_data = os.path.join(os.getcwd() ,'raw_data') 
@@ -67,9 +66,6 @@ class Varian634AcquisitionMode:
         self.choice = self.experim_manager.get_solution_cuvette()
         self.title_file_sample = self.date + '_' + self.slot_size + '_' + self.sample_name
         
-        # Graph 
-        self.graph = Varian634ExperimentPlotter(self.path, self.sample_name, self.peak_search_window)
-
 
     def perform_step_measurement(self):
         """
@@ -232,7 +228,7 @@ class Varian634AcquisitionMode:
         data_acquisition = [wavelength, absorbance]
         title_file = self.title_file_sample + '_final'
         self.experim_manager.save_data_csv(self.path, data_acquisition, title_data_acquisition, title_file)
-        self.graph.graph_absorbance(title_file)
+        self.experim_manager.save_display(self.path, title_file, 'Longueur d\'onde (nm)', "Absorbance", title_file)
         # End-of-file (EOF)
 
     def run_kinetics_analysis(self, time_acquisition, wavelengths, delay_between_measurements):
@@ -280,7 +276,10 @@ class Varian634AcquisitionMode:
             file_name = f'{self.date}_{self.slot_size}_{self.sample_name}_longueur_{wavelength}'
             title_file = ["Longueur d'onde (nm)", "Temps (s)", "Absorbance"]
             self.experim_manager.save_data_csv(self.path, data_acquisition, title_file, file_name)
+            self.experim_manager.save_display(self.path, title_file, "Temps (s)", 'Absorbance', file_name)
             self.motors_controller.reset_screw_position(course_vis)
+            self.motors_controller.wait_for_idle()
+        
 
     def slits_variable_scanning(self, screw_travel, number_measurements):
         """

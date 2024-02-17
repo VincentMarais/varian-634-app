@@ -287,9 +287,11 @@ class VoltageAcquisition:
 
 
 if __name__ == "__main__":
-    acqui_voltage = VoltageAcquisition()
 
     from pyfirmata import Arduino
+
+    acqui_voltage = VoltageAcquisition()
+
     # Arduino
     BOARD = Arduino('COM9')
     PIN_SENSOR = 5
@@ -304,60 +306,24 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     TASK = nidaqmx.Task()
     # Test measure_voltage
-
-    [data_y, min, integrale, mean_data] = acqui_voltage.voltage_acquisition_scanning_baseline(CHANNEL[0])    
-
-    int = acqui_voltage.integrate(data_y,1)
-    print("Intégrale", int)
-    # Création de la figure et des sous-graphiques
-    fig, axs = plt.subplots(2, 2)
-
-    # Graphique 1
+    data_y = acqui_voltage.measure_voltage(TASK, CHANNEL[0])
     x_data = np.arange(0, len(data_y), 1)
-    axs[0, 0].plot(x_data, data_y)
-    axs[0, 0].set_title('Data Y')
-    axs[0, 0].set_xlabel('samples')
-    axs[0, 0].set_ylabel('Voltage (Volt)')
-    axs[0, 0].grid()
-
-    # Graphique 2
-    x_data = np.arange(0, len(min), 1)
-    axs[0, 1].plot(x_data, min)
-    axs[0, 1].set_title('Min Values')
-    axs[0, 1].set_xlabel('samples')
-    axs[0, 1].set_ylabel('Voltage (Volt)')
-    axs[0, 1].grid()
-
-    # Graphique 3
-    x_data = np.arange(0, len(integrale), 1)
-    axs[1, 0].plot(x_data, integrale)
-    axs[1, 0].set_title('Integrale')
-    axs[1, 0].set_xlabel('samples')
-    axs[1, 0].set_ylabel('Integrale (Volt)')
-    axs[1, 0].grid()
-
-    # Graphique 4
-    x_data = np.arange(0, len(mean_data), 1)
-    axs[1, 1].plot(x_data, mean_data)
-    axs[1, 1].set_title('Mean Data')
-    axs[1, 1].set_xlabel('samples')
-    axs[1, 1].set_ylabel('Mean (Volt)')
-    axs[1, 1].grid()
-
-    # Ajuster automatiquement le placement des sous-graphiques
+    plt.plot(x_data, data_y)
+    plt.xlabel('samples')
+    plt.ylabel('Voltage (Volt)')
+    plt.legend()
+    plt.grid()
     plt.tight_layout()
-
-    # Afficher le graphique
     plt.show()
 
     # Test measure_mean_voltage
     TASK.stop()
-    #time.sleep(1)
-    print(np.mean(min))
+    time.sleep(1)
+
 
 # Test voltage_acquisition_scanning_baseline
-    #print(acqui_voltage.voltage_acquisition_scanning_baseline(CHANNEL[0]))
-    """time.sleep(3)
+    print(acqui_voltage.voltage_acquisition_scanning_baseline(CHANNEL[0]))
+
    # Test voltage_acquisition_chemical_kinetics
     TIME_ACQUISITION = 10
     TIME_PER_ACQUISITION = 1
@@ -368,4 +334,4 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid()
     plt.tight_layout()
-    plt.show()"""
+    plt.show()

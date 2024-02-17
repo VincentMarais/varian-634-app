@@ -53,11 +53,18 @@ class GeneralMotorsController:
         self.pin_limit_switch_mirror_cuves = [3]
 
 
-    def search_word(self, list, word):
+    def search_word(self, data, word):
         """
         Rearch a word in the list
+        
+        Args:  
+            - data (list) : list of string
+            - word (str) : words searched
+        
+        Returns:
+            index (int) : index of words searched in the data.
         """
-        for index, element in enumerate(list):
+        for index, element in enumerate(data):
             if word in element:
                 return index
 # G_CODE management of motors
@@ -113,7 +120,8 @@ class GeneralMotorsController:
             state = str(self.get_motor_state())
             time.sleep(0.1)
             print(state)
-        self.arduino_motors.flushInput() 
+        self.arduino_motors.flushInput()        
+
     def get_position_xyz(self):
         """
         Get and return the current XYZ position of the motor.
@@ -328,7 +336,6 @@ class GeneralMotorsController:
         #self.initialisation_motor_slits(slip)
 
 if __name__ == "__main__":
-    import serial
 
     # MOTOR INITIALIZATION:
     COM_PORT_MOTORS = 'COM3'

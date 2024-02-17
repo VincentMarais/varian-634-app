@@ -16,6 +16,12 @@ import itertools
 import tkinter as tk
 from tkinter import filedialog
 
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.signal import find_peaks
+import pandas as pd
+
+
 class ExperimentManager:
     """
     A class to manage experiments.
@@ -52,7 +58,7 @@ class ExperimentManager:
         Wait for user confirmation.
     """
 
-    def __init__(self):
+    def __init__(self, sample_analyzed_name, peak_search_window):
         """
         Constructs all the necessary attributes for the CSVTransformer object.
 
@@ -63,7 +69,8 @@ class ExperimentManager:
         sample_analyzed_name (str): Le nom de l'espèce chimique analysée.
         peak_search_window (int): La fenêtre de recherche des pics.
         """
-        pass
+        self.sample_analyzed_name = sample_analyzed_name
+        self.peak_search_window = peak_search_window
     
     def save_data_csv(self, path, data_list, title_list, file_name):
         """
@@ -265,39 +272,124 @@ class ExperimentManager:
             pass
 
 
-    @staticmethod
-    def create_data_baseline():
-        """        
-        Display the full path of a file up
+    def max_absorbance_display(self, wavelength_peak, absorbance_peak, wavelength, absorbance):
         """
-        script_root = os.path.dirname(os.path.abspath(__file__))
+        Fonction pour afficher les pics d'absorbance et le maximum d'absorbance.
 
-        # Create the target directory path
-        target_directory = os.path.join(script_root, 'databaseline')
+        Parameters:
+            wavelength_peak (float): La longueur d'onde du pic d'absorbance maximal.
+            absorbance_peak (float): La valeur d'absorbance maximale.
+            wavelength (numpy.ndarray): Les longueurs d'onde.
+            absorbance (numpy.ndarray): Les valeurs d'absorbance.
 
-        # Check if the directory exists, and create it if not
-        if not os.path.exists(target_directory):
-            os.makedirs(target_directory)
-            print(f"Directory '{target_directory}' created.")
-        else:
-            print(f"Directory '{target_directory}' already exists.") 
+        Returns:
+            None
+        """
+        plt.scatter(wavelength_peak, absorbance_peak, color='red')
 
-        return target_directory
+        plt.annotate(f'({wavelength_peak:.2f} nm, {absorbance_peak:.2f})',
+                     xy=(wavelength_peak, absorbance_peak),
+                     xytext=(wavelength_peak + 10, absorbance_peak),
+                     fontsize=10,
+                     color='red',
+                     arrowprops=dict(facecolor='red', arrowstyle='->'))
 
+        plt.hlines(y=absorbance_peak,
+                   xmin=wavelength[0],
+                   xmax=wavelength_peak,
+                   linestyle='dashed',
+                   color='red')
 
+        plt.vlines(x=wavelength_peak, ymin=min(absorbance),
+                   ymax=absorbance_peak,
+                   linestyle='dashed',
+                   color='red')
+        
+
+    def extract_data_csv(self, path, file_experiment, name_data_x, name_data_y):
+        """
+        Extraire les données d'un fichier csv
+        """
+        path_file = f"{path}/{file_experiment}.csv"
+        data_file_experiment = pd.read_csv(path_file, encoding='ISO-8859-1')
+
+        data_x = data_file_experiment[name_data_x]
+        data_y = data_file_experiment[name_data_y]
+
+        return data_x, data_y
+
+    def graph_absorbance(self, path, name_data_x, file_experiment):
+        """
+        Affichage du graphique de l'absorbance en fonction de la longueur d'onde.
+
+        Parameters:
+            file_experiment (str): Le nom du fichier CSV de l'expérience.
+
+        Returns:
+            None
+        """
+
+        [wavelength, absorbance] = self.extract_data_csv(path, file_experiment, name_data_x, 'Absorbance')
+        absorbance_peak = max(absorbance)
+        wavelength_peak = wavelength[np.argmax((absorbance))]
+        peaks, _ = find_peaks(absorbance, distance=self.peak_search_window)
+        titles_data = ['Longueur d\'onde (nm)','Absorbance', "Absorbance pics", "Longueur d'onde pics (nm)"]
+        data = [wavelength, absorbance, peaks, wavelength[peaks]]
+        self.save_data_csv(path, data, titles_data, file_experiment)
+        title_graph = 'Absorbance du ' + self.sample_analyzed_name
+        plt.plot(wavelength, absorbance)
+        plt.plot(wavelength[peaks], absorbance[peaks], 'ro')
+
+        plt.xlabel('Longueur d\'onde (nm)')
+        plt.ylabel('Absorbance')
+        plt.title(title_graph)
+        self.max_absorbance_display(wavelength_peak, absorbance_peak, wavelength, absorbance)
+        plt.savefig(path + '\\' + title_graph + ".pdf")
+        plt.show()
+
+    def save_display(self, path_file, file_experiment, name_data_x, name_data_y, title_graph):
+        plt.figure()
+        [data_x, data_y] = self.extract_data_csv(path_file, file_experiment, name_data_x, name_data_y)
+        plt.plot(data_x, data_y, '-', label= name_data_y)
+        plt.legend()
+        plt.xlabel(name_data_x)
+        plt.ylabel(name_data_y)
+        plt.title(title_graph)
+        plt.savefig(path_file + '\\' + title_graph + ".pdf")
+
+    def classic_graph(self, path_file, file_experiment, name_data_x, name_data_y, title_graph):
+        """
+        Plot classique du graphique.
+
+        Parameters:
+            datas_x (list): Liste contenant les données x [data_x, name_data_x].
+            datas_y (list): Liste des données y à tracer.
+            title_graph (str): Titre du graphique.
+            titles_data_y (list): Liste des titres des données y.
+            y_name (str): Nom de l'axe y.
+
+        Returns:
+            None
+        """
+        self.save_display(path_file, file_experiment, name_data_x, name_data_y, title_graph)
+        plt.show()
+    
+    
 
 
 if __name__ == "__main__":
     # Exemple d'utilisation:
     SAMPLE_NAME = "Bromo"
     WINDOW = 2
-    experiment_manager = ExperimentManager()
+    experiment_manager = ExperimentManager(SAMPLE_NAME, WINDOW)
+    ROOT = tk.Tk()
     #experiment_manager.creation_directory_date_slot()
-    path = experiment_manager.choose_folder()
-    [path, date_str, slot_size] = experiment_manager.creation_directory_date_slot(path)
-    print(path)
-    experiment_manager.save_data_csv(path = path, data_list=[[1, 2, 3], [4, 5, 6], [1]], title_list=['Absorbance', 'Longueur d\'onde (nm)', 'C'], file_name='nom_fichier')
-
+    PATH = experiment_manager.choose_folder(ROOT)
+    [PATH, date_str, slot_size] = experiment_manager.creation_directory_date_slot(PATH)
+    print(PATH)
+    experiment_manager.save_data_csv(path = PATH, data_list=[[1, 2, 3], [4, 5, 6], [1], [23,5,5,4,3,1]], title_list=['Absorbance', 'Longueur d\'onde (nm)', 'C', "Temps (s)"], file_name='nom_fichier')
+    experiment_manager.classic_graph(PATH, 'nom_fichier', "Temps (s)", 'Absorbance', "Cinétique_test")
+    experiment_manager.graph_absorbance(PATH, "Longueur d'onde (nm)", 'nom_fichier')
  
 
 
