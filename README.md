@@ -6,7 +6,7 @@ Ce programme Python permet d'automatiser un ancien spectrophotomètre Varian 634
 
 ## Prérequis
 . Python 3.x installé sur votre machine - https://www.python.org/downloads/
-
+. Télécharger le code varian-634-app sur GitHub
 
 ## Installation
 1. Ouvrez une invite de commande ou un terminal sur votre machine.
@@ -22,14 +22,19 @@ Si `pip` n'est pas installé, suivez les étapes de ce tutoriel :
 
 https://www.youtube.com/watch?v=PikcUT-ts7E&ab_channel=AhmedHegazy 
 
-3. Placez-vous dans le répertoire du projet.
+3. Dézipper le fichier :  varian-634-app-main.zip
+
+4. Placez-vous dans le répertoire du fichier varian-634-app-main .
 
 ``` bash
 cd Chemin_acces
 ```
 Exemple si vous avez téléchargé le fichié sur votre bureau: 
 
-`cd Desktop\Programmation_application_spectro-master\App_VARIAN`
+``` bash
+cd Desktop\varian-634-app-main
+```
+
 
 4. Installez les bibliothèques nécessaires en exécutant la commande suivante :
 
@@ -49,10 +54,10 @@ Cette commande va installer toutes les bibliothèques listées dans le fichier r
 4. Lancez le programme avec la commande suivante :
 
 ``` bash
-python main.py
+python client\app.py
 ```
 
-5. Suivez les instructions affichées à l'écran pour utiliser le programme.
+5. Suivez les instructions affichées à l'écran pour utiliser l'application.
 
 
 

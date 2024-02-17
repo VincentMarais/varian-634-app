@@ -1,0 +1,11 @@
+{
+    "name": "python-electron-gui",
+    "version": "0.1.0",
+    "main": "./electron/main.js",
+    "scripts": {
+        "start": "electron ."
+    },
+    "devDependencies": {
+        "electron": "^23.3.13"
+    }
+}
