@@ -1,6 +1,6 @@
 """
-This program will create the baseline for the absorbance analysis of the sample and
-scan wavelengths within a specific interval to detect the peak of absorbance in the solution.
+This program manages the operation modes for Varian 634 instruments including baseline, calibration, 
+scanning, and kinetics analysis.
 
 
 Define deferente speed of analysis 3 for exampl (look the exampl in the spectro use in TP GP3A) :

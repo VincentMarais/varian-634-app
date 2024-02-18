@@ -24,50 +24,15 @@ import pandas as pd
 
 class ExperimentManager:
     """
-    A class to manage experiments.
-
-    ...
-
-    Methods
-    -------
-    detection_existence_directory(path):
-        Check if the directory exists.
-
-    create_directory(path):
-        Create the directory if it doesn't exist.
-
-    directory_year_month_day():
-        Create a directory with the current year_month_day.
-
-    creation_directory_date_slot():
-        Create a directory with the length of the slot used in the experiment.
-
-    path_creation(path, physical_data):
-        Create a path for physical data.
-
-    get_solution_cuvette():
-        Ask the user in which cuvette they placed the reference.
-
-    delete_files_in_directory(directory_path):
-        Delete all files in a given directory.
-
-    validate_user_input(prompt, valid_responses):
-        Validate user input.
-
-    wait_for_user_confirmation(prompt):
-        Wait for user confirmation.
+    A class to manage and analyze experimental data, including file management, data visualization, and user interaction.
     """
 
     def __init__(self, sample_analyzed_name):
         """
-        Constructs all the necessary attributes for the CSVTransformer object.
+        Initializes the ExperimentManager with the name of the chemical species being analyzed.
 
-        Parameters
-        ----------
-        path : str
-            The path where the CSV files are located.
-        sample_analyzed_name (str): Le nom de l'espèce chimique analysée.
-        peak_search_window (int): La fenêtre de recherche des pics.
+        Args:
+            sample_analyzed_name (str): The name of the chemical species analyzed in the experiments.
         """
         self.sample_analyzed_name = sample_analyzed_name
     
@@ -75,19 +40,14 @@ class ExperimentManager:
         """
         Transforms and saves the provided data to a CSV file.
 
-        Parameters
-        ----------
-        data_list : list
-            List of data to be saved in the CSV file.
-        title_list : list
-            List of titles for the CSV columns.
-        file_name : str
-            The name of the CSV file to be saved.
+        Args:
+            path (str): The directory path where the CSV file will be saved.
+            data_list (list): List of data rows to be saved in the CSV file.
+            title_list (list): List of column titles for the CSV.
+            file_name (str): The name for the CSV file.
 
-        Returns
-        -------
-        str
-            The path of the saved CSV file.
+        Returns:
+            path_file (str): The full path of the saved CSV file.
         """
         path_file = f"{path}/{file_name}.csv"
         # Transpose the list of data
@@ -103,33 +63,26 @@ class ExperimentManager:
 
     def detection_existence_directory(self, path):
         """
-        Check if the directory exists.
+        Checks if the specified directory exists.
 
-        Parameters
-        ----------
-        path : str
-            The path to the directory.
+        Args:
+            path (str): The path to the directory to check.
 
-        Returns
-        -------
-        bool
-            True if the directory exists, False otherwise.
+        Returns:
+            bool: True if the directory exists, False otherwise.
         """
         path = os.path.join(path)
         return os.path.exists(path)
 
     def create_directory(self, path):
         """
-        Create the directory if it doesn't exist.
+        Creates a directory at the specified path if it doesn't exist.
 
-        Parameters
-        ----------
-        path : str
-            The path to the directory.
+        Args:
+            path (str): The path where the directory will be created.
 
-        Returns
-        -------
-        None
+        Returns:
+            None
         """
         if not self.detection_existence_directory(path):
             os.makedirs(path)
@@ -139,12 +92,13 @@ class ExperimentManager:
 
     def directory_year_month_day(self, path):
         """
-        Create a directory with the current year_month_day.
+        Creates a directory structure based on the current year, month, and day.
 
-        Returns
-        -------
-        str
-            The path of the created directory.
+        Args:
+            path (str): The base path where the new directory structure will be created.
+
+        Returns:
+            str: The path of the newly created directory.
         """
         current_date = datetime.datetime.now()
         current_year = current_date.strftime("%Y")
@@ -160,12 +114,13 @@ class ExperimentManager:
 
     def creation_directory_date_slot(self, path):
         """
-        Create a directory with the length of the slot used in the experiment.
+        Creates a directory named after the current date and the slot size used in the experiment.
 
-        Returns
-        -------
-        tuple
-            A tuple containing path, date_str, and slot_size.
+        Args:
+            path (str): The base path where the new directory will be created.
+
+        Returns:
+            tuple: Contains the path, date string, and slot size.
         """
         path = self.directory_year_month_day(path)
         slot_size = self.validate_user_input(
@@ -181,12 +136,10 @@ class ExperimentManager:
     @staticmethod
     def get_solution_cuvette():
         """
-        Ask the user in which cuvette they placed the reference.
+        Prompts the user to specify the cuvette containing the reference solution.
 
-        Returns
-        -------
-        str
-            The cuvette number.
+        Returns:
+            str: The cuvette number chosen by the user.
         """
         solution = ExperimentManager.validate_user_input(
             "In which cuvette number is the blank solution: cuvette 1 or cuvette 2: ",
@@ -198,16 +151,13 @@ class ExperimentManager:
     @staticmethod
     def delete_files_in_directory(directory_path):
         """
-        Delete all files in a given directory.
+        Deletes all files within the specified directory.
 
-        Parameters
-        ----------
-        directory_path : str
-            The path to the directory.
+        Args:
+            directory_path (str): The path to the directory from which files will be deleted.
 
-        Returns
-        -------
-        None
+        Returns:
+            None
         """
         with os.scandir(directory_path) as entries:
             for entry in entries:
@@ -217,19 +167,14 @@ class ExperimentManager:
     @staticmethod
     def validate_user_input(prompt, valid_responses):
         """
-        Validate user input.
+        Validates user input against a list of valid responses.
 
-        Parameters
-        ----------
-        prompt : str
-            The prompt message.
-        valid_responses : list
-            List of valid responses.
+        Args:
+            prompt (str): The message displayed to the user.
+            valid_responses (list): A list of acceptable responses.
 
-        Returns
-        -------
-        str
-            The validated user input.
+        Returns:
+            str: The validated user input.
         """
         response = input(prompt)
         while response not in valid_responses:
@@ -239,9 +184,14 @@ class ExperimentManager:
     
     def choose_folder(self, root):
         """
-        Fonction qui permet de demander à l'utilisateur on il souhaite enregistrer son fichier
+        Prompts the user to select a folder where they wish to save their file.
+
+        Args:
+            root (tk.Tk): The root Tkinter window.
+
+        Returns:
+            str: The path of the selected folder.
         """
-        # Create an instance of Tk
         
         # Hide the main window (do not use it)
         root.iconify()
@@ -254,16 +204,13 @@ class ExperimentManager:
 
     def wait_for_user_confirmation(self, prompt):
         """
-        Wait for user confirmation.
+        Pauses program execution until the user confirms by inputting 'Oui'.
 
-        Parameters
-        ----------
-        prompt : str
-            The prompt message.
+        Args:
+            prompt (str): The message displayed to the user.
 
-        Returns
-        -------
-        None
+        Returns:
+            None
         """
         while input(prompt) != 'Oui':
             pass
@@ -271,13 +218,13 @@ class ExperimentManager:
 
     def max_absorbance_display(self, wavelength_peak, absorbance_peak, wavelength, absorbance):
         """
-        Fonction pour afficher les pics d'absorbance et le maximum d'absorbance.
+        Displays the absorbance peak and maximum absorbance on a plot.
 
-        Parameters:
-            wavelength_peak (float): La longueur d'onde du pic d'absorbance maximal.
-            absorbance_peak (float): La valeur d'absorbance maximale.
-            wavelength (numpy.ndarray): Les longueurs d'onde.
-            absorbance (numpy.ndarray): Les valeurs d'absorbance.
+        Args:
+            wavelength_peak (float): The wavelength at the maximum absorbance peak.
+            absorbance_peak (float): The maximum absorbance value.
+            wavelength (numpy.ndarray): The array of wavelengths.
+            absorbance (numpy.ndarray): The array of absorbance values.
 
         Returns:
             None
@@ -305,7 +252,16 @@ class ExperimentManager:
 
     def extract_data_csv(self, path, file_experiment, name_data_x, name_data_y):
         """
-        Extraire les données d'un fichier csv
+        Extracts X and Y data from a CSV file.
+
+        Args:
+            path (str): The directory path where the CSV file is located.
+            file_experiment (str): The name of the experiment file.
+            name_data_x (str): The column name for the X data.
+            name_data_y (str): The column name for the Y data.
+
+        Returns:
+            tuple: Contains the X data (as a pandas Series) and Y data (as a pandas Series).
         """
         path_file = f"{path}/{file_experiment}.csv"
         data_file_experiment = pd.read_csv(path_file, encoding='ISO-8859-1')
@@ -317,10 +273,13 @@ class ExperimentManager:
 
     def graph_absorbance(self, path, name_data_x, file_experiment, peak_search_window):
         """
-        Affichage du graphique de l'absorbance en fonction de la longueur d'onde.
+        Plots the absorbance as a function of wavelength from experimental data and highlights the absorbance peaks.
 
-        Parameters:
-            file_experiment (str): Le nom du fichier CSV de l'expérience.
+        Args:
+            path (str): The directory path where the data files are located.
+            name_data_x (str): The column name for the X data (wavelength).
+            file_experiment (str): The name of the experiment file.
+            peak_search_window (int): The window size for peak detection.
 
         Returns:
             None
@@ -346,7 +305,17 @@ class ExperimentManager:
 
     def save_display(self, path_file, file_experiment, name_data_x, name_data_y, title_graph):
         """
-        Save graph of data_x and data_y in .pdf 
+        Saves a graph of data_x and data_y in a PDF file.
+
+        Args:
+            path_file (str): The directory path where the PDF file will be saved.
+            file_experiment (str): The name of the experiment file.
+            name_data_x (str): The column name for the X data.
+            name_data_y (str): The column name for the Y data.
+            title_graph (str): The title of the graph.
+
+        Returns:
+            None
         """
         plt.figure()
         [data_x, data_y] = self.extract_data_csv(path_file, file_experiment, name_data_x, name_data_y)
@@ -359,14 +328,14 @@ class ExperimentManager:
 
     def classic_graph(self, path_file, file_experiment, name_data_x, name_data_y, title_graph):
         """
-        Plot classique du graphique.
+        Plots a classic graph of the specified data.
 
-        Parameters:
-            datas_x (list): Liste contenant les données x [data_x, name_data_x].
-            datas_y (list): Liste des données y à tracer.
-            title_graph (str): Titre du graphique.
-            titles_data_y (list): Liste des titres des données y.
-            y_name (str): Nom de l'axe y.
+        Args:
+            path_file (str): The directory path where the data files are located.
+            file_experiment (str): The name of the experiment file.
+            name_data_x (str): The column name for the X data.
+            name_data_y (str): The column name for the Y data.
+            title_graph (str): The title of the graph.
 
         Returns:
             None
