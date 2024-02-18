@@ -62,6 +62,19 @@ class PhotodiodeNoiseReducer:
                 voltage_sample_analyzed[i] = voltage_ref
         return voltages_sample_reference, voltage_sample_analyzed
 
+
+    def calculate_wavelength(self, position):
+        """
+        Calculates the wavelength based on the position.
+        """
+        return -31.10419907 * position + 800
+    
+    def calculate_course(self, wavelength):
+        """
+        Calculates the wavelength based on the position.
+        """
+        return (wavelength - 800)/-31.10419907
+
     def graph_digital_processing(self, data_x, datas_y, title_graph, titles_data_y):
         """
         Plots a digital signal processing graph.
@@ -231,7 +244,7 @@ if __name__ == "__main__":
     data_sample = pd.read_csv(FILE_SAMPLE, encoding='ISO-8859-1')
 
     # Extract columns
-    wavelength = data_ref_sample['Longueur d\'onde (nm)']
+    WAVELENGTH = data_ref_sample['Longueur d\'onde (nm)']
     voltages_ref_sample = data_ref_sample['Tension blanc (Volt)']
     voltages_sample = data_sample['Tension échantillon (Volt)']
     denoise.fourier_transform(voltages_sample)

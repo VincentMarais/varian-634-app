@@ -58,7 +58,7 @@ class ExperimentManager:
         Wait for user confirmation.
     """
 
-    def __init__(self, sample_analyzed_name, peak_search_window):
+    def __init__(self, sample_analyzed_name):
         """
         Constructs all the necessary attributes for the CSVTransformer object.
 
@@ -70,7 +70,6 @@ class ExperimentManager:
         peak_search_window (int): La fenêtre de recherche des pics.
         """
         self.sample_analyzed_name = sample_analyzed_name
-        self.peak_search_window = peak_search_window
     
     def save_data_csv(self, path, data_list, title_list, file_name):
         """
@@ -102,8 +101,7 @@ class ExperimentManager:
                 writer.writerow(row)
         return path_file
 
-    @staticmethod
-    def detection_existence_directory(path):
+    def detection_existence_directory(self, path):
         """
         Check if the directory exists.
 
@@ -120,8 +118,7 @@ class ExperimentManager:
         path = os.path.join(path)
         return os.path.exists(path)
 
-    @staticmethod
-    def create_directory(path):
+    def create_directory(self, path):
         """
         Create the directory if it doesn't exist.
 
@@ -134,7 +131,7 @@ class ExperimentManager:
         -------
         None
         """
-        if not ExperimentManager.detection_existence_directory(path):
+        if not self.detection_existence_directory(path):
             os.makedirs(path)
             print("Directory created successfully:", path)
         else:
@@ -178,7 +175,7 @@ class ExperimentManager:
         date_today = datetime.date.today()
         date_str = date_today.strftime("%d_%m_%Y")
         path = os.path.join(path, slot_size)
-        ExperimentManager.create_directory(path)
+        self.create_directory(path)
         return path, date_str, slot_size
 
     @staticmethod
@@ -318,7 +315,7 @@ class ExperimentManager:
 
         return data_x, data_y
 
-    def graph_absorbance(self, path, name_data_x, file_experiment):
+    def graph_absorbance(self, path, name_data_x, file_experiment, peak_search_window):
         """
         Affichage du graphique de l'absorbance en fonction de la longueur d'onde.
 
@@ -332,8 +329,8 @@ class ExperimentManager:
         [wavelength, absorbance] = self.extract_data_csv(path, file_experiment, name_data_x, 'Absorbance')
         absorbance_peak = max(absorbance)
         wavelength_peak = wavelength[np.argmax((absorbance))]
-        peaks, _ = find_peaks(absorbance, distance=self.peak_search_window)
-        titles_data = ['Longueur d\'onde (nm)','Absorbance', "Absorbance pics", "Longueur d'onde pics (nm)"]
+        peaks, _ = find_peaks(absorbance, distance=peak_search_window)
+        titles_data = ['Longueur d\'onde (nm)','Absorbace', "Absorbance pics", "Longueur d'onde pics (nm)"]
         data = [wavelength, absorbance, peaks, wavelength[peaks]]
         self.save_data_csv(path, data, titles_data, file_experiment)
         title_graph = 'Absorbance du ' + self.sample_analyzed_name
@@ -344,10 +341,13 @@ class ExperimentManager:
         plt.ylabel('Absorbance')
         plt.title(title_graph)
         self.max_absorbance_display(wavelength_peak, absorbance_peak, wavelength, absorbance)
-        plt.savefig(path + '\\' + title_graph + ".pdf")
+        plt.savefig(path + '\\' + file_experiment + ".pdf")
         plt.show()
 
     def save_display(self, path_file, file_experiment, name_data_x, name_data_y, title_graph):
+        """
+        Save graph of data_x and data_y in .pdf 
+        """
         plt.figure()
         [data_x, data_y] = self.extract_data_csv(path_file, file_experiment, name_data_x, name_data_y)
         plt.plot(data_x, data_y, '-', label= name_data_y)
@@ -355,7 +355,7 @@ class ExperimentManager:
         plt.xlabel(name_data_x)
         plt.ylabel(name_data_y)
         plt.title(title_graph)
-        plt.savefig(path_file + '\\' + title_graph + ".pdf")
+        plt.savefig(path_file + '\\' + file_experiment + ".pdf")
 
     def classic_graph(self, path_file, file_experiment, name_data_x, name_data_y, title_graph):
         """
@@ -381,15 +381,15 @@ if __name__ == "__main__":
     # Exemple d'utilisation:
     SAMPLE_NAME = "Bromo"
     WINDOW = 2
-    experiment_manager = ExperimentManager(SAMPLE_NAME, WINDOW)
+    experiment_manager = ExperimentManager(SAMPLE_NAME)
     ROOT = tk.Tk()
     #experiment_manager.creation_directory_date_slot()
     PATH = experiment_manager.choose_folder(ROOT)
-    [PATH, date_str, slot_size] = experiment_manager.creation_directory_date_slot(PATH)
-    print(PATH)
+    [PATH, DATE, SLOT_SIZE] = experiment_manager.creation_directory_date_slot(PATH)
+    print([PATH, DATE, SLOT_SIZE])
     experiment_manager.save_data_csv(path = PATH, data_list=[[1, 2, 3], [4, 5, 6], [1], [23,5,5,4,3,1]], title_list=['Absorbance', 'Longueur d\'onde (nm)', 'C', "Temps (s)"], file_name='nom_fichier')
     experiment_manager.classic_graph(PATH, 'nom_fichier', "Temps (s)", 'Absorbance', "Cinétique_test")
-    experiment_manager.graph_absorbance(PATH, "Longueur d'onde (nm)", 'nom_fichier')
+    experiment_manager.graph_absorbance(PATH, "Longueur d'onde (nm)", 'nom_fichier', WINDOW)
  
 
 

@@ -1,7 +1,5 @@
-import os
 import time
 import tkinter as tk
-import datetime
 
 # MODES
 from backend.core.acquisition_mode import Varian634AcquisitionMode
@@ -29,19 +27,15 @@ if __name__ == "__main__":
     # INITIALIZATION Optical Fork:
 
     arduino_sensors = Arduino(COM_PORT_SENSORS)
-    MODE_SLITS = False
-    experim_manager = ExperimentManager()    
-    current_date = datetime.datetime.now()
-    current_day = current_date.strftime("%d_%m_%Y")        
-    PHYSICAL_DATAS = ["Longueur d'onde (nm)", "Tension photodiode 1 (Volt)"]
+    SAMPLE_NAME = "Bromophénol" 
+    experim_manager = ExperimentManager(SAMPLE_NAME)
+     
     ROOT = tk.Tk()
-    USER_PATH =  experim_manager.choose_folder(ROOT)
-    RAW_DATA_FILE = os.path.join(os.getcwd() ,'raw_data\\raw_data' + current_day + '.csv' ) 
-    print(RAW_DATA_FILE)
-    SAMPLE_NAME = input("Nom de l'espèce étudié ? ")
-    baseline_scanning = Varian634AcquisitionMode(arduino_motors, arduino_sensors, USER_PATH, MODE_SLITS, SAMPLE_NAME)
+    USER_PATH =  experim_manager.choose_folder(ROOT) 
     
-    baseline_scanning.scanning_acquisition(17, 200)
+    baseline_scanning = Varian634AcquisitionMode(arduino_motors, arduino_sensors, USER_PATH, SAMPLE_NAME)
+    
+    baseline_scanning.scanning_acquisition(380, 800, 2, False)
     ROOT.mainloop()
 
     

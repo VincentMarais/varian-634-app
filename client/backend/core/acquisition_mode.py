@@ -14,11 +14,14 @@ Visible range with the screw pitch:
 Course maxi : 26mm
 
 Pour une acquisition longue désactiver la mise en veille du PC
+
+
 """
 import time
 import os
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 # Motors
 from backend.core.kinematic_chains.motors_varian_634 import GeneralMotorsController
@@ -33,10 +36,12 @@ from backend.core.utils.digital_signal_processing import PhotodiodeNoiseReducer
 
 class Varian634AcquisitionMode:
     """
-    A class with all methods to do baseline and scanning.
+    Manages the operation modes for Varian 634 instruments including baseline, calibration, 
+    scanning, and kinetics analysis. It controls motors for movement, acquires voltage 
+    signals from sensors, and processes these signals to compute absorbance and other metrics.
     """
 
-    def __init__(self, arduino_motors_instance, arduino_sensors_instance, path_user, mode_variable_slits, sample_name):
+    def __init__(self, arduino_motors_instance, arduino_sensors_instance, path_user, sample_name):
         """
         Initializes the Varian634BaselineScanning class.
 
@@ -48,17 +53,16 @@ class Varian634AcquisitionMode:
         # Init hardware
         self.arduino_motors = arduino_motors_instance
         self.arduino_sensors = arduino_sensors_instance
-        self.mode_variable_slits = mode_variable_slits
         self.motors_controller = GeneralMotorsController(self.arduino_motors, self.arduino_sensors)
         self.slits_position = [0, 0.07, 0.07, 0.08] # position of slits [2nm, 1nm, 0.5nm, 0.2nm]
         self.daq = VoltageAcquisition()
         self.channels = ['Dev1/ai0', 'Dev1/ai1']
 
         # Init digital processing
-        self.noise_processing = PhotodiodeNoiseReducer()
+        self.signal_processing = PhotodiodeNoiseReducer()
         self.peak_search_window = 60
         # Init experiment tools
-        self.experim_manager = ExperimentManager(self.peak_search_window, sample_name)  
+        self.experim_manager = ExperimentManager(sample_name)  
         self.path_user = path_user      
         self.path, self.date, self.slot_size = self.experim_manager.creation_directory_date_slot(self.path_user)
         self.raw_data = os.path.join(os.getcwd() ,'raw_data') 
@@ -69,63 +73,62 @@ class Varian634AcquisitionMode:
 
     def perform_step_measurement(self):
         """
-        Performs a measurement at a given step and returns the measured voltages.
+        Measures voltage across two photodiodes by switching mirror position between measurements.
+
+        Returns:
+            Tuple containing measured voltages from photodiode 1 and photodiode 2.
         """
-        print("Mesure cuvette 1")
-        #acquiere la tension aux borne de photodiode 1
         voltage_photodiode_1 = self.daq.voltage_acquisition_scanning_baseline(self.channels[0])
-        # move mirror motor 0.333334 = 60° to switch cuvette
-        self.motors_controller.move_mirror_motor(0.33334)
-        # wait mirror motor 
-        time.sleep(1)
-        # read the voltage on photodiode 2    
+        self.motors_controller.move_mirror_motor(0.33334)  # Move mirror to switch cuvette
+        time.sleep(1)  # Wait for mirror adjustment
         voltage_photodiode_2 = self.daq.voltage_acquisition_scanning_baseline(self.channels[1])
-        self.motors_controller.move_mirror_motor(-0.33334)
+        self.motors_controller.move_mirror_motor(-0.33334)  # Move mirror back
         time.sleep(1)
 
         return voltage_photodiode_1, voltage_photodiode_2
 
-    def calculate_wavelength(self, position):
-        """
-        Calculates the wavelength based on the position.
-        """
-        return -31.10419907 * position + 800
+   
 
     def precision_mode(self, screw_travel, number_measurements):
         """
-        Executes the precision mode for the measurement and returns the results.
+        Performs precise measurements across a range of positions, calculates wavelength, and stores results.
+
+        Parameters:
+            screw_travel: Total distance for the screw to travel during the measurement.
+            number_measurements: Number of measurements to take across the screw travel distance.
+
+        Returns:
+            A tuple containing lists of wavelengths, absorbance, reference voltages, sample voltages, and screw positions.
         """
+        # Precision measurement setup
         voltages_photodiode_1, voltages_photodiode_2 = [], []
         no_screw, wavelength = [], []
-        step = screw_travel / number_measurements 
-        time_per_step = (step*60)/10 # [step] = mm et 10=vitesse de rotation de la vis (mm/min)       
+        step = screw_travel / number_measurements  # Step size for each measurement
+        time_per_step = (step * 60) / 10  # Time calculation for each step
+
         self.motors_controller.unlock_motors()
-        # mode relatif :
-        self.motors_controller.execute_g_code("G91")
-        # Laissé le temps au moteurs de recevoir la commande dans le serial
-        time.sleep(1)
+        self.motors_controller.execute_g_code("G91")  # Set relative movement mode
+        time.sleep(1)  # Wait for command acknowledgment
+
         for i in range(0, number_measurements):
             voltage_1, voltage_2 = self.perform_step_measurement()
-            # On deplace le reseau de diffraction pour 
-            # changer de longueur d'onde
+            # Move diffraction grating
             self.motors_controller.move_screw(step)
-            # On stoke toute les datas necessaires
-            # pour tracer le graphique de l'absorbance 
-            # En fonction de la longueur d'onde
+            # Store measurement data for plotting
             voltages_photodiode_1.append(voltage_1)
             voltages_photodiode_2.append(voltage_2)
             position = i * step
             no_screw.append(position + step)
-            wavelength.append(self.calculate_wavelength(position))
-            # On sauvegarde les datas au fur et à mesure                
+            wavelength.append(self.signal_processing.calculate_wavelength(position))
+            # Save data incrementally             
             title_data_acquisition = ["Longueur d'onde (nm)", "Tension photodiode 1 (Volt)", "Tension photodiode 2 (Volt)", 
                                   "pas de vis (mm)"]
             datas = [wavelength, voltages_photodiode_1, voltages_photodiode_2, no_screw]
             title_file = "raw_data_" + self.date
-            self.experim_manager.save_data_csv(self.raw_data, datas, title_data_acquisition, title_file)
-            # On attend que le réseau de diffraction soit bien arrivé à la longueur d'onde souhaité
-            time.sleep(time_per_step)
-        # Reference and cuvette 1
+            self.experim_manager.save_data_csv(self.raw_data, datas, title_data_acquisition, title_file)            
+            time.sleep(time_per_step)# Wait for diffraction grating adjustment
+        
+        # Calculate absorbance based on measurement choice
         if self.choice == 'cuvette 1':
             reference_solution, sample_solution = (voltages_photodiode_1, voltages_photodiode_2)
         else:
@@ -133,47 +136,92 @@ class Varian634AcquisitionMode:
         reference_solution = np.array(reference_solution)
         sample_solution = np.array(sample_solution)
         absorbance = np.log10(reference_solution/sample_solution)
-        return wavelength, list(absorbance)
 
-    def acquisition(self, screw_travel, number_measurements, mode):
+        return wavelength, list(absorbance), list(reference_solution), list(sample_solution), no_screw
+
+    def acquisition(self, screw_travel, number_measurements, mode, mode_variable_slits):
         """
-        Performs a complete acquisition and saves the data.
+        Manages the complete acquisition process, including motor initialization and data saving.
 
-        Args:
-            screw_travel: Total distance the screw must travel.
+        Parameters:
+            screw_travel: Total distance for the screw to travel.
             number_measurements: Total number of measurements to perform.
-            mode: Mode of the acquisition.
+            mode: Acquisition mode (e.g., calibration, baseline).
+            mode_variable_slits: Flag to use variable slit positions or not.
+
+        Returns:
+            The result of the precision mode operation, including wavelengths and absorbance values.
         """
-        if self.mode_variable_slits:
+        if mode_variable_slits:
             pass
         else:
             self.motors_controller.initialisation_motors()
+        
         data_acquisition = self.precision_mode(screw_travel, number_measurements)
 
-        title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance"]
-        title_file = mode +"_"+ self.date
+        # Data saving
+        title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "Tension photodiode 1 (Volt)", "Tension photodiode 2 (Volt)", 
+                                  "pas de vis (mm)"]
+        title_file = mode + "_" + self.date
         self.experim_manager.save_data_csv(self.raw_data, data_acquisition, title_data_acquisition, title_file)
-
         self.motors_controller.wait_for_idle()
         self.motors_controller.reset_screw_position(screw_travel)
+
+        # Calibration plot
+        if mode == 'calibration':
+            plt.figure()            
+            plt.plot(data_acquisition[4], data_acquisition[2], '-', color='blue', label = "Tension photodiode 1 (Volt)")
+            plt.plot(data_acquisition[4], data_acquisition[3], '-', color='red', label= "Tension photodiode 2 (Volt)")
+            plt.grid(True)
+            plt.legend()
+            plt.xlabel("pas de vis (mm)")
+            plt.ylabel("Tension (Volt)")
+            plt.title("Spectre de la lampe au Xénon")
+            plt.savefig(self.path + '\\' + title_file + ".pdf")
     
         return data_acquisition
 
-    def acquisition_baseline(self, screw_travel, number_measurements):
+    def acquisition_baseline(self, screw_travel=26, number_measurements=600, mode_variable_slits=False):
         """
-        Performs a complete baseline acquisition and saves the data.
+        Conducts a baseline acquisition to establish a reference point for future measurements.
+
+        Parameters:
+            screw_travel: Total screw travel distance to cover during the baseline acquisition.
+            number_measurements: Number of measurements to take across the screw travel distance.
+            mode_variable_slits: Flag indicating whether to adjust slit positions during the acquisition.
+
+        Returns:
+            The result of the complete acquisition process, specific to the baseline mode.
         """
-        return self.acquisition(screw_travel, number_measurements, mode = 'baseline')
+        return self.acquisition(screw_travel, number_measurements, 'baseline', mode_variable_slits)
+
+    def acquisition_calibration(self, screw_travel=26, number_measurements=600, mode_variable_slits=False):
+        """
+        Performs a full calibration acquisition to calibrate the diffraction grating for accurate measurements.
+        (find the relation betwen wavelength and no screw)
+
+        Parameters:
+            screw_travel (int): Preset total distance for the calibration screw to travel.
+            number_measurements (int): Preset total number of measurements for the calibration process.
+            mode_variable_slits: Flag to adjust slit positions during calibration; not used in this context.
+
+        Returns:
+            None; results are directly managed by the acquisition method.
+        """
+        self.acquisition(screw_travel, number_measurements, 'calibration', mode_variable_slits)
+        
 
     def baseline_verification(self):
         """
-        Checks if a baseline file exists for the Varian 634 scanning mode.
+        Verifies the existence of a baseline file and decides on creating a new one if necessary.
 
-        This function checks if a baseline file named 'data_baseline_DD_MM_YYYY.csv' exists
-        in the specified path. If the file does not exist, it prompts the user to decide
-        whether to create a new baseline by calling the 'baseline_acquisition' method. If the
-        file exists, the user is given the option to create a new baseline or proceed without
-        creating one.        """
+        Checks for the presence of a baseline file named according to the date of the experiment.
+        If absent, prompts the user to initiate baseline acquisition. If present, offers the choice
+        to proceed with the existing baseline or create a new one.
+
+        Returns:
+            Absorbance values from the chosen or newly created baseline file.
+        """
 
         self.experim_manager.create_directory(self.raw_data)
         baseline_file = os.path.join(self.raw_data, 'baseline_' + self.date)
@@ -183,7 +231,7 @@ class Varian634AcquisitionMode:
             print('Le fichier : ' + baseline_file + ".csv" + '  n\'est pas créé.')
             self.experim_manager.delete_files_in_directory(self.raw_data)
             print("Réalisation de la baseline")
-            absorbance_baseline = self.acquisition_baseline(1, 5)[1]
+            absorbance_baseline = self.acquisition_baseline(1, 5, False)[1]
             return absorbance_baseline
 
         else:
@@ -207,55 +255,76 @@ class Varian634AcquisitionMode:
                     reponse = input("Répondez par 'Oui' ou 'Non'. Souhaitez-vous réaliser une nouvelle baseline ? ").lower()
     
 
-    def scanning_acquisition(self, screw_travel, number_measurements):
+    def scanning_acquisition(self, lambda_min, lambda_max, wavelength_step, mode_variable_slits):
         """
-        Performs a complete data acquisition, saves the results, and manages motor states.
+        Conducts a scanning acquisition over a specified wavelength range and step size.
 
-        Args:
-            screw_travel: Total distance the screw must travel.
-            number_measurements: Total number of measurements to perform.
+        Parameters:
+            lambda_min (int): Minimum wavelength for the scanning range.
+            lambda_max (int): Maximum wavelength for the scanning range.
+            step (int): Step size for wavelength adjustment during the scan.
+            mode_variable_slits: Flag indicating whether to adjust slit positions during scanning.
+
+        Initiates by verifying baseline, calculating screw travel based on wavelength range, and
+        performing the acquisition with specified parameters.
         """
         absorbance_baseline = self.baseline_verification()
-        
+
+        initialiale_course = self.signal_processing.calculate_course(lambda_min)
+        final_course = self.signal_processing.calculate_course(lambda_max)
+        step = self.signal_processing.calculate_course(wavelength_step)
+        screw_travel = final_course - initialiale_course 
+        number_measurements = int(screw_travel/step)
+        self.motors_controller.move_screw(initialiale_course)
         cuvette_prompt = "Avez-vous mis votre solution dans la cuve appropriée ? "
         self.experim_manager.wait_for_user_confirmation(cuvette_prompt)
-        data_acquisition = self.acquisition(screw_travel, number_measurements, 'scanning')
+        self.motors_controller.wait_for_idle()
+
+        data_acquisition = self.acquisition(screw_travel, number_measurements, 'scanning', mode_variable_slits)
         wavelength = data_acquisition[0]
         absorbance_scanning = data_acquisition[1]
-        absorbance = self.noise_processing.sample_absorbance(absorbance_baseline, absorbance_scanning)
+        absorbance = self.signal_processing.sample_absorbance(absorbance_baseline, absorbance_scanning)
 
         title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance"]
         data_acquisition = [wavelength, absorbance]
-        title_file = self.title_file_sample + '_final'
+        title_file = self.title_file_sample + '_mode_scanning'
         self.experim_manager.save_data_csv(self.path, data_acquisition, title_data_acquisition, title_file)
         self.experim_manager.save_display(self.path, title_file, 'Longueur d\'onde (nm)', "Absorbance", title_file)
         # End-of-file (EOF)
 
-    def run_kinetics_analysis(self, time_acquisition, wavelengths, delay_between_measurements):
+
+# Analysis of the absorbance kinetics for the absorbance analysis of the sample.
+    def run_kinetics_analysis(self, time_acquisition, delay_between_measurements, wavelengths, mode_variable_slits):
         """
-        Runs the kinetics analysis.
+        Executes kinetics analysis over specified wavelengths with time intervals.
 
-        Parameters
-        ----------
-        time_acquisition : int
-            acquisition time
-        wavelengths : list
-            list of wavelengths
-        delay_between_measurements : int
-            delay between measurements
+        Parameters:
+            time_acquisition: Total time to conduct the kinetics measurement.
+            delay_between_measurements: Time delay between consecutive measurements.
+            wavelengths: List of wavelengths to perform the kinetics analysis at.
+            mode_variable_slits: Flag indicating whether to adjust slit positions during kinetics analysis.
 
-        Returns
-        -------
-        None
+        Performs kinetics measurements by adjusting to specified wavelengths and measuring
+        absorbance over time, allowing for analysis of chemical reactions or sample changes.
         """
         absorbance_baseline = self.baseline_verification()
 
-        if self.mode_variable_slits:
+        if mode_variable_slits:
             pass
         else:
             self.motors_controller.initialisation_motors()
+        # Trie de la liste dans l'ordre décroissant
+        # Afin que le moteur s'initialise plus vite
+       
+        wavelengths.sort(reverse=True)
+        print(wavelengths)
+        course_vis = 1 / 31.10419907 * (800 - wavelengths[0])
+        # Deplace
+        self.motors_controller.execute_g_code("G90")
+        self.motors_controller.move_screw(course_vis)
+        self.motors_controller.wait_for_idle()
+        cuvette_prompt = "Avez-vous mis votre solution dans la cuve appropriée ? "
 
-        
         for wavelength in wavelengths:
             course_vis = 1 / 31.10419907 * (800 - wavelength)
             self.motors_controller.move_screw(course_vis)
@@ -271,7 +340,7 @@ class Varian634AcquisitionMode:
             self.motors_controller.move_mirror_motor(-0.33334)
 
             absorbance_kinetics = np.log10(voltage_ref/voltages_sample)
-            absorbance = self.noise_processing.sample_absorbance(absorbance_baseline, absorbance_kinetics)
+            absorbance = self.signal_processing.sample_absorbance(absorbance_baseline, absorbance_kinetics)
             data_acquisition = [wavelength, moment, absorbance]
             file_name = f'{self.date}_{self.slot_size}_{self.sample_name}_longueur_{wavelength}'
             title_file = ["Longueur d'onde (nm)", "Temps (s)", "Absorbance"]
@@ -281,38 +350,39 @@ class Varian634AcquisitionMode:
             self.motors_controller.wait_for_idle()
         
 
-    def slits_variable_scanning(self, screw_travel, number_measurements):
+    def slits_variable_scanning(self, lambda_min, lambda_max, step):
         """
-        Program that scans all slits of the Varian during scanning mode.
+        Executes scanning across all slit positions for a given wavelength range and step size.
 
-        Parameters
-        ----------
-        screw_travel : int
-            Screw travel for scanning
-        number_measurements : int
-            Number of measurements to be performed
+        Parameters:
+            lambda_min (int): Minimum wavelength for the scanning range.
+            lambda_max (int): Maximum wavelength for the scanning range.
+            step (int): Step size for wavelength adjustment during the scan.
+
+        Iterates through predefined slit positions, conducting scanning acquisitions at each position,
+        to analyze the effect of slit width on measurement results.
         """
         self.motors_controller.initialisation_motors()
         for slits in self.slits_position:
             self.motors_controller.move_slits(slits)
             self.motors_controller.wait_for_idle()
-            self.scanning_acquisition(screw_travel, number_measurements)
+            self.scanning_acquisition(lambda_min, lambda_max, step, True)
 
     def slits_variable_chemical_kinetics(self, time_acquisition, wavelengths, delay_between_measurements):
         """
-        Program that scans all slits of the Varian during kinetic analysis mode.
+        Conducts chemical kinetics analysis across all slit positions for specified wavelengths.
 
-        Parameters
-        ----------
-        time_acquisition : int
-            Time of acquisition for each measurement
-        wavelengths : list
-            List of wavelengths to be analyzed
-        delay_between_measurements : int
-            Delay between consecutive measurements
+        Parameters:
+            time_acquisition: Total time for the kinetics measurement.
+            wavelengths: List of wavelengths to perform kinetics analysis at.
+            delay_between_measurements: Time delay between consecutive measurements.
+
+        Similar to the slits_variable_scanning method, but focused on kinetics analysis,
+        this method iterates through slit positions, adjusting the system for measurements
+        that reveal how slit width affects kinetics measurements.
         """
         self.motors_controller.initialisation_motors()
         for slits in self.slits_position:
             self.motors_controller.move_slits(slits)
             self.motors_controller.wait_for_idle()
-            self.run_kinetics_analysis(time_acquisition, wavelengths, delay_between_measurements)
+            self.run_kinetics_analysis(time_acquisition, delay_between_measurements, wavelengths, True)
