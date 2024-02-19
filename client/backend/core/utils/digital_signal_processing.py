@@ -231,23 +231,75 @@ class PhotodiodeNoiseReducer:
         """
         voltage_convol = np.convolve(voltage, np.ones(door_function_width) / door_function_width, mode='same')
         return voltage_convol
+    
+    def calculate_average_translation(self, list_A, list_B):
+        """
+        Corrige le gap en les deux photodiode, 
+        nous avons remarqué quand trançant le spectre du Xe sur les 
+        des photodiodes la Tension photodiode 1  = Tension phodiode_2 + a
+
+        Ce programme permet de déterminer a, afin d'avoir 
+        Tension photodiode 1  = Tension phodiode_2
+        et donc Absorbance_baseline = 0
+        """
+        # Check if both lists are of the same size
+        if len(list_A) != len(list_B):
+            raise ValueError("Both lists must be of the same size.")
+        
+        # Initialize the sums of differences in x and y
+        sum_diff_x = 0
+        
+        # Calculate the sum of differences between corresponding points
+        for x_a, x_b in zip(list_A, list_B):
+            sum_diff_x += x_a - x_b
+        
+        # Calculate the averages
+        n = len(list_A)  # Number of points
+        average_x = sum_diff_x / n
+        
+        return average_x
+    
+    def correction_baseline(self,voltage_photodiode_1, voltage_photodiode_2):
+        """
+        Corrige le gap en les deux photodiode, 
+        nous avons remarqué quand trançant le spectre du Xe sur les 
+        des photodiodes la Tension photodiode 1  = Tension phodiode_2 + a
+
+        Ce programme permet de déterminer a, afin d'avoir 
+        Tension photodiode 1  = Tension phodiode_2
+        et donc Absorbance_baseline = 0
+        """
+        a = self.calculate_average_translation(voltage_photodiode_1, voltage_photodiode_2)
+        print(a)
+        voltage_photodiode_2 = [(x + a) for x in voltage_photodiode_2]
+        return voltage_photodiode_2
 
 
 if __name__ == "__main__":
     denoise = PhotodiodeNoiseReducer()
-    CHEMIN = "C:\\Users\\vimarais\\Documents\\GitHub\\varian-634-app\\experiments\\experiments_2023\\experiments_06_2023\\28_06_2023\\Fente_0_2nm"
-
-    FILE_REF_SAMPLE = CHEMIN + '\\' + "Tension_de_blanc_28_06_2023_Fente_0_2nm.csv"
-    FILE_SAMPLE = CHEMIN + '\\' + "Tension_de_echantillon_28_06_2023_Fente_0_2nm.csv"
-
-    data_ref_sample = pd.read_csv(FILE_REF_SAMPLE, encoding='ISO-8859-1')
-    data_sample = pd.read_csv(FILE_SAMPLE, encoding='ISO-8859-1')
+    PATH = "C:\\Users\\admin\\Desktop\\GitHub\\varian-634-app\\experiments\\experiments_2024\\experiments_02_2024\\experiments_16_02_2024\\Calibrage"
+    file = f"{PATH}/{'calibrage_16_02_2024_fente_2nm'}.csv"
+    data = pd.read_csv(file, encoding='ISO-8859-1')
+    voltage_1 = data["Tension photodiode 1 (Volt)"]
+    voltage_2 = data["Tension photodiode 2 (Volt)"]
+    screw = data["pas de vis (mm)"]
 
     # Extract columns
-    WAVELENGTH = data_ref_sample['Longueur d\'onde (nm)']
-    voltages_ref_sample = data_ref_sample['Tension blanc (Volt)']
-    voltages_sample = data_sample['Tension échantillon (Volt)']
-    denoise.fourier_transform(voltages_sample)
-    denoise.hilbert_transform(voltages_sample)
-    denoise.spline_interpolation(voltages_sample, 0.5)
+    
+    denoise.fourier_transform(voltage_1)
+    denoise.hilbert_transform(voltage_1)
+    denoise.spline_interpolation(voltage_1, 0.5)
     denoise.simulation_gaussian_noise()
+    voltage_2_correc = denoise.correction_baseline(voltage_1, voltage_2)
+    plt.plot(screw, -voltage_1, label='Tension photodiode 1', linewidth=2, color='orange')
+    plt.plot(screw, [-v for v in voltage_2_correc], label='Tension photodiode 2 corrigé', linestyle='--', linewidth=2, color='red')
+    plt.plot(screw, -voltage_2, label='Tension photodiode 2', linestyle='-', linewidth=2)
+
+    plt.legend()
+    plt.grid(True)
+    plt.title('Spectre en intensité du Xe')
+    plt.xlabel("pas de vis (mm)")
+    plt.ylabel('Tension (Volt)')
+    plt.show()
+
+    
