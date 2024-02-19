@@ -5,7 +5,6 @@ This program provides user assistance for VARIAN 634 experiments.
 
 2) Program for graphics.
 
-
 """
 
 import os
@@ -342,9 +341,6 @@ class ExperimentManager:
         """
         self.save_display(path_file, file_experiment, name_data_x, name_data_y, title_graph)
         plt.show()
-    
-    
-
 
 if __name__ == "__main__":
     # Exemple d'utilisation:
@@ -359,7 +355,21 @@ if __name__ == "__main__":
     experiment_manager.save_data_csv(path = PATH, data_list=[[1, 2, 3], [4, 5, 6], [1], [23,5,5,4,3,1]], title_list=['Absorbance', 'Longueur d\'onde (nm)', 'C', "Temps (s)"], file_name='nom_fichier')
     experiment_manager.classic_graph(PATH, 'nom_fichier', "Temps (s)", 'Absorbance', "Cinétique_test")
     experiment_manager.graph_absorbance(PATH, "Longueur d'onde (nm)", 'nom_fichier', WINDOW)
- 
+
+    PATH = "C:\\Users\\admin\\Desktop\\GitHub\\varian-634-app\\experiments\\experiments_2024\\experiments_02_2024\\experiments_16_02_2024\\Calibrage"
+    file = f"{PATH}/{'calibrage_16_02_2024_fente_2nm'}.csv"
+    data = pd.read_csv(file, encoding='ISO-8859-1')
+    voltage_1 = data["Tension photodiode 1 (Volt)"]
+    voltage_2 = data["Tension photodiode 2 (Volt)"]
+    screw = data["pas de vis (mm)"]
+    plt.plot(screw, -voltage_1, label='Tension photodiode 1', linewidth=2, color='orange')
+    plt.plot(screw, -voltage_2, label='Tension photodiode 2', linestyle='-', linewidth=2, color='red')
+    plt.legend()
+    plt.grid(True)
+    plt.title('Spectre en intensité du Xe')
+    plt.xlabel("pas de vis (mm)")
+    plt.ylabel('Tension (Volt)')
+    plt.show()
 
 
 

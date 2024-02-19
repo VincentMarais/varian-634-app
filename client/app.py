@@ -1,6 +1,5 @@
 # Bibliothèque
 import os
-import tkinter.messagebox
 import customtkinter
 from PIL import Image
 
