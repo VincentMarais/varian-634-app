@@ -72,8 +72,10 @@ class PhotodiodeNoiseReducer:
     def calculate_course(self, wavelength):
         """
         Calculates the wavelength based on the position.
+        abs pour que GBRL est des valeurs positive de position cela 
+        évite l'initialisé dans le sens inverse
         """
-        return (wavelength - 800)/-31.10419907
+        return np.abs((wavelength - 800)/-31.10419907)
 
     def graph_digital_processing(self, data_x, datas_y, title_graph, titles_data_y):
         """

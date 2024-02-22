@@ -22,41 +22,40 @@ Ce guide fournit des instructions pour configurer et utiliser une CNC Shield ave
 
     5. Assurez-vous que les paramètres si-dessous sont correctement configurés avant de tester les moteurs
         ```
-            $0=10
-            $1=25
-            $2=0
-            $3=0
-            $4=0
-            $5=0
-            $6=0
-            $10=1
-            $11=0.010
-            $12=0.002
-            $13=0
-            $20=0
-            $21=1
-            $22=1
-            $23=0
-            $24=10.000
-            $25=12.000
-            $26=250
-            $27=1.000
-            $30=1000
-            $31=0
-            $32=0
-            $100=10295.660
-            $101=3200.000
-            $102=3200.000
-            $110=10.000
-            $111=10.000
-            $112=10.000
-            $120=200.000
-            $121=10.000
-            $122=10.000
-            $130=21.000
-            $131=800.000
-            $132=800.000
+            $0=10 (step pulse, usec)
+            $1=25 (step idle delay, msec)
+            $2=0 (step port invert mask:00000000)
+            $3=0 (dir port invert mask:00000000)
+            $4=0 (step enable invert, bool)
+            $5=0 (limit pins invert, bool)
+            $6=0 (probe pin invert, bool)
+            $10=3 (status report mask:00000011)
+            $11=0.010 (junction deviation, mm)
+            $12=0.002 (arc tolerance, mm)
+            $13=0 (report inches, bool)
+            $20=0 (soft limits, bool)
+            $21=1 (hard limits, bool)
+            $22=1 (homing cycle, bool)
+            $23=1 (homing dir invert mask:00000001)
+            $24=6.000 (homing feed, mm/min)
+            $25=10.000 (homing seek, mm/min)
+            $26=250 (homing debounce, msec)
+            $27=1.000 (homing pull-off, mm)
+            $100=10295.660 (x, step/mm)
+            $101=3200.000 (y, step/mm)
+            $102=3200.000 (z, step/mm)
+            $110=10.000 (x max rate, mm/min)
+            $111=10.000 (y max rate, mm/min)
+            $112=20.000 (z max rate, mm/min)
+            $120=10.000 (x accel, mm/sec^2)
+            $121=10.000 (y accel, mm/sec^2)
+            $122=10.000 (z accel, mm/sec^2)
+            $130=21.000 (x max travel, mm)
+            $131=200.000 (y max travel, mm)
+            $132=200.000 (z max travel, mm)
         ```
+    6. Modification code grbl : config.h (mettre le code)
+
 
 2. **Installation Python et pyserial:**
    - Si Python n'est pas installé, téléchargez-le depuis [le site officiel de Python](https://www.python.org/downloads/) et suivez les instructions d'installation.

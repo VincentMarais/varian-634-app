@@ -214,7 +214,19 @@ class ExperimentManager:
         while input(prompt) != 'Oui':
             pass
 
+    def link_cuvette_voltage(choice, voltages_photodiode_1, voltages_photodiode_2):
+        """
+        Lie le choix de cuvette de l'utilisateur à la photodiode
+            Si l'utilisateur à mis l'échantillon dans la cuvette 1 alors 
+            la tension mesurer par la photodiode 1 sera celle de l'échantillon
+        """
 
+        if choice == 'cuvette 1':
+            reference_solution, sample_solution = (voltages_photodiode_1, voltages_photodiode_2)
+        else:
+            reference_solution, sample_solution = (voltages_photodiode_2, voltages_photodiode_1)
+        
+        return reference_solution, sample_solution
     def max_absorbance_display(self, wavelength_peak, absorbance_peak, wavelength, absorbance):
         """
         Displays the absorbance peak and maximum absorbance on a plot.

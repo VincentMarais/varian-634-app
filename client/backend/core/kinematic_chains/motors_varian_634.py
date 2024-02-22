@@ -49,7 +49,7 @@ class GeneralMotorsController:
         self.slits_position = [0, 0.065, 0.135, 0.22] # position of slits [2nm, 1nm, 0.5nm, 0.2nm]
         self.name_slits = ["Fente_2nm", "Fente_1nm", "Fente_0_5nm", "Fente_0_2nm"]
         # Mirror cuves motor
-        self.mirror_cuves_motor = ['Z', '$112', 10]  # [axis, g_code_speed, speed]
+        self.mirror_cuves_motor = ['Z', '$112', 20]  # [axis, g_code_speed, speed]
         self.pin_limit_switch_mirror_cuves = [3]
 
 
@@ -357,8 +357,5 @@ if __name__ == "__main__":
 
     # Test set_motors_speed function
     motors_controller.unlock_motors() 
-    SLIT = input("Slot size: Fente_2nm, Fente_1nm, Fente_0_5nm, Fente_0_2nm: ")
 
-    motors_controller.initialize_end_stop([2, 3, 4, 5])
-    time.sleep(5)
-    motors_controller.initialisation_motor_slits(SLIT)
+    motors_controller.initialisation_motors()

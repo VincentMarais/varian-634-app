@@ -22,6 +22,7 @@ import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import serial
 
 # Motors
 from backend.core.kinematic_chains.motors_varian_634 import GeneralMotorsController
@@ -129,15 +130,9 @@ class Varian634AcquisitionMode:
             time.sleep(time_per_step)# Wait for diffraction grating adjustment
         
         # Calculate absorbance based on measurement choice
-        if self.choice == 'cuvette 1':
-            reference_solution, sample_solution = (voltages_photodiode_1, voltages_photodiode_2)
-        else:
-            reference_solution, sample_solution = (voltages_photodiode_2, voltages_photodiode_1)
-        reference_solution = np.array(reference_solution)
-        sample_solution = np.array(sample_solution)
-        absorbance = np.log10(reference_solution/sample_solution)
+            
 
-        return wavelength, list(absorbance), list(reference_solution), list(sample_solution), no_screw
+        return wavelength, voltages_photodiode_1, voltages_photodiode_2, no_screw
 
     def acquisition(self, screw_travel, number_measurements, mode, mode_variable_slits):
         """
@@ -181,7 +176,7 @@ class Varian634AcquisitionMode:
     
         return data_acquisition
 
-    def acquisition_baseline(self, screw_travel=26, number_measurements=600, mode_variable_slits=False):
+    def acquisition_baseline(self, screw_travel=2, number_measurements=2, mode_variable_slits=False):
         """
         Conducts a baseline acquisition to establish a reference point for future measurements.
 
@@ -232,7 +227,6 @@ class Varian634AcquisitionMode:
             self.experim_manager.delete_files_in_directory(self.raw_data)
             print("Réalisation de la baseline")
             absorbance_baseline = self.acquisition_baseline(1, 5, False)[1]
-            return absorbance_baseline
 
         else:
             reponse = input("Souhaitez-vous réaliser une nouvelle baseline, 'Oui' ou 'Non'? ").lower()
@@ -248,7 +242,6 @@ class Varian634AcquisitionMode:
                 baseline_file = f"{self.raw_data}\\{file_baseline}.csv"
                 data_baseline = pd.read_csv(baseline_file, encoding='ISO-8859-1')
                 absorbance_baseline = data_baseline['Absorbance']
-                return absorbance_baseline
 
             else:
                 while reponse not in ['oui', 'non']:
@@ -268,23 +261,35 @@ class Varian634AcquisitionMode:
         Initiates by verifying baseline, calculating screw travel based on wavelength range, and
         performing the acquisition with specified parameters.
         """
-        absorbance_baseline = self.baseline_verification()
+        # Réalisation de la baseline pour une acquisition correct
+        self.baseline_verification()
+        # On réinitialise les moteurs pour une meilleure 
+        self.motors_controller.initialisation_motors()
+        course_lambda_min = self.signal_processing.calculate_course(lambda_min)
+        course_lambda_max = self.signal_processing.calculate_course(lambda_max)
+        print("final_course : " , course_lambda_min)
+        print("initialiale_course", course_lambda_max)
 
-        initialiale_course = self.signal_processing.calculate_course(lambda_min)
-        final_course = self.signal_processing.calculate_course(lambda_max)
         step = self.signal_processing.calculate_course(wavelength_step)
-        screw_travel = final_course - initialiale_course 
+        screw_travel = course_lambda_min - course_lambda_max 
         number_measurements = int(screw_travel/step)
-        self.motors_controller.move_screw(initialiale_course)
-        cuvette_prompt = "Avez-vous mis votre solution dans la cuve appropriée ? "
-        self.experim_manager.wait_for_user_confirmation(cuvette_prompt)
+        print(number_measurements)
+
+        self.arduino_motors.flushInput()
+        self.motors_controller.unlock_motors()
+        self.motors_controller.move_screw(course_lambda_max)
+        #cuvette_prompt = "Avez-vous mis votre solution dans la cuve appropriée ? "
+        #self.experim_manager.wait_for_user_confirmation(cuvette_prompt)
         self.motors_controller.wait_for_idle()
 
-        data_acquisition = self.acquisition(screw_travel, number_measurements, 'scanning', mode_variable_slits)
+        data_acquisition = self.precision_mode(screw_travel, number_measurements, 'scanning', mode_variable_slits)
         wavelength = data_acquisition[0]
-        absorbance_scanning = data_acquisition[1]
-        absorbance = self.signal_processing.sample_absorbance(absorbance_baseline, absorbance_scanning)
+        voltages_photodiode_1 = data_acquisition[1]
+        voltages_photodiode_2 = self.signal_processing.correction_baseline(data_acquisition[1], data_acquisition[2])
+        [reference_solution, sample_solution] = self.experim_manager.link_cuvette_voltage(self.choice, 
+                                                                                voltages_photodiode_1, voltages_photodiode_2)
 
+        absorbance = np.log10(np.array(reference_solution)/np.array(sample_solution))
         title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance"]
         data_acquisition = [wavelength, absorbance]
         title_file = self.title_file_sample + '_mode_scanning'
