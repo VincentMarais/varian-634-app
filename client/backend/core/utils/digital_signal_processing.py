@@ -277,8 +277,8 @@ class PhotodiodeNoiseReducer:
 
 if __name__ == "__main__":
     denoise = PhotodiodeNoiseReducer()
-    PATH = "C:\\Users\\admin\\Desktop\\GitHub\\varian-634-app\\experiments\\experiments_2024\\experiments_02_2024\\experiments_16_02_2024\\Calibrage"
-    file = f"{PATH}/{'calibrage_16_02_2024_fente_2nm'}.csv"
+    PATH = "C:\\Users\\admin\\Desktop\\GitHub\\varian-634-app\\experiments\\experiments_2024\\experiments_02_2024\\experiments_23_02_2024\\Calibrage"
+    file = f"{PATH}/{'calibrage_23_02_2024_fente_0_5nm'}.csv"
     data = pd.read_csv(file, encoding='ISO-8859-1')
     voltage_1 = data["Tension photodiode 1 (Volt)"]
     voltage_2 = data["Tension photodiode 2 (Volt)"]

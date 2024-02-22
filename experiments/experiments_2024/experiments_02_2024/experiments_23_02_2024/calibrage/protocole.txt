@@ -1,0 +1,8 @@
+
+But : Réaliser une correction de gain des photodiodes que l'on est une Absorbance (A) de sans cuve nulle
+
+Acquisition de la tension aux bornes des photodiodes 1 et 2 du VARIAN 634, sans cuve pour reconstruire le spectre en intensité du
+Xénon (Rappel : intensité lumineuse en proportionnel à la tension au borne de la photodiodes (Démo cf Rapport 2022-2023))
+
+
+

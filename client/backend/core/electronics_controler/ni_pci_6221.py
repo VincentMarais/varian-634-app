@@ -293,7 +293,7 @@ if __name__ == "__main__":
     acqui_voltage = VoltageAcquisition()
 
     # Arduino
-    BOARD = Arduino('COM9')
+    BOARD = Arduino('COM6')
     PIN_SENSOR = 5
     # Test sensors_state 
     acqui_voltage.sensors_state(BOARD, PIN_SENSOR)
