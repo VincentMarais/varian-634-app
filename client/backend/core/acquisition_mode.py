@@ -133,7 +133,7 @@ class Varian634AcquisitionMode:
 
         return wavelength, voltages_photodiode_1, voltages_photodiode_2, no_screw
 
-    def acquisition(self, step, number_measurements, mode, mode_variable_slits):
+    def acquisition(self, wavelenght_min, wavelenght_max, wavelenght_step, mode, slot_size, mode_variable_slits):
         """
         Manages the complete acquisition process, including motor initialization and data saving.
 
@@ -147,10 +147,11 @@ class Varian634AcquisitionMode:
             The result of the precision mode operation, including wavelengths and absorbance values.
         """
         if mode_variable_slits:
-            pass
+            self.motors_controller.initialisation_motors(slot_size, mode_variable_slits)
         else:
-            self.motors_controller.initialisation_motors()
+            self.motors_controller.initialisation_motors(self.slot_size, mode_variable_slits)
         
+        [step , number_measurements] = self.initialisation_setting(wavelenght_min, wavelenght_max, wavelenght_step)
         data_acquisition = self.precision_mode(step, number_measurements)
 
         # Data saving
@@ -175,7 +176,21 @@ class Varian634AcquisitionMode:
     
         return data_acquisition
 
-    def acquisition_baseline(self, wavelenght_max, wavelenght_min, wavelenght_step, slit_size):
+    def initialisation_setting(self, wavelenght_min, wavelenght_max, wavelength_step):
+        course_lambda_min = self.signal_processing.calculate_course(wavelenght_min)
+        course_lambda_max = self.signal_processing.calculate_course(wavelenght_max)
+        step = self.signal_processing.calculate_course(wavelength_step)
+        print("final_course : " , course_lambda_min)
+        print("initialiale_course", course_lambda_max)
+        print("step", step)
+        step = self.signal_processing.calculate_course(wavelength_step)
+        screw_travel = course_lambda_min - course_lambda_max 
+        print("step", screw_travel)
+        number_measurements = int(screw_travel/step)
+        print(number_measurements)
+        return step, number_measurements
+
+    def acquisition_baseline(self, wavelenght_min, wavelenght_max, wavelenght_step, slot_size, mode_variable_slits):
         """
         Conducts a baseline acquisition to establish a reference point for future measurements.
 
@@ -187,7 +202,11 @@ class Varian634AcquisitionMode:
         Returns:
             The result of the complete acquisition process, specific to the baseline mode.
         """
-        return self.acquisition(screw_travel, number_measurements, 'baseline', mode_variable_slits)
+        [screw_travel, number_measurements] = self.initialisation_setting(wavelenght_min, wavelenght_max, wavelenght_step)
+        if mode_variable_slits:
+            return self.acquisition(screw_travel, number_measurements, 'baseline', slot_size, mode_variable_slits)
+        else:
+            return self.acquisition(screw_travel, number_measurements, 'baseline')
 
     def acquisition_calibration(self, screw_travel=26, number_measurements=600, mode_variable_slits=False):
         """
@@ -225,13 +244,13 @@ class Varian634AcquisitionMode:
             print('Le fichier : ' + baseline_file + ".csv" + '  n\'est pas créé.')
             self.experim_manager.delete_files_in_directory(self.raw_data)
             print("Réalisation de la baseline")
-            absorbance_baseline = self.acquisition_baseline(1, 5, False)[1]
+            absorbance_baseline = self.acquisition_baseline(780,795,5, "Fente_1nm", True)[1]
 
         else:
             reponse = input("Souhaitez-vous réaliser une nouvelle baseline, 'Oui' ou 'Non'? ").lower()
 
             if reponse == 'oui':
-                absorbance_baseline = self.acquisition_baseline(1, 5)[1]
+                absorbance_baseline = self.acquisition_baseline(780,795,5, "Fente_1nm", True)[1]
                 print("Exécution de acquisition_baseline")
                 return absorbance_baseline
                 
