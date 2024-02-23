@@ -93,12 +93,11 @@ class PhotodiodeNoiseReducer:
         plt.figure()
         for data_y, title_data_y in zip(datas_y, titles_data_y):
             plt.plot(data_x, data_y, '-', label=title_data_y)
-        plt.legend()
         plt.xlabel("x")
         plt.ylabel("y")
         plt.title(title_graph)
-        plt.grid()
-
+        plt.grid(True)
+        plt.legend()
         plt.tight_layout()
         plt.show()
 
@@ -184,7 +183,7 @@ class PhotodiodeNoiseReducer:
         self.fourier_transform(signal)
         self.fourier_transform(sinusoidal_signal)
 
-    def spline_interpolation(self, signal, smoothing_factor):
+    def spline_interpolation(self, x_data, signal, smoothing_factor):
         """
         Applies cubic spline interpolation to the input signal and plots the original and interpolated signals.
 
@@ -195,7 +194,6 @@ class PhotodiodeNoiseReducer:
         Returns:
             array: Interpolated signal.
         """
-        x_data = np.arange(0, len(signal), 1)
         spline = UnivariateSpline(x_data, signal, s=smoothing_factor)
         signal_spline = spline(x_data)
         y_datas = [signal, signal_spline]
@@ -279,8 +277,8 @@ class PhotodiodeNoiseReducer:
 
 if __name__ == "__main__":
     denoise = PhotodiodeNoiseReducer()
-    PATH = "C:\\Users\\admin\\Desktop\\GitHub\\varian-634-app\\experiments\\experiments_2024\\experiments_02_2024\\experiments_23_02_2024\\calibrage"
-    file = f"{PATH}/{'calibrage_23_02_2024_fente_2nm'}.csv"
+    PATH = "C:\\Users\\admin\\Desktop\\GitHub\\varian-634-app\\experiments\\experiments_2024\\experiments_02_2024\\experiments_16_02_2024\\calibrage"
+    file = f"{PATH}/{'calibrage_16_02_2024_fente_0_2nm'}.csv"
     data = pd.read_csv(file, encoding='ISO-8859-1')
     voltage_1 = data["Tension photodiode 1 (Volt)"]
     voltage_2 = data["Tension photodiode 2 (Volt)"]
@@ -303,31 +301,55 @@ if __name__ == "__main__":
     plt.grid(True)
     plt.show()
 
-    PATH = "C:\\Users\\admin\\Desktop\\GitHub\\varian-634-app\\experiments\\experiments_2024\\experiments_02_2024\\experiments_23_02_2024\\scanning"
-    file = f"{PATH}/{'23_02_2024_Fente_2nm_algue_gb'}.csv"
+    PATH = "C:\\Users\\admin\\Desktop\\GitHub\\varian-634-app\\experiments\\experiments_2024\\experiments_02_2024\\experiments_23_02_2024\\scanning\\bromophenol"
+    file = f"{PATH}/{'23_02_2024_Fente_0_2nm_Bromophénol'}.csv"
     data = pd.read_csv(file, encoding='ISO-8859-1')
     voltage_1 = data["Tension photodiode 1 (Volt)"]
     voltage_2_correc = data["Tension photodiode 2 (Volt)"] + A
     voltage_2 = data["Tension photodiode 2 (Volt)"]
-    wavelenght = data["Longueur d\'onde (nm)"]
+    wavelength = data["Longueur d\'onde (nm)"]
     absorbance = np.log(np.array(voltage_1)/np.array(voltage_2_correc))
     absorbance_no_baseline = np.log(np.array(voltage_1)/np.array(voltage_2))
     print(np.shape(absorbance))
     plt.title('Absorbance du Bromophénol')
     plt.xlabel("Longueur d\'onde (nm)")
     plt.ylabel('Absorbance')
-    plt.plot(wavelenght, absorbance)
+    plt.plot(wavelength, absorbance)
     plt.legend()
     plt.grid(True)
     plt.show()
     
     from experiment_manager import ExperimentManager
     WINDOW = 60
-    ExperimentManager("Algue").graph_absorbance_v2(PATH, "23_02_2024_Fente_2nm_algue_gb", wavelenght, absorbance, WINDOW)
+    ExperimentManager("bromophénol").graph_absorbance_v2(PATH, "23_02_2024_Fente_0_2nm_Bromophénol_final", wavelength, absorbance, WINDOW)
     
-    plt.plot(wavelenght, absorbance_no_baseline, label='Absorbance sans ligne de base', linewidth=2, color='orange')
-    plt.plot(wavelenght, absorbance, label='Absorbance avec ligne de base', linestyle='-', linewidth=2, color='red')    
+    plt.plot(wavelength, absorbance_no_baseline, label='Absorbance sans ligne de base', linewidth=2, color='orange')
+    plt.plot(wavelength, absorbance, label='Absorbance avec ligne de base', linestyle='-', linewidth=2, color='red')    
     plt.title('Absorbance d\'algue')
+    plt.xlabel("Longueur d\'onde (nm)")
+    plt.ylabel('Absorbance')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+        # Assuming 'wavelength' and 'absorbance' are your data arrays
+    # First, sort the data by wavelength (x_data)
+    sorted_indices = np.argsort(wavelength)
+    wavelength_sorted = wavelength[sorted_indices]
+    absorbance_sorted = absorbance[sorted_indices]
+
+    # Then, remove any duplicates in wavelength to ensure it's strictly increasing
+    # This step depends on how you want to handle duplicates. Here's one approach:
+    unique_wavelength, unique_indices = np.unique(wavelength_sorted, return_index=True)
+    unique_absorbance = absorbance_sorted[unique_indices]
+
+    # Now, you can safely call UnivariateSpline
+    smoothing_factor = 1  # Adjust this as needed
+    spline = UnivariateSpline(unique_wavelength, unique_absorbance, s=smoothing_factor)
+    absorbance_spline = spline(unique_wavelength)
+    plt.plot(wavelength, absorbance, label='Absorbance', linewidth=2, color='orange')
+    plt.plot(unique_wavelength, absorbance_spline, label='Absorbance lissé', linestyle='-', linewidth=2, color='red')    
+    plt.title('Absorbance du bromophénol')
     plt.xlabel("Longueur d\'onde (nm)")
     plt.ylabel('Absorbance')
     plt.legend()
