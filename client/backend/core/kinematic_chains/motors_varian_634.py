@@ -323,7 +323,7 @@ class GeneralMotorsController:
         print("Diffraction grating is ready for acquisition!")
         # End-of-file (EOF)
 
-    def initialisation_motors(self):
+    def initialisation_motors(self, slip, state_motor_motor_slits):
         """
         Initializes all motors to start an acquisition.
         """
@@ -333,13 +333,15 @@ class GeneralMotorsController:
         self.wait_for_idle()
         self.initialisation_motor_screw()
         self.wait_for_idle()
-        #self.initialisation_motor_slits(slip)
-
+        if state_motor_motor_slits:            
+            self.initialisation_motor_slits(slip)
+        else:
+            pass
 if __name__ == "__main__":
 
     # MOTOR INITIALIZATION:
     COM_PORT_MOTORS = 'COM3'
-    COM_PORT_SENSORS = 'COM9'
+    COM_PORT_SENSORS = 'COM6'
     BAUD_RATE = 115200
     INITIALIZATION_TIME = 2
 
@@ -357,5 +359,6 @@ if __name__ == "__main__":
 
     # Test set_motors_speed function
     motors_controller.unlock_motors() 
-
-    motors_controller.move_screw(15)
+    #motors_controller.initialize_end_stop([2, 3, 4, 5])
+    #time.sleep(1)
+    motors_controller.initialisation_motors("Fente_0_5nm", True)

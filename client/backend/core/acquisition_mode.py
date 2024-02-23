@@ -79,10 +79,10 @@ class Varian634AcquisitionMode:
         Returns:
             Tuple containing measured voltages from photodiode 1 and photodiode 2.
         """
-        voltage_photodiode_1 = self.daq.voltage_acquisition_scanning_baseline(self.channels[0])
+        voltage_photodiode_2 = self.daq.voltage_acquisition_scanning_baseline(self.channels[0])
         self.motors_controller.move_mirror_motor(0.33334)  # Move mirror to switch cuvette
         time.sleep(1)  # Wait for mirror adjustment
-        voltage_photodiode_2 = self.daq.voltage_acquisition_scanning_baseline(self.channels[1])
+        voltage_photodiode_1 = self.daq.voltage_acquisition_scanning_baseline(self.channels[1])
         self.motors_controller.move_mirror_motor(-0.33334)  # Move mirror back
         time.sleep(1)
 
@@ -140,7 +140,7 @@ class Varian634AcquisitionMode:
         Parameters:
             screw_travel: Total distance for the screw to travel.
             number_measurements: Total number of measurements to perform.
-            mode: Acquisition mode (e.g., calibration, baseline).
+            mode: Acquisition mode (e.g., calibration, baseline, scanning).
             mode_variable_slits: Flag to use variable slit positions or not.
 
         Returns:
@@ -175,7 +175,7 @@ class Varian634AcquisitionMode:
     
         return data_acquisition
 
-    def acquisition_baseline(self, screw_travel=2, number_measurements=2, mode_variable_slits=False):
+    def acquisition_baseline(self, wavelenght_max, wavelenght_min, wavelenght_step, slit_size):
         """
         Conducts a baseline acquisition to establish a reference point for future measurements.
 

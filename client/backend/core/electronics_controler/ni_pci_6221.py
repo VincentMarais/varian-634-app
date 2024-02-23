@@ -55,8 +55,8 @@ class VoltageAcquisition:
 
         # Voltage acquisition parameters
         # cf link : Figure 8. NI PCI/PXI-6221 Pinout
-        # Dev1/ai0 : pin 68 / pin 34 (ground) (Capteur 2)
         # Dev1/ai1 : pin 33 / pin 66 (ground) (Capteur 1)
+        # Dev1/ai0 : pin 68 / pin 34 (ground) (Capteur 2)
         self.channels = ['Dev1/ai0', 'Dev1/ai1']
         self.samples_per_channel = 100000  # Sampling frequency
         self.sample_rate = 100000

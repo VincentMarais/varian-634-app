@@ -274,34 +274,63 @@ class PhotodiodeNoiseReducer:
         a = self.calculate_average_translation(voltage_photodiode_1, voltage_photodiode_2)
         print(a)
         voltage_photodiode_2 = [(x + a) for x in voltage_photodiode_2]
-        return voltage_photodiode_2
+        return a, voltage_photodiode_2
 
 
 if __name__ == "__main__":
     denoise = PhotodiodeNoiseReducer()
-    PATH = "C:\\Users\\admin\\Desktop\\GitHub\\varian-634-app\\experiments\\experiments_2024\\experiments_02_2024\\experiments_23_02_2024\\Calibrage"
-    file = f"{PATH}/{'calibrage_23_02_2024_fente_0_5nm'}.csv"
+    PATH = "C:\\Users\\admin\\Desktop\\GitHub\\varian-634-app\\experiments\\experiments_2024\\experiments_02_2024\\experiments_16_02_2024\\calibrage"
+    file = f"{PATH}/{'calibrage_16_02_2024_fente_0_2nm'}.csv"
     data = pd.read_csv(file, encoding='ISO-8859-1')
     voltage_1 = data["Tension photodiode 1 (Volt)"]
     voltage_2 = data["Tension photodiode 2 (Volt)"]
     screw = data["pas de vis (mm)"]
-
+    
     # Extract columns
     
-    denoise.fourier_transform(voltage_1)
-    denoise.hilbert_transform(voltage_1)
-    denoise.spline_interpolation(voltage_1, 0.5)
-    denoise.simulation_gaussian_noise()
-    voltage_2_correc = denoise.correction_baseline(voltage_1, voltage_2)
+    #denoise.fourier_transform(voltage_1)
+    #denoise.hilbert_transform(voltage_1)
+    #denoise.spline_interpolation(voltage_1, 0.5)
+    #denoise.simulation_gaussian_noise()
+    [A, voltage_2_correc] = denoise.correction_baseline(voltage_1, voltage_2)
     plt.plot(screw, -voltage_1, label='Tension photodiode 1', linewidth=2, color='orange')
     plt.plot(screw, [-v for v in voltage_2_correc], label='Tension photodiode 2 corrigé', linestyle='--', linewidth=2, color='red')
-    plt.plot(screw, -voltage_2, label='Tension photodiode 2', linestyle='-', linewidth=2)
-
-    plt.legend()
-    plt.grid(True)
+    plt.plot(screw, -voltage_2, label='Tension photodiode 2', linestyle='-', linewidth=2)    
     plt.title('Spectre en intensité du Xe')
     plt.xlabel("pas de vis (mm)")
     plt.ylabel('Tension (Volt)')
+    plt.legend()
+    plt.grid(True)
     plt.show()
 
+    PATH = "C:\\Users\\admin\\Desktop\\GitHub\\varian-634-app\\experiments\\experiments_2024\\experiments_02_2024\\experiments_23_02_2024\\scanning"
+    file = f"{PATH}/{'23_02_2024_Fente_0_2nm_Bromophénol'}.csv"
+    data = pd.read_csv(file, encoding='ISO-8859-1')
+    voltage_1 = data["Tension photodiode 1 (Volt)"]
+    voltage_2_correc = data["Tension photodiode 2 (Volt)"] + A
+    voltage_2 = data["Tension photodiode 2 (Volt)"]
+    wavelenght = data["Longueur d\'onde (nm)"]
+    absorbance = np.log(np.array(voltage_1)/np.array(voltage_2_correc))
+    absorbance_no_baseline = np.log(np.array(voltage_1)/np.array(voltage_2))
+    print(np.shape(absorbance))
+    plt.title('Absorbance du Bromophénol')
+    plt.xlabel("Longueur d\'onde (nm)")
+    plt.ylabel('Absorbance')
+    plt.plot(wavelenght, absorbance)
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+    
+    from experiment_manager import ExperimentManager
+    WINDOW = 60
+    ExperimentManager("Bromophénol").graph_absorbance_v2(PATH, "23_02_2024_Fente_0_2nm_Bromophénol_final", wavelenght, absorbance, WINDOW)
+    
+    plt.plot(wavelenght, absorbance_no_baseline, label='Absorbance sans ligne de base', linewidth=2, color='orange')
+    plt.plot(wavelenght, absorbance, label='Absorbance avec ligne de base', linestyle='-', linewidth=2, color='red')    
+    plt.title('Absorbance du Bromophénol')
+    plt.xlabel("Longueur d\'onde (nm)")
+    plt.ylabel('Absorbance')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
     

@@ -214,7 +214,7 @@ class ExperimentManager:
         while input(prompt) != 'Oui':
             pass
 
-    def link_cuvette_voltage(choice, voltages_photodiode_1, voltages_photodiode_2):
+    def link_cuvette_voltage(self, choice, voltages_photodiode_1, voltages_photodiode_2):
         """
         Lie le choix de cuvette de l'utilisateur à la photodiode
             Si l'utilisateur à mis l'échantillon dans la cuvette 1 alors 
@@ -314,6 +314,39 @@ class ExperimentManager:
         plt.savefig(path + '\\' + file_experiment + ".pdf")
         plt.show()
 
+    def graph_absorbance_v2(self, path, file_experiment, wavelength, absorbance, peak_search_window):
+        """
+        Plots the absorbance as a function of wavelength from experimental data and highlights the absorbance peaks.
+
+        Args:
+            path (str): The directory path where the data files are located.
+            name_data_x (str): The column name for the X data (wavelength).
+            file_experiment (str): The name of the experiment file.
+            peak_search_window (int): The window size for peak detection.
+
+        Returns:
+            None
+        """
+
+        absorbance_peak = max(absorbance)
+        wavelength_peak = wavelength[np.argmax((absorbance))]
+        peaks, _ = find_peaks(absorbance, distance=peak_search_window)
+        titles_data = ['Longueur d\'onde (nm)','Absorbace', "Absorbance pics", "Longueur d'onde pics (nm)"]
+        data = [wavelength, absorbance, peaks, wavelength[peaks]]
+        self.save_data_csv(path, data, titles_data, file_experiment)
+        title_graph = 'Absorbance du ' + self.sample_analyzed_name
+        plt.plot(wavelength, absorbance)
+        plt.plot(wavelength[peaks], absorbance[peaks], 'ro')
+
+        plt.xlabel('Longueur d\'onde (nm)')
+        plt.ylabel('Absorbance')
+        plt.title(title_graph)
+        plt.legend()
+        plt.grid(True)
+        self.max_absorbance_display(wavelength_peak, absorbance_peak, wavelength, absorbance)
+        plt.savefig(path + '\\' + file_experiment + ".pdf")
+        plt.show()
+
     def save_display(self, path_file, file_experiment, name_data_x, name_data_y, title_graph):
         """
         Saves a graph of data_x and data_y in a PDF file.
@@ -357,23 +390,23 @@ class ExperimentManager:
 if __name__ == "__main__":
     # Exemple d'utilisation:
     SAMPLE_NAME = "Bromo"
-    WINDOW = 2
+    WINDOW = 60
     experiment_manager = ExperimentManager(SAMPLE_NAME)
-    ROOT = tk.Tk()
+    """ROOT = tk.Tk()
     #experiment_manager.creation_directory_date_slot()
     PATH = experiment_manager.choose_folder(ROOT)
     [PATH, DATE, SLOT_SIZE] = experiment_manager.creation_directory_date_slot(PATH)
     print([PATH, DATE, SLOT_SIZE])
     experiment_manager.save_data_csv(path = PATH, data_list=[[1, 2, 3], [4, 5, 6], [1], [23,5,5,4,3,1]], title_list=['Absorbance', 'Longueur d\'onde (nm)', 'C', "Temps (s)"], file_name='nom_fichier')
     experiment_manager.classic_graph(PATH, 'nom_fichier', "Temps (s)", 'Absorbance', "Cinétique_test")
-    experiment_manager.graph_absorbance(PATH, "Longueur d'onde (nm)", 'nom_fichier', WINDOW)
+    experiment_manager.graph_absorbance(PATH, "Longueur d'onde (nm)", 'nom_fichier', WINDOW)"""
 
     PATH = "C:\\Users\\admin\\Desktop\\GitHub\\varian-634-app\\experiments\\experiments_2024\\experiments_02_2024\\experiments_16_02_2024\\Calibrage"
     file = f"{PATH}/{'calibrage_16_02_2024_fente_2nm'}.csv"
-    data = pd.read_csv(file, encoding='ISO-8859-1')
-    voltage_1 = data["Tension photodiode 1 (Volt)"]
-    voltage_2 = data["Tension photodiode 2 (Volt)"]
-    screw = data["pas de vis (mm)"]
+    DATA = pd.read_csv(file, encoding='ISO-8859-1')
+    voltage_1 = DATA["Tension photodiode 1 (Volt)"]
+    voltage_2 = DATA["Tension photodiode 2 (Volt)"]
+    screw = DATA["pas de vis (mm)"]
     plt.plot(screw, -voltage_1, label='Tension photodiode 1', linewidth=2, color='orange')
     plt.plot(screw, -voltage_2, label='Tension photodiode 2', linestyle='-', linewidth=2, color='red')
     plt.legend()
@@ -382,6 +415,29 @@ if __name__ == "__main__":
     plt.xlabel("pas de vis (mm)")
     plt.ylabel('Tension (Volt)')
     plt.show()
+    
+    PATH_2 = "C:\\Users\\admin\\Desktop\\GitHub\\varian-634-app\\experiments\\experiments_2024\\experiments_02_2024\\experiments_23_02_2024\\scanning"
+    file = f"{PATH_2}/{'23_02_2024_Fente_0_5nm_Bromophénol_final'}.csv"
+    DATA = pd.read_csv(file, encoding='ISO-8859-1')
+    voltage_1 = DATA["Tension photodiode 1 (Volt)"]
+    voltage_2 = DATA["Tension photodiode 2 (Volt)"]
+    A = -0.018636302251767035
+    voltage_2_correc = DATA["Tension photodiode 2 (Volt)"] + A
+    wavelenght = DATA["Longueur d\'onde (nm)"]
+    absorbance_no_baseline = np.log(np.array(voltage_1)/np.array(voltage_2))
+    absorbance_baseline = np.log(np.array(voltage_1)/np.array(voltage_2_correc))
+
+
+    #experiment_manager.graph_absorbance_v2(PATH, file, wavelenght, absorbance_baseline, WINDOW)
+    plt.plot(wavelenght, absorbance_no_baseline, label='Absorbance sans ligne de base', linewidth=2, color='orange')
+    plt.plot(wavelenght, -voltage_2, label='Absorbance avec ligne de base', linestyle='-', linewidth=2, color='red')
+    plt.legend()
+    plt.grid(True)
+    plt.title('Absorbance du Bromophénol')
+    plt.xlabel("Longueur d\'onde (nm)")
+    plt.ylabel('Absorbance')
+    plt.show()
+    
 
 
 
