@@ -332,7 +332,7 @@ class ExperimentManager:
         wavelength_peak = wavelength[np.argmax((absorbance))]
         peaks, _ = find_peaks(absorbance, distance=peak_search_window)
         titles_data = ['Longueur d\'onde (nm)','Absorbace', "Absorbance pics", "Longueur d'onde pics (nm)"]
-        data = [wavelength, absorbance, peaks, wavelength[peaks]]
+        data = [wavelength, absorbance, absorbance[peaks], wavelength[peaks]]
         self.save_data_csv(path, data, titles_data, file_experiment)
         title_graph = 'Absorbance du ' + self.sample_analyzed_name
         plt.plot(wavelength, absorbance)

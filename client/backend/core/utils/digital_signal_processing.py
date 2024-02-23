@@ -279,8 +279,8 @@ class PhotodiodeNoiseReducer:
 
 if __name__ == "__main__":
     denoise = PhotodiodeNoiseReducer()
-    PATH = "C:\\Users\\admin\\Desktop\\GitHub\\varian-634-app\\experiments\\experiments_2024\\experiments_02_2024\\experiments_16_02_2024\\calibrage"
-    file = f"{PATH}/{'calibrage_16_02_2024_fente_0_2nm'}.csv"
+    PATH = "C:\\Users\\admin\\Desktop\\GitHub\\varian-634-app\\experiments\\experiments_2024\\experiments_02_2024\\experiments_23_02_2024\\calibrage"
+    file = f"{PATH}/{'calibrage_23_02_2024_fente_2nm'}.csv"
     data = pd.read_csv(file, encoding='ISO-8859-1')
     voltage_1 = data["Tension photodiode 1 (Volt)"]
     voltage_2 = data["Tension photodiode 2 (Volt)"]
@@ -304,7 +304,7 @@ if __name__ == "__main__":
     plt.show()
 
     PATH = "C:\\Users\\admin\\Desktop\\GitHub\\varian-634-app\\experiments\\experiments_2024\\experiments_02_2024\\experiments_23_02_2024\\scanning"
-    file = f"{PATH}/{'23_02_2024_Fente_0_2nm_Bromophénol'}.csv"
+    file = f"{PATH}/{'23_02_2024_Fente_2nm_algue_gb'}.csv"
     data = pd.read_csv(file, encoding='ISO-8859-1')
     voltage_1 = data["Tension photodiode 1 (Volt)"]
     voltage_2_correc = data["Tension photodiode 2 (Volt)"] + A
@@ -323,11 +323,11 @@ if __name__ == "__main__":
     
     from experiment_manager import ExperimentManager
     WINDOW = 60
-    ExperimentManager("Bromophénol").graph_absorbance_v2(PATH, "23_02_2024_Fente_0_2nm_Bromophénol_final", wavelenght, absorbance, WINDOW)
+    ExperimentManager("Algue").graph_absorbance_v2(PATH, "23_02_2024_Fente_2nm_algue_gb", wavelenght, absorbance, WINDOW)
     
     plt.plot(wavelenght, absorbance_no_baseline, label='Absorbance sans ligne de base', linewidth=2, color='orange')
     plt.plot(wavelenght, absorbance, label='Absorbance avec ligne de base', linestyle='-', linewidth=2, color='red')    
-    plt.title('Absorbance du Bromophénol')
+    plt.title('Absorbance d\'algue')
     plt.xlabel("Longueur d\'onde (nm)")
     plt.ylabel('Absorbance')
     plt.legend()
