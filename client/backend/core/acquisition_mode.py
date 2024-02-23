@@ -90,7 +90,7 @@ class Varian634AcquisitionMode:
 
    
 
-    def precision_mode(self, screw_travel, number_measurements):
+    def precision_mode(self, step, number_measurements):
         """
         Performs precise measurements across a range of positions, calculates wavelength, and stores results.
 
@@ -104,7 +104,6 @@ class Varian634AcquisitionMode:
         # Precision measurement setup
         voltages_photodiode_1, voltages_photodiode_2 = [], []
         no_screw, wavelength = [], []
-        step = screw_travel / number_measurements  # Step size for each measurement
         time_per_step = (step * 60) / 10  # Time calculation for each step
 
         self.motors_controller.unlock_motors()
@@ -134,7 +133,7 @@ class Varian634AcquisitionMode:
 
         return wavelength, voltages_photodiode_1, voltages_photodiode_2, no_screw
 
-    def acquisition(self, screw_travel, number_measurements, mode, mode_variable_slits):
+    def acquisition(self, step, number_measurements, mode, mode_variable_slits):
         """
         Manages the complete acquisition process, including motor initialization and data saving.
 
@@ -152,7 +151,7 @@ class Varian634AcquisitionMode:
         else:
             self.motors_controller.initialisation_motors()
         
-        data_acquisition = self.precision_mode(screw_travel, number_measurements)
+        data_acquisition = self.precision_mode(step, number_measurements)
 
         # Data saving
         title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "Tension photodiode 1 (Volt)", "Tension photodiode 2 (Volt)", 
@@ -160,7 +159,7 @@ class Varian634AcquisitionMode:
         title_file = mode + "_" + self.date
         self.experim_manager.save_data_csv(self.raw_data, data_acquisition, title_data_acquisition, title_file)
         self.motors_controller.wait_for_idle()
-        self.motors_controller.reset_screw_position(screw_travel)
+        self.motors_controller.reset_screw_position(step*number_measurements)
 
         # Calibration plot
         if mode == 'calibration':
@@ -248,7 +247,7 @@ class Varian634AcquisitionMode:
                     reponse = input("Répondez par 'Oui' ou 'Non'. Souhaitez-vous réaliser une nouvelle baseline ? ").lower()
     
 
-    def scanning_acquisition(self, lambda_min, lambda_max, wavelength_step, mode_variable_slits):
+    def scanning_acquisition(self, lambda_min, lambda_max, wavelength_step):
         """
         Conducts a scanning acquisition over a specified wavelength range and step size.
 
@@ -267,22 +266,24 @@ class Varian634AcquisitionMode:
         self.motors_controller.initialisation_motors()
         course_lambda_min = self.signal_processing.calculate_course(lambda_min)
         course_lambda_max = self.signal_processing.calculate_course(lambda_max)
+        step = self.signal_processing.calculate_course(wavelength_step)
         print("final_course : " , course_lambda_min)
         print("initialiale_course", course_lambda_max)
-
+        print("step", step)
         step = self.signal_processing.calculate_course(wavelength_step)
         screw_travel = course_lambda_min - course_lambda_max 
+        print("step", screw_travel)
         number_measurements = int(screw_travel/step)
         print(number_measurements)
 
         self.arduino_motors.flushInput()
-        self.motors_controller.unlock_motors()
+        self.motors_controller.execute_g_code("G91")
         self.motors_controller.move_screw(course_lambda_max)
-        #cuvette_prompt = "Avez-vous mis votre solution dans la cuve appropriée ? "
-        #self.experim_manager.wait_for_user_confirmation(cuvette_prompt)
+        cuvette_prompt = "Avez-vous mis votre solution dans la cuve appropriée ? "
+        self.experim_manager.wait_for_user_confirmation(cuvette_prompt)
         self.motors_controller.wait_for_idle()
 
-        data_acquisition = self.precision_mode(screw_travel, number_measurements, 'scanning', mode_variable_slits)
+        data_acquisition = self.precision_mode(step, number_measurements)
         wavelength = data_acquisition[0]
         voltages_photodiode_1 = data_acquisition[1]
         voltages_photodiode_2 = self.signal_processing.correction_baseline(data_acquisition[1], data_acquisition[2])

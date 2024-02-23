@@ -35,7 +35,7 @@ if __name__ == "__main__":
     
     baseline_scanning = Varian634AcquisitionMode(arduino_motors, arduino_sensors, USER_PATH, SAMPLE_NAME)
     
-    baseline_scanning.scanning_acquisition(780, 790, 10, False)
+    baseline_scanning.scanning_acquisition(780, 790, 10)
     ROOT.mainloop()
 
     
