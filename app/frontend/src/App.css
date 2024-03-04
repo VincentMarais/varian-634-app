@@ -1,0 +1,17 @@
+.App {
+  text-align: center;
+}
+
+.chart-container {
+  width: 50%; /* Ou toute autre taille */
+  height: 400px; /* Ou toute autre hauteur */
+  margin: auto; /* Centrer le graphique si nécessaire */
+}
+
+
+.control-panel input, .control-panel button {
+  margin: 10px;
+  padding: 10px;
+  border-radius: 5px;
+}
+
