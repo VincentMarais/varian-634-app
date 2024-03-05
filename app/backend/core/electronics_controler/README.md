@@ -17,23 +17,106 @@ La carte NI-PCI 6221 est une carte d'acquisition de données multifonctions con�
 ## Installation Matérielle
 
 1. **Éteignez** votre ordinateur et débranchez-le de la source d'alimentation.
-2. Retirez le couvercle du PC pour accéder aux slots PCI.
-3. Insérez la carte NI-PCI 6221 dans un slot PCI libre, en appliquant une pression uniforme pour s'assurer qu'elle est bien connectée.
-4. Replacez le couvercle du PC et reconnectez l'alimentation.
+2. **Retirez** le couvercle du PC pour accéder aux slots PCI.
+3. **Insérez** la carte NI-PCI 6221 dans un slot PCI libre, en appliquant une pression uniforme pour s'assurer qu'elle est bien connectée.
+4. **Replacez** le couvercle du PC et reconnectez l'alimentation.
 
 ## Configuration Logicielle
 
 ### Installation de NI-DAQmx
 
-1. Téléchargez le dernier pilote NI-DAQmx depuis le site de National Instruments.
-2. Exécutez le programme d'installation et suivez les instructions à l'écran.
-3. Redémarrez votre ordinateur après l'installation pour que les changements prennent effet.
+1. **Téléchargez** le dernier pilote <a href="https://www.ni.com/fr/support/downloads/drivers/download.ni-daq-mx.html#521556">NI-DAQmx</a>  depuis le site de National Instruments.
 
-### Configuration de votre matériel
 
-1. Ouvrez NI Measurement & Automation Explorer (NI MAX).
-2. Sous l'arborescence "Devices and Interfaces", vous devriez voir la carte NI-PCI 6221 listée.
-3. Cliquez droit sur le périphérique et sélectionnez "Test Panel" pour vérifier le fonctionnement de la carte.
+2. **Exécutez** le programme d'installation et suivez les instructions à l'écran.
+3. **Redémarrez** votre ordinateur après l'installation pour que les changements prennent effet.
+
+## Configuration du matériel
+
+1. **Ouvrez** l'application NI Measurement & Automation Explorer (NI MAX). Sous l'arborescence "Devices and Interfaces", vous devriez voir la carte NI-PCI 6221 listée.
+
+<div style="text-align: center;">
+    <img src="image/Etape_1_NI.PNG" width="400"/>
+</div>
+
+2. **Cliquez** droit sur le périphérique : NI-PCI-6221 "Dev1" et sélectionnez "Test Panel" pour vérifier le fonctionnement de la carte.
+<div style="text-align: center;">
+    <img src="image/Etape_2_NI.PNG" width="400"/>
+</div>
+
+
+### Vérification des photodiodes et de la lampe à arc au Xénon
+
+3. **Cliquez** sur Entrée analogique et vérifiez que les données entrées sont correctes :
+
+<ul>
+  <li>Nom de la voie : Dev1/ai0 (Photodiode de la cuvette 2)
+</li>
+  <li>Mode : Continu </li>
+  <li>Configuration de l'entrée : Différentielle </li>
+
+<li>Limite d'entrée maximale : 10 </li>
+
+<li> Limite d'entrée minimale : -10  </li>
+
+<li> Fréquence (Hz) : 100000
+ </li>
+
+<li>  Échantillons à lire : 100000
+ </li>
+</ul>
+
+
+
+<div style="text-align: center;">
+    <img src="image/Etape_3_NI.PNG" width="400"/>
+</div>
+
+<b>Nota :</b>  Nom de la voie : Dev1/ai1 (Photodiode de la cuvette 1)
+
+4. **Cliquez** sur le bouton "Démarrer" pour lancer.
+<div style="text-align: center;">
+    <img src="image/Etape_4_NI.PNG" width="400"/>
+</div>
+
+
+5. **Cliquez** sur E/S de compteur et vérifiez que les informations entrées sont correctes :
+<ul>
+<li> Nom de la voie : Dev1/ctr0
+ </li>
+ <li> Mode : Génération de train d'impulsions
+ </li>
+ <li> Terminal d'impulsion /Dev/PFI12
+</li>
+ <li> Fréquence : 20
+</li>
+ <li> Rapport cyclique : 50
+</li>
+</ul>
+
+<div style="text-align: center;">
+    <img src="image/Etape_5_NI.PNG" width="400"/>
+</div>
+
+6. **Vérifiez** que le capot des cuves du VARIAN 634 soit bien fermé pour désactiver la sécurité de la photodiode.
+
+(Image capot fermé)
+
+7. **Cliquez** sur "Démarrer" pour que la lampe à arc au Xénon émette des faisceaux de lumière sur la photodiode visée.
+
+8. **Retournez** dans le menu 'Entrée analogique'. Voici la forme de signal que vous devez obtenir. L'amplitude n'est pas à prendre en compte, car elle dépend de la fente que vous utilisez et du placement du réseau de diffraction."
+
+
+
+
+
+
+
+<div style="text-align: center;">
+    <img src="image/Etape_6_NI.PNG" width="400"/>
+</div>
+
+9. **Cliquez** sur le bouton 'Arrêter' dans l'onglet 'Entrée analogique' pour couper la mesure et sur le bouton 'Arrêter' dans l'onglet 'E/S de compteur' pour arrêter les impulsions de la lampe à arc au Xénon.
 
 ## Exemples d'Utilisation
 
@@ -62,3 +145,5 @@ with nidaqmx.Task() as task:
 # Support et Ressources Additionnelles
 
 Pour plus d'informations, référez-vous à la documentation officielle : <a href="https://www.ni.com/docs/fr-FR/bundle/pci-pxi-usb-6221-specs/page/specs.html">https://www.ni.com/docs/fr-FR/bundle/pci-pxi-usb-6221-specs/page/specs.html</a>
+
+# Photodiodes et cuvette
