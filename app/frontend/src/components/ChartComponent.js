@@ -21,16 +21,16 @@ ChartJS.register(
   Legend
 );
 
-const ChartComponent = ({ temperatureData }) => {
+const ChartComponent = ({ AbsorbanceData }) => {
   // Générer des labels basés sur l'indice i
-  const labels = temperatureData.map((data, index) => `Indice ${index}`);
+  const labels = AbsorbanceData.map((data, index) => `Indice ${index}`);
 
   const data = {
     labels,
     datasets: [
       {
-        label: 'Temperature',
-        data: temperatureData.map(data => data.value),
+        label: 'Absorbance',
+        data: AbsorbanceData.map(data => data.value),
         fill: true,
         backgroundColor: 'rgb(255, 33, 56)',
         borderColor: 'rgba(255, 125, 71, 1)',
@@ -44,7 +44,7 @@ const ChartComponent = ({ temperatureData }) => {
       x: {
         title: {
           display: true,
-          text: 'Indice',
+          text: 'Longueur d\'onde (nm)',
           color: '#000',
           font: {
             size: 14,
@@ -55,7 +55,7 @@ const ChartComponent = ({ temperatureData }) => {
       y: {
         title: {
           display: true,
-          text: 'Température (°C)',
+          text: 'Absorbance',
           color: '#000',
           font: {
             size: 14,
@@ -71,7 +71,7 @@ const ChartComponent = ({ temperatureData }) => {
       },
       title: {
         display: true,
-        text: 'Température par indice',
+        text: 'Scanning Varian 634',
         font: {
           size: 18,
         },

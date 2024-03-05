@@ -6,13 +6,13 @@ import './App.css';
 
 const App = () => {
   const socket = useSocket('http://127.0.0.1:5000');
-  const [temperatureData, setTemperatureData] = useState([]);
+  const [AbsorbanceData, setAbsorbanceData] = useState([]);
   const [isGeneratingData, setIsGeneratingData] = useState(false);
 
   useEffect(() => {
     if (socket) {
       socket.on('updateSensorData', (data) => {
-        setTemperatureData(prevData => [...prevData, data]);
+        setAbsorbanceData(prevData => [...prevData, data]);
       });
     }
   }, [socket]);
@@ -39,7 +39,7 @@ const App = () => {
 
 
   const downloadCsv = () => {
-    const csvRows = ['date,value', ...temperatureData.map(d => `${d.date},${d.value}`)];
+    const csvRows = ['date,value', ...AbsorbanceData.map(d => `${d.date},${d.value}`)];
     const csvString = csvRows.join('\n');
     const blob = new Blob([csvString], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -50,12 +50,12 @@ const App = () => {
   };
 
   const resetGraphData = () => {
-    setTemperatureData([]);
+    setAbsorbanceData([]);
   };
 
   return (
     <div className="App">
-      <ChartComponent temperatureData={temperatureData} />
+      <ChartComponent AbsorbanceData={AbsorbanceData} />
       <SensorControlPanel
         socket={socket}
         isGeneratingData={isGeneratingData}
