@@ -14,6 +14,9 @@ app.config['SECRET_KEY'] = 'VARIAN634!'
 socketio = SocketIO(app, cors_allowed_origins='*')
 ser = serial.Serial('COM4', 9600, timeout=1)
 
+sensor_data_running = False
+
+
 # Initialisation des variables globales pour stocker les paramètres
 wavelength_min = None
 wavelength_max = None
@@ -36,44 +39,36 @@ def get_current_datetime():
     now = datetime.now()
     return now.strftime("%m/%d/%Y %H:%M:%S")
 
-sensor_data_running = False
 
 def sensor_data_task():
     global sensor_data_running, wavelength_min, wavelength_max, step
     sensor_data_running = True
-    print("Generating sensor values")
+    print("Génération des valeurs du capteur")
     number_measurements = int((wavelength_max - wavelength_min) / step)
-    print("number_measurements:", number_measurements)
+    print("nombre_mesures:", number_measurements)
     for i in range(number_measurements + 1):
         if not sensor_data_running:
-            print("Stopping sensor data generation")
+            print("Arrêt de la génération des données du capteur")
             break
         time.sleep(1)
         data = ser.readline().decode('utf-8').rstrip()
         if data:
-            print("Data:", data)
+            print("Données:", data)
             socketio.emit('updateSensorData', {'value': data, "index": i})
 
 
 @socketio.on('startSensorData')
 def handle_start_sensor_data():
     global wavelength_min, wavelength_max, step, sensor_data_running, selected_cuvette, selected_slits
-    # Vérifiez si tous les paramètres nécessaires sont définis et valides
     if None in (wavelength_min, wavelength_max, step) or not selected_cuvette or not selected_slits:
-        error_msg = "Cannot start sensor data generation: One or more parameters are not set or invalid."
+        error_msg = "Impossible de démarrer la génération de données du capteur : un ou plusieurs paramètres ne sont pas définis ou invalides."
         print(error_msg)
         socketio.emit('error', {'message': error_msg})
         return
 
-    # Ajoutez ici des vérifications supplémentaires pour la validité des paramètres si nécessaire
-
-    # Si tout est valide, démarrez la génération des données de capteur
-    print("Starting sensor data generation")
+    print("Début de la génération de données du capteur")
     sensor_data_running = True
     sensor_data_task()  # Démarrage effectif de la génération de données
-
-
-
 
 @socketio.on('setWaveLengthParams')
 def handle_set_wave_length_params(json):
@@ -83,37 +78,17 @@ def handle_set_wave_length_params(json):
     step = float(json['step'])
     selected_cuvette = json.get('selectedCuvette', '')
     selected_slits = json.get('selectedSlits', [])
-    print(f'Received Wavelength Params: Min = {wavelength_min}, Max = {wavelength_max}, Step = {step}, Cuvette = {selected_cuvette}, Slits = {selected_slits}')
-    # Vous pouvez ici ajouter la logique pour valider les paramètres si nécessaire.
+    print(f'Paramètres de longueur d\'onde reçus : Min = {wavelength_min}, Max = {wavelength_max}, Pas = {step}, Cuvette = {selected_cuvette}, Lames = {selected_slits}')
 
 @socketio.on('stopSensorData')
 def handle_stop_sensor_data():
     global sensor_data_running
     sensor_data_running = False  # Cela indiquera à la boucle de s'arrêter
-    print("Received stop signal")
-
-
+    print("Signal d'arrêt reçu")
 
 @app.route('/')
-
-
-@socketio.on('connect')
-def connect():
-    """
-    Decorator for connect
-    """
-    global thread
-    print('Client connected', request.sid)
-
-    
-
-
-@socketio.on('disconnect')
-def disconnect():
-    """
-    Decorator for disconnect
-    """
-    print('Client disconnected',  request.sid)
+def index():
+    return "Bienvenue sur le serveur" 
 
 if __name__ == '__main__':
     socketio.run(app)
