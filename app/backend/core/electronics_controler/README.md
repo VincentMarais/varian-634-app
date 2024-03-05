@@ -4,9 +4,10 @@
 
 La carte NI-PCI 6221 est une carte d'acquisition de données multifonctions conçue par National Instruments. Elle offre une combinaison de fonctionnalités d'entrée et de sortie analogiques et numériques, rendant ce matériel adapté à une grande variété d'applications industrielles, scientifiques, et de recherche.
 
-<div style="text-align: center;">
+<p align="center">
     <img src="image/National_Instruments_PCI_6221.jpg" width="400"/>
-</div>
+</p>
+
 
 ## Prérequis
 
@@ -35,14 +36,16 @@ La carte NI-PCI 6221 est une carte d'acquisition de données multifonctions con�
 
 1. **Ouvrez** l'application NI Measurement & Automation Explorer (NI MAX). Sous l'arborescence "Devices and Interfaces", vous devriez voir la carte NI-PCI 6221 listée.
 
-<div style="text-align: center;">
-    <img src="image/Etape_1_NI.PNG" width="400"/>
-</div>
+<p align="center">
+    <img src="image/Etape_1_NI.PNG" width="500"/>
+</p>
 
 2. **Cliquez** droit sur le périphérique : NI-PCI-6221 "Dev1" et sélectionnez "Test Panel" pour vérifier le fonctionnement de la carte.
-<div style="text-align: center;">
-    <img src="image/Etape_2_NI.PNG" width="400"/>
-</div>
+
+<p align="center">
+  <img src="image/Etape_2_NI.PNG" width="500" />
+</p>
+
 
 
 ### Vérification des photodiodes et de la lampe à arc au Xénon
@@ -68,16 +71,16 @@ La carte NI-PCI 6221 est une carte d'acquisition de données multifonctions con�
 
 
 
-<div style="text-align: center;">
-    <img src="image/Etape_3_NI.PNG" width="400"/>
-</div>
+<p align="center">
+    <img src="image/Etape_3_NI.PNG" width="500"/>
+</p>
 
 <b>Nota :</b>  Nom de la voie : Dev1/ai1 (Photodiode de la cuvette 1)
 
 4. **Cliquez** sur le bouton "Démarrer" pour lancer.
-<div style="text-align: center;">
-    <img src="image/Etape_4_NI.PNG" width="400"/>
-</div>
+<p align="center">
+    <img src="image/Etape_4_NI.PNG" width="500"/>
+</p>
 
 
 5. **Cliquez** sur E/S de compteur et vérifiez que les informations entrées sont correctes :
@@ -94,9 +97,9 @@ La carte NI-PCI 6221 est une carte d'acquisition de données multifonctions con�
 </li>
 </ul>
 
-<div style="text-align: center;">
-    <img src="image/Etape_5_NI.PNG" width="400"/>
-</div>
+<p align="center">
+    <img src="image/Etape_5_NI.PNG" width="500"/>
+</p>
 
 6. **Vérifiez** que le capot des cuves du VARIAN 634 soit bien fermé pour désactiver la sécurité de la photodiode.
 
@@ -112,9 +115,9 @@ La carte NI-PCI 6221 est une carte d'acquisition de données multifonctions con�
 
 
 
-<div style="text-align: center;">
-    <img src="image/Etape_6_NI.PNG" width="400"/>
-</div>
+<p align="center">
+    <img src="image/Etape_6_NI.PNG" width="500"/>
+</p>
 
 9. **Cliquez** sur le bouton 'Arrêter' dans l'onglet 'Entrée analogique' pour couper la mesure et sur le bouton 'Arrêter' dans l'onglet 'E/S de compteur' pour arrêter les impulsions de la lampe à arc au Xénon.
 
