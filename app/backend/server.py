@@ -12,7 +12,7 @@ thread_lock = Lock()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'VARIAN634!'
 socketio = SocketIO(app, cors_allowed_origins='*')
-ser = serial.Serial('COM4', 9600, timeout=1)
+ser = serial.Serial('COM10', 9600, timeout=1)
 
 sensor_data_running = False
 
