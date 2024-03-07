@@ -39,13 +39,13 @@ const App = () => {
 
 
   const downloadCsv = () => {
-    const csvRows = ['date,value', ...AbsorbanceData.map(d => `${d.date},${d.value}`)];
+    const csvRows = ['Longueur d\'onde (nm),Absorbance', ...AbsorbanceData.map(d => `${d.data_x},${d.data_y}`)];
     const csvString = csvRows.join('\n');
     const blob = new Blob([csvString], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'temperature_data.csv';
+    link.download = 'data_VARIAN_634.csv';
     link.click();
   };
 

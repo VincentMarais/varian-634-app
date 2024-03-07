@@ -6,6 +6,20 @@ import time
 import re
 from pyfirmata import util, INPUT, Arduino
 import serial
+from typing import List, Tuple, Union
+
+# Constants
+MOTOR_AXIS = str
+G_CODE_SPEED = str
+PIN = int
+
+SCREW_MOTOR_AXIS = 'X'
+SLITS_MOTOR_AXIS = 'Y'
+MIRROR_CUVES_MOTOR_AXIS = 'Z'
+
+
+
+
 class GeneralMotorsController:
     """
     This class represents a controller for all the motors on the VARIAN 634.
@@ -13,17 +27,8 @@ class GeneralMotorsController:
     Attributes:
         arduino_motors (object): An instance of the Arduino motor to control.
         arduino_sensors (object): An instance of the Arduino sensors.
-
-        screw_motor (list): Motor parameters for the screw motor [axis, g_code_speed, speed, gcode_type].
-        pin_limit_switch_screw (list): Digital pins for the limit switch next to the mechanical stop at the screw.
-
-        mirror_cuves_motor (list): Motor parameters for the mirror cuves motor [axis, g_code_speed, speed, gcode_type].
-        pin_limit_switch_mirror_cuves (list): Digital pins for the limit switch for the mirror cuves.
-
-        slits_motor (list): Motor parameters for the slits motor [axis, g_code_speed, speed, gcode_type].
-        pin_limit_switch_slits (list): Digital pins for the limit switch for the slits.
     """
-    def __init__(self, arduino_motors_instance, arduino_sensors_instance):
+    def __init__(self, arduino_motors_instance: serial.Serial, arduino_sensors_instance: Arduino):
         """
         Initialize the controller with an Arduino motor and sensors instance.
 
@@ -150,6 +155,7 @@ class GeneralMotorsController:
         Args:
             g_code (str): The G-code command to be sent to the motor.
         """
+        g_code = g_code + '\n'
         self.arduino_motors.write(g_code.encode())
 
     def unlock_motors(self):
@@ -397,11 +403,3 @@ if __name__ == "__main__":
     motors_controller.initialize_end_stop([2, 3, 4, 5, 6])
 
     motors_controller.initialisation_motor_slits("Fente_0_5nm")
-"""
-    while True:
-        pin_limit= 6
-        print(pin_limit)
-        pin_limit_value = arduino_sensors.digital[pin_limit].read() # False : fente / True pas fente
-        print(pin_limit_value)
-        time.sleep(0.5)
-"""

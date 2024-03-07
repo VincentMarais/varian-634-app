@@ -12,7 +12,7 @@ thread_lock = Lock()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'VARIAN634!'
 socketio = SocketIO(app, cors_allowed_origins='*')
-ser = serial.Serial('COM10', 9600, timeout=1)
+ser = serial.Serial('COM4', 9600, timeout=1)
 
 sensor_data_running = False
 
@@ -54,7 +54,7 @@ def sensor_data_task():
         data = ser.readline().decode('utf-8').rstrip()
         if data:
             print("Données:", data)
-            socketio.emit('updateSensorData', {'value': data, "index": i})
+            socketio.emit('updateSensorData', {'data_y': data, "data_x": i})
 
 
 @socketio.on('startSensorData')
@@ -70,7 +70,7 @@ def handle_start_sensor_data():
     sensor_data_running = True
     sensor_data_task()  # Démarrage effectif de la génération de données
 
-@socketio.on('setWaveLengthParams')
+@socketio.on('setScanningParams')
 def handle_set_wave_length_params(json):
     global wavelength_min, wavelength_max, step, selected_cuvette, selected_slits
     wavelength_min = float(json['wavelengthMin'])

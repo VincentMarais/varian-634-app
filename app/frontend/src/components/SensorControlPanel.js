@@ -20,7 +20,7 @@ const SensorControlPanel = ({ socket,
       return;
     }
     // Envoyez les paramètres au serveur
-    socket.emit('setWaveLengthParams', { wavelengthMin, wavelengthMax, step, selectedCuvette, selectedSlits });
+    socket.emit('setScanningParams', { wavelengthMin, wavelengthMax, step, selectedCuvette, selectedSlits });
     // Demandez au serveur de démarrer la génération des données
     socket.emit('startSensorData');
   };
@@ -37,7 +37,13 @@ const SensorControlPanel = ({ socket,
 
   return (
     <div className="control-panel">
-      <input type="number" value={wavelengthMin} onChange={(e) => setWavelengthMin(e.target.value)} placeholder="Longueur d'onde Min [1,799]" />
+      <input
+  type="number"
+  value={wavelengthMin}
+  onChange={(e) => setWavelengthMin(e.target.value)}
+  style={{ marginBottom: '10px' }} // adjust the value to your desired margin size
+  placeholder="Longueur d'onde Min [1,799]"
+/>
       <input type="number" value={wavelengthMax} onChange={(e) => setWavelengthMax(e.target.value)} placeholder="Longueur d'onde Max [2,800]" />
       <input type="number" value={step} onChange={(e) => setStep(e.target.value)} placeholder="Étape [1,800]" />
       <div>
