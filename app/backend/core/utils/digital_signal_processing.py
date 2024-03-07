@@ -260,80 +260,7 @@ class PhotodiodeNoiseReducer:
         
         return average_x
     
-    def correction_baseline(self,voltage_photodiode_1, voltage_photodiode_2):
-        """
-        Corrige le gap en les deux photodiode, 
-        nous avons remarqué quand trançant le spectre du Xe sur les 
-        des photodiodes la Tension photodiode 1  = Tension phodiode_2 + a
-
-        Ce programme permet de déterminer a, afin d'avoir 
-        Tension photodiode 1  = Tension phodiode_2
-        et donc Absorbance_baseline = 0
-        """
-        a = self.calculate_average_translation(voltage_photodiode_1, voltage_photodiode_2)
-        print(a)
-        voltage_photodiode_2 = [(x + a) for x in voltage_photodiode_2]
-        return a, voltage_photodiode_2
-
-
-if __name__ == "__main__":
-    denoise = PhotodiodeNoiseReducer()
-
-    import tkinter as tk
-    from tkinter import filedialog
-
-    def file_path():
-        # Créer une instance de Tk
-        root = tk.Tk()
-        # Cacher la fenêtre principale de Tk
-        root.withdraw()
-
-        # Ouvrir la fenêtre de dialogue pour choisir un fichier
-        file_selected = filedialog.askopenfilename()
-
-        print(file_selected)
-        
-        return file_selected
-
-    file = file_path()
-    print("Calibrage")
-
-    data = pd.read_csv(file, encoding='ISO-8859-1')
-    voltage_1 = data["Tension photodiode 1 (Volt)"]
-    voltage_2 = data["Tension photodiode 2 (Volt)"]
-    screw = data["pas de vis (mm)"]
-    
-    # Extract columns
-    
-    #denoise.fourier_transform(voltage_1)
-    #denoise.hilbert_transform(voltage_1)
-    #denoise.spline_interpolation(voltage_1, 0.5)
-    #denoise.simulation_gaussian_noise()
-    [A, voltage_2_correc] = denoise.correction_baseline(voltage_1, voltage_2)
-    plt.plot(screw, -voltage_1, label='Tension photodiode 1', linewidth=2, color='orange')
-    plt.plot(screw, [-v for v in voltage_2_correc], label='Tension photodiode 2 corrigé', linestyle='--', linewidth=2, color='red')
-    plt.plot(screw, -voltage_2, label='Tension photodiode 2', linestyle='-', linewidth=2)    
-    plt.title('Spectre en intensité du Xe')
-    plt.xlabel("pas de vis (mm)")
-    plt.ylabel('Tension (Volt)')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
-
-
-    print("Absorbance baseline et non baseline")
-
-    file = file_path()
-    data = pd.read_csv(file, encoding='ISO-8859-1')
-    voltage_1 = data["Tension photodiode 1 (Volt)"]
-    voltage_2 = data["Tension photodiode 2 (Volt)"]
-    screw = data["pas de vis (mm)"]
-    WAVELENGTH = np.array([denoise.calculate_wavelength(p) for p in screw])
-    absorbance_no_baseline = np.log10(np.array(voltage_1)/np.array(voltage_2))
-  
-
-
-    def aals(x, y, alpha=0.01, beta=0.01, tol=1e-5, max_iter=1000):
+    def aals(self, x, y, alpha=0.01, beta=0.01, tol=1e-5, max_iter=1000):
         """
         Adaptive Asymmetric Least Squares baseline estimation.
 
@@ -370,14 +297,64 @@ if __name__ == "__main__":
             if np.max(np.abs(resid[1:] - resid[:-1])) < tol:
                 break
 
+
         return y_hat
     
-    baseline_fitter = Baseline(WAVELENGTH, check_finite=False)
-    y_filtered = savgol_filter(aals(WAVELENGTH, absorbance_no_baseline), window_length=11, polyorder=2, deriv=0, delta=0.01)
+
+    def correction_baseline(self, wavelength, absorbance):
+        """
+        Corrige le gap en les deux photodiode, 
+        nous avons remarqué quand trançant le spectre du Xe sur les 
+        des photodiodes la Tension photodiode 1  = Tension phodiode_2 + a
+
+        Ce programme permet de déterminer a, afin d'avoir 
+        Tension photodiode 1  = Tension phodiode_2
+        et donc Absorbance_baseline = 0
+        """
+        absorbance_baseline = self.aals(wavelength, absorbance)
+        
+        absorbance_fit = savgol_filter(absorbance_baseline, window_length=15, polyorder=2, deriv=0, delta=0.01)
+
+        return absorbance_fit
+
+
+if __name__ == "__main__":
+    denoise = PhotodiodeNoiseReducer()
+
+    import tkinter as tk
+    from tkinter import filedialog
+
+    def file_path():
+        # Créer une instance de Tk
+        root = tk.Tk()
+        # Cacher la fenêtre principale de Tk
+        root.withdraw()
+
+        # Ouvrir la fenêtre de dialogue pour choisir un fichier
+        file_selected = filedialog.askopenfilename()
+
+        print(file_selected)
+        
+        return file_selected
+
+    file = file_path()
+
+    print("Absorbance baseline et non baseline")
+
+    data = pd.read_csv(file, encoding='ISO-8859-1')
+    voltage_1 = data["Tension photodiode 1 (Volt)"]
+    voltage_2 = data["Tension photodiode 2 (Volt)"]
+    screw = data["pas de vis (mm)"]
+    WAVELENGTH = np.array([denoise.calculate_wavelength(p) for p in screw])
+    absorbance_no_baseline = np.log10(np.array(voltage_1)/np.array(voltage_2))
+  
+
+
+
 
     plt.plot(WAVELENGTH, absorbance_no_baseline, label='Original data')
-    plt.plot(WAVELENGTH, aals(WAVELENGTH, absorbance_no_baseline), label='Estimated baseline')
-    plt.plot(WAVELENGTH, y_filtered, label='Estimated baseline')
+    plt.plot(WAVELENGTH, denoise.aals(WAVELENGTH, absorbance_no_baseline), label='Estimated baseline')
+    plt.plot(WAVELENGTH, denoise.correction_baseline(WAVELENGTH,absorbance_no_baseline) , label='Estimated baseline')
 
     plt.legend()
     plt.show()
