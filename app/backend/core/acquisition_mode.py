@@ -152,7 +152,7 @@ class Varian634AcquisitionMode:
 
         return wavelengths, absorbances, voltage_reference, voltage_sample, no_screw
 
-    def acquisition(self, wavelenght_min, wavelenght_max, wavelenght_step, mode, slot_size, state_motor_motor_slits):
+    def acquisition(self, wavelenght_min, wavelenght_max, wavelenght_step, slot_size, state_motor_motor_slits):
         """
         Manages the complete acquisition process, including motor initialization and data saving.
 

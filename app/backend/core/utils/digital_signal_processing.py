@@ -7,7 +7,8 @@ from scipy.interpolate import UnivariateSpline
 import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.signal import hilbert, savgol_filter
-
+from pybaselines import Baseline
+ 
 
 class PhotodiodeNoiseReducer:
     """
@@ -277,8 +278,26 @@ class PhotodiodeNoiseReducer:
 
 if __name__ == "__main__":
     denoise = PhotodiodeNoiseReducer()
-    PATH = "C:\\Users\\admin\\Desktop\\GitHub\\varian-634-app\\experiments\\experiments_2024\\experiments_02_2024\\experiments_16_02_2024\\calibrage"
-    file = f"{PATH}/{'calibrage_16_02_2024_fente_0_2nm'}.csv"
+
+    import tkinter as tk
+    from tkinter import filedialog
+
+    def file_path():
+        # Créer une instance de Tk
+        root = tk.Tk()
+        # Cacher la fenêtre principale de Tk
+        root.withdraw()
+
+        # Ouvrir la fenêtre de dialogue pour choisir un fichier
+        file_selected = filedialog.askopenfilename()
+
+        print(file_selected)
+        
+        return file_selected
+
+    file = file_path()
+    print("Calibrage")
+
     data = pd.read_csv(file, encoding='ISO-8859-1')
     voltage_1 = data["Tension photodiode 1 (Volt)"]
     voltage_2 = data["Tension photodiode 2 (Volt)"]
@@ -301,81 +320,64 @@ if __name__ == "__main__":
     plt.grid(True)
     plt.show()
 
-    PATH = "C:\\Users\\admin\\Desktop\\GitHub\\varian-634-app\\experiments\\experiments_2024\\experiments_02_2024\\experiments_23_02_2024\\scanning\\bromophenol"
-    file = f"{PATH}/{'23_02_2024_Fente_0_2nm_Bromophénol'}.csv"
+
+    print("Absorbance baseline et non baseline")
+
+    file = file_path()
     data = pd.read_csv(file, encoding='ISO-8859-1')
     voltage_1 = data["Tension photodiode 1 (Volt)"]
-    voltage_2_correc = data["Tension photodiode 2 (Volt)"] + A/1.5
     voltage_2 = data["Tension photodiode 2 (Volt)"]
     screw = data["pas de vis (mm)"]
     WAVELENGTH = np.array([denoise.calculate_wavelength(p) for p in screw])
-    absorbance = np.log10(np.array(voltage_1)/np.array(voltage_2_correc))
     absorbance_no_baseline = np.log10(np.array(voltage_1)/np.array(voltage_2))
-    print(np.shape(absorbance))
-    plt.title('Absorbance du Bromophénol')
-    plt.xlabel("Longueur d\'onde (nm)")
-    plt.ylabel('Absorbance')
-    plt.plot(WAVELENGTH, absorbance)
-    plt.legend()
-    plt.grid(True)
-    plt.show()
-    
-    from experiment_manager import ExperimentManager
-    WINDOW = 60
-    ExperimentManager("bromophénol").graph_absorbance_v2(PATH, "23_02_2024_Fente_0_2nm_Bromophénol_final", WAVELENGTH, absorbance, WINDOW)
-    
-    plt.plot(WAVELENGTH, absorbance_no_baseline, label='Absorbance sans ligne de base', linewidth=2, color='orange')
-    plt.plot(WAVELENGTH, absorbance, label='Absorbance avec ligne de base', linestyle='-', linewidth=2, color='red')    
-    plt.title('Absorbance bromophénol')
-    plt.xlabel("Longueur d\'onde (nm)")
-    plt.ylabel('Absorbance')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
-    
-    [voltage_ref, voltage_sample] = denoise.negative_absorbance_correction(voltage_1, voltage_2_correc)
-    absorbance = np.log10(np.array(voltage_ref)/np.array(voltage_sample))
-    plt.plot(WAVELENGTH, absorbance, label='Absorbance negative', linewidth=2, color='orange')
-    plt.title('Absorbance bromophénol')
-    plt.xlabel("Longueur d\'onde (nm)")
-    plt.ylabel('Absorbance')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
-    # First, sort the data by WAVELENGTH (x_data)
-    sorted_indices = np.argsort(WAVELENGTH)
-    wavelength_sorted = WAVELENGTH[sorted_indices]
-    absorbance_sorted = absorbance[sorted_indices]
+  
 
-    # Then, remove any duplicates in WAVELENGTH to ensure it's strictly increasing
-    # This step depends on how you want to handle duplicates. Here's one approach:
-    unique_wavelength, unique_indices = np.unique(wavelength_sorted, return_index=True)
-    unique_absorbance = absorbance_sorted[unique_indices]
 
-    # Now, you can safely call UnivariateSpline
-    spline = UnivariateSpline(unique_wavelength, unique_absorbance, s=0.02)
-    absorbance_spline = spline(unique_wavelength)
-    plt.plot(WAVELENGTH, absorbance, label='Absorbance', linewidth=2, color='orange')
-    plt.plot(unique_wavelength, absorbance_spline, label='Absorbance lissé', linestyle='-', linewidth=2, color='red')    
-    plt.title('Absorbance du bromophénol')
-    plt.xlabel("Longueur d\'onde (nm)")
-    plt.ylabel('Absorbance')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
+    def aals(x, y, alpha=0.01, beta=0.01, tol=1e-5, max_iter=1000):
+        """
+        Adaptive Asymmetric Least Squares baseline estimation.
+
+        Parameters:
+        x (array_like): The independent variable (e.g. wavelength).
+        y (array_like): The dependent variable (e.g. signal).
+        alpha (float): The asymmetry parameter for the LS fit.
+        beta (float): The smoothing parameter for the running average.
+        tol (float): The tolerance for convergence.
+        max_iter (int): The maximum number of iterations.
+
+        Returns:
+        (array_like) The estimated baseline.
+        """
+        n = len(x)
+        y_hat = np.zeros_like(y)
+        resid = np.zeros_like(y)
+
+        # Initialize running average
+        window = int(n * beta)
+        if window % 2 == 0:
+            window += 1
+        ma = np.convolve(y, np.ones(window) / window, mode='same')
+
+        for i in range(max_iter):
+            # Compute residuals
+            y_hat[:-1] = ma[:-1] + alpha * (y[1:] - ma[:-1])
+            resid[:-1] = y[:-1] - y_hat[:-1]
+
+            # Update running average
+            ma = np.convolve(resid, np.ones(window) / window, mode='same')
+
+            # Check for convergence
+            if np.max(np.abs(resid[1:] - resid[:-1])) < tol:
+                break
+
+        return y_hat
     
+    baseline_fitter = Baseline(WAVELENGTH, check_finite=False)
+    y_filtered = savgol_filter(aals(WAVELENGTH, absorbance_no_baseline), window_length=11, polyorder=2, deriv=0, delta=0.01)
 
-    # Appliquer le filtrage Savitzky-Golay
-    window_length = 11  # Longueur de la fenêtre de filtrage
-    polyorder = 2  # Ordre du polynôme d'ajustement
-    y_smooth = savgol_filter(absorbance_sorted, window_length, polyorder)
-    plt.plot(WAVELENGTH, absorbance, label='Absorbance', linewidth=2, color='orange')
-    plt.plot(unique_wavelength, y_smooth, label='Absorbance lissé', linestyle='-', linewidth=2, color='red')    
-    plt.title('Absorbance du bromophénol')
-    plt.xlabel("Longueur d\'onde (nm)")
-    plt.ylabel('Absorbance')
+    plt.plot(WAVELENGTH, absorbance_no_baseline, label='Original data')
+    plt.plot(WAVELENGTH, aals(WAVELENGTH, absorbance_no_baseline), label='Estimated baseline')
+    plt.plot(WAVELENGTH, y_filtered, label='Estimated baseline')
+
     plt.legend()
-    plt.grid(True)
     plt.show()
-
-    ExperimentManager("bromophénol").graph_absorbance_v2(PATH, "23_02_2024_Fente_0_2nm_Bromophénol_final", unique_wavelength, y_smooth, WINDOW)

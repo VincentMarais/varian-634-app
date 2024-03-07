@@ -295,7 +295,6 @@ class GeneralMotorsController:
                 pin_optical_value = self.arduino_sensors.digital[pin_optical].read()
                 i -= 0.005  # Movement of 0.005 of the motor not optimal
                 time.sleep(0.5)
-            print("Variable slit motor has reached the start")
             pin_limit_value = self.arduino_sensors.digital[pin_limit].read() # False : fente / True pas fente
             time.sleep(1)
             print("limit",pin_limit_value)
@@ -307,22 +306,31 @@ class GeneralMotorsController:
                 i -= 0.001  # Movement of 0.005 of the motor not optimal
                 print(pin_limit_value)
                 time.sleep(0.5)
-            print("Variable slit motor is ready for measurement")
+            print("Variable slit motor has reached the start")
             initial= False
         else:
-            print("Variable slit motor is ready for measurement")
+            print("Variable slit motor has reached the start")
         
-        
-        """
-        if pin_limit is True and slit !="Fente_2nm":
+    
+        if slit !="Fente_2nm":
+            self.execute_g_code("G91")
             indice = self.search_word(self.name_slits, slit)
-            self.move_slits(self.slits_position[indice])
+            self.move_slits(self.slits_position[indice]-0.005)
+            self.wait_for_idle()
 
-            while pin_limit_value is True:
-                self.execute_g_code("G91")
-                i += 0.001
-                self.wait_for_idle()
-"""
+            while pin_limit_value:
+                self.unlock_motors()
+                self.move_slits(i)
+                pin_limit_value = self.arduino_sensors.digital[pin_limit].read()
+                i += 0.001  # Movement of 0.005 of the motor not optimal
+                print(pin_limit_value)
+                time.sleep(0.5)
+            
+            print("Variable slit motor is ready for measurement")     
+
+        else: 
+            print("Variable slit motor is ready for measurement")     
+
 
     def initialisation_motor_screw(self):
         """

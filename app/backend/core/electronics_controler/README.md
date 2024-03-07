@@ -150,3 +150,14 @@ with nidaqmx.Task() as task:
 Pour plus d'informations, référez-vous à la documentation officielle : <a href="https://www.ni.com/docs/fr-FR/bundle/pci-pxi-usb-6221-specs/page/specs.html">https://www.ni.com/docs/fr-FR/bundle/pci-pxi-usb-6221-specs/page/specs.html</a>
 
 # Photodiodes et cuvette
+
+## Explication du signal en sortie de la carte NI-PCI 6221 :
+
+Tout d'abord rappelons la caractéristique intensité-courant d'une photodiode 
+
+
+<div align="center">
+    <img src="image/Photodiode_operation.png" width="500" alt="Caractéristique de la photodiode"/>
+</div>
+
+Le courant délivrer par la photodiode est proportionnel à l'intensité lumineuse  
