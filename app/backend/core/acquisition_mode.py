@@ -73,17 +73,17 @@ class Varian634AcquisitionMode:
         Initi
         """
 
-        course_lambda_min = self.signal_processing.calculate_course(wavelenght_min)
-        course_lambda_max = self.signal_processing.calculate_course(wavelenght_max)
-        step = self.signal_processing.calculate_course(wavelength_step)
-        print("final_course : " , course_lambda_min)
-        print("initialiale_course", course_lambda_max)
+        course_final = self.signal_processing.calculate_course(wavelenght_min)
+        course_initial = self.signal_processing.calculate_course(wavelenght_max)
+        print("final_course : " , course_final)
+        print("initialiale_course", course_initial)
+        number_measurements = int( (wavelenght_max - wavelenght_min)/wavelength_step )
+        step = (course_final - course_initial)/number_measurements
         print("step", step)
-        step = self.signal_processing.calculate_course(wavelength_step)
-        screw_travel = course_lambda_min - course_lambda_max 
-        print("step", screw_travel)
-        number_measurements = int(screw_travel/step)
         print(number_measurements)
+        self.motors_controller.execute_g_code("G91")
+        self.motors_controller.move_screw(course_initial)
+        time.sleep(course_initial/10)
         return step, number_measurements
 
 
@@ -168,7 +168,7 @@ class Varian634AcquisitionMode:
         self.motors_controller.initialisation_motors(slot_size)
         
         [step , number_measurements] = self.initialisation_setting(wavelenght_min, wavelenght_max, wavelenght_step)
-
+        
         data_acquisition = self.precision_mode(step, number_measurements)
 
         # Data saving

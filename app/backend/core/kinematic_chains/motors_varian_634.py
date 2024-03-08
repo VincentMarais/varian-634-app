@@ -362,7 +362,7 @@ class GeneralMotorsController:
         print("Diffraction grating is ready for acquisition!")
         # End-of-file (EOF)
 
-    def initialisation_motors(self, slip, state_motor_motor_slits):
+    def initialisation_motors(self, slip):
         """
         Initializes all motors to start an acquisition.
         """
@@ -372,10 +372,15 @@ class GeneralMotorsController:
         self.wait_for_idle()
         self.initialisation_motor_screw()
         self.wait_for_idle()
+        self.initialisation_motor_slits(slip)
+        self.wait_for_idle()
+
+        """
         if state_motor_motor_slits:            
             self.initialisation_motor_slits(slip)
         else:
             pass
+        """
 if __name__ == "__main__":
 
     # MOTOR INITIALIZATION:

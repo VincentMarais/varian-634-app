@@ -7,7 +7,7 @@ from scipy.interpolate import UnivariateSpline
 import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.signal import hilbert, savgol_filter
-from pybaselines import Baseline
+from scipy.signal import find_peaks
  
 
 class PhotodiodeNoiseReducer:
@@ -358,3 +358,10 @@ if __name__ == "__main__":
 
     plt.legend()
     plt.show()
+    absorb = denoise.correction_baseline(WAVELENGTH,absorbance_no_baseline)
+    peaks, _ = find_peaks(absorb, prominence=0)
+
+
+    # Convertir les indices des pics en un array python
+    peak_values = np.array([absorb[i] for i in peaks])
+    print(peak_values)

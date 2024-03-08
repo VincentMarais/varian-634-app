@@ -169,7 +169,7 @@ class VoltageAcquisition:
         """
 
         mean_voltages=[]
-        peak_search_window = self.samples_per_channel/self.frequency[0]
+        peak_search_window = (self.samples_per_channel/self.frequency[0])*0.9
         with nidaqmx.Task() as task_impulsion, nidaqmx.Task() as task_voltage:
             self.configure_task_impulsion(task_impulsion)
             self.configure_task_voltage(task_voltage, physical_channel)
@@ -178,13 +178,16 @@ class VoltageAcquisition:
                 voltages = task_voltage.read(number_of_samples_per_channel=self.samples_per_channel)
                 peaks, _ = find_peaks(voltages, distance=peak_search_window)
                 # Conversion des données en un tableau numpy pour faciliter les calculs
-                voltages = np.array(voltages[peaks])
+                # Convertir les indices des pics en un array python
+                peak_voltages = np.array([voltages[i] for i in peaks])
+                print(peak_voltages)
+                print(np.shape(peak_voltages))
                 # Trouver et stocker le minimum
-                mean_voltage = np.mean(voltages)
+                mean_voltage = np.mean(peak_voltages)
                 mean_voltages.append(mean_voltage)
             task_impulsion.stop()
             task_voltage.stop()
-            mean = np.mean(mean_voltages)
+            mean = float(np.mean(mean_voltages))
         return mean
 
 
@@ -201,20 +204,28 @@ class VoltageAcquisition:
         - moment (list float) : List of time instants.
         - voltages (list float) : List of minimum measured voltages.
         """
-        min_voltages = []
+        mean_voltages = []
         moment = []
+        peak_search_window = (self.samples_per_channel/self.frequency[0])
+
         with nidaqmx.Task() as task_impulsion, nidaqmx.Task() as task_voltage:
             self.configure_task_impulsion(task_impulsion)
             self.configure_task_voltage(task_voltage, physical_channel)
             start_time = time.time()
             while time.time() - start_time < time_acquisition + 1:  # Loop for the specified duration
                 start_time_temp = time.time() # Data acquisition
-                voltage = task_voltage.read(number_of_samples_per_channel=self.samples_per_channel)
+                voltages = task_voltage.read(number_of_samples_per_channel=self.samples_per_channel)
                 moment.append(start_time_temp - start_time)
-                voltages = np.array(voltage)
+                peaks, _ = find_peaks(voltages, distance=peak_search_window)
+                # Conversion des données en un tableau numpy pour faciliter les calculs
+                # Convertir les indices des pics en un array python
+                peak_voltages = np.array([voltages[i] for i in peaks])
+                print(peak_voltages)
+                print(np.shape(peak_voltages))
                 # Trouver et stocker le minimum
-                min_voltage = np.min(voltages)
-                min_voltages.append(min_voltage)                
+                mean_voltage = np.mean(peak_voltages)
+                mean_voltages.append(mean_voltage)               
+                            
                 # Loop for wait
                 sys.stdout.flush()  # Forcer l'impression immédiate
                 delay = time.time() - start_time_temp
@@ -224,7 +235,7 @@ class VoltageAcquisition:
             task_impulsion.stop()
             task_voltage.stop()
             
-        return moment, min_voltages
+        return moment, mean_voltages
 
     
     def sensors_state(self, board, pin):
@@ -290,12 +301,10 @@ if __name__ == "__main__":
     time.sleep(1)
 
 
-# Test voltage_acquisition_scanning_baseline
-    print(acqui_voltage.voltage_acquisition_scanning_baseline(CHANNEL[0]))
 
    # Test voltage_acquisition_chemical_kinetics
-    TIME_ACQUISITION = 10
-    TIME_PER_ACQUISITION = 1
+    TIME_ACQUISITION = 20
+    TIME_PER_ACQUISITION = 4
     [MOMENT, VOLTAGE] = acqui_voltage.voltage_acquisition_chemical_kinetics(CHANNEL[0], TIME_ACQUISITION, TIME_PER_ACQUISITION)
     plt.plot(MOMENT, VOLTAGE)
     plt.xlabel('moment (s)')
