@@ -2,10 +2,10 @@ import time
 import tkinter as tk
 
 # MODES
-from backend.core.acquisition_mode import Varian634AcquisitionMode
+from core.acquisition_mode import Varian634AcquisitionMode
 
 # TOOLS
-from backend.core.utils.experiment_manager import ExperimentManager
+from core.utils.experiment_manager import ExperimentManager
 
 
 if __name__ == "__main__":
@@ -27,15 +27,12 @@ if __name__ == "__main__":
     # INITIALIZATION Optical Fork:
 
     arduino_sensors = Arduino(COM_PORT_SENSORS)
-    SAMPLE_NAME = "Bromophénol" 
+    SAMPLE_NAME = "Bromophenol" 
     experim_manager = ExperimentManager(SAMPLE_NAME)
      
-    ROOT = tk.Tk()
-    USER_PATH =  experim_manager.choose_folder(ROOT) 
+    USER_PATH =  "C:\\Users\\vimarais\\Documents\\Analyse"
     
-    baseline_scanning = Varian634AcquisitionMode(arduino_motors, arduino_sensors, USER_PATH, SAMPLE_NAME)
-    baseline_scanning.baseline_verification()
-    baseline_scanning.scanning_acquisition(780, 790, 10)
-    ROOT.mainloop()
+    baseline_scanning = Varian634AcquisitionMode(arduino_motors, arduino_sensors, SAMPLE_NAME, "cuvette 1")
+    baseline_scanning.acquisition(780, 790, 10, "Fente_2nm")
 
     

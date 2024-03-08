@@ -294,13 +294,13 @@ class GeneralMotorsController:
         initial = True
         # Mise au départ 
         time.sleep(1)       
-
+        self.execute_g_code("G91")
         if pin_optical_value is False and initial:
             while pin_optical_value is False:
                 self.move_slits(i)
                 pin_optical_value = self.arduino_sensors.digital[pin_optical].read()
-                i -= 0.005  # Movement of 0.005 of the motor not optimal
-                time.sleep(0.5)
+                i = -0.005  # Movement of 0.005 of the motor not optimal
+                time.sleep(0.10)
             pin_limit_value = self.arduino_sensors.digital[pin_limit].read() # False : fente / True pas fente
             time.sleep(1)
             print("limit",pin_limit_value)
@@ -309,7 +309,7 @@ class GeneralMotorsController:
                 self.unlock_motors()
                 self.move_slits(i)
                 pin_limit_value = self.arduino_sensors.digital[pin_limit].read()
-                i -= 0.001  # Movement of 0.005 of the motor not optimal
+                i = -0.001  # Movement of 0.005 of the motor not optimal
                 print(pin_limit_value)
                 time.sleep(0.5)
             print("Variable slit motor has reached the start")
@@ -319,16 +319,16 @@ class GeneralMotorsController:
         
     
         if slit !="Fente_2nm":
-            self.execute_g_code("G91")
             indice = self.search_word(self.name_slits, slit)
             self.move_slits(self.slits_position[indice]-0.005)
             self.wait_for_idle()
+            pin_limit_value = self.arduino_sensors.digital[pin_limit].read()
 
             while pin_limit_value:
                 self.unlock_motors()
                 self.move_slits(i)
                 pin_limit_value = self.arduino_sensors.digital[pin_limit].read()
-                i += 0.001  # Movement of 0.005 of the motor not optimal
+                i = 0.001  # Movement of 0.005 of the motor not optimal
                 print(pin_limit_value)
                 time.sleep(0.5)
             
@@ -403,3 +403,12 @@ if __name__ == "__main__":
     motors_controller.initialize_end_stop([2, 3, 4, 5, 6])
 
     motors_controller.initialisation_motor_slits("Fente_0_5nm")
+
+    """
+    while True:
+        pin_limit= 6
+        print(pin_limit)
+        pin_limit_value = arduino_sensors.digital[pin_limit].read() # False : fente / True pas fente
+        print(pin_limit_value)
+        time.sleep(0.5)
+    """

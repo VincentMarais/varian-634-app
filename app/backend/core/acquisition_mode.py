@@ -13,7 +13,7 @@ Visible range with the screw pitch:
 
 Course maxi : 26mm
 
-Pour une acquisition longue désactiver la mise en veille du PC
+Pour une acquisition longue dÃ©sactiver la mise en veille du PC
 
 
 """
@@ -22,14 +22,14 @@ import os
 import numpy as np
 
 # Motors
-from backend.core.kinematic_chains.motors_varian_634 import GeneralMotorsController
+from core.kinematic_chains.motors_varian_634 import GeneralMotorsController
 
 # Voltage acquisition
-from backend.core.electronics_controler.ni_pci_6221 import VoltageAcquisition
+from core.electronics_controler.ni_pci_6221 import VoltageAcquisition
 
 # Data processing
-from backend.core.utils.experiment_manager import ExperimentManager
-from backend.core.utils.digital_signal_processing import PhotodiodeNoiseReducer
+from core.utils.experiment_manager import ExperimentManager
+from core.utils.digital_signal_processing import PhotodiodeNoiseReducer
 
 
 class Varian634AcquisitionMode:
@@ -125,7 +125,6 @@ class Varian634AcquisitionMode:
         self.motors_controller.unlock_motors()
         self.motors_controller.execute_g_code("G91")  # Set relative movement mode
         time.sleep(1)  # Wait for command acknowledgment
-
         for i in range(0, number_measurements):
             voltages_photodiode_1, voltages_photodiode_2 = self.perform_step_measurement()
             # Move diffraction grating
@@ -141,7 +140,7 @@ class Varian634AcquisitionMode:
             
             absorbances.append(np.log10(voltage_sample/voltage_reference))
             # Save data incrementally             
-            title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "Tension référence (Volt)", "Tension échantillon (Volt)", 
+            title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "Tension rÃ©fÃ©rence (Volt)", "Tension Ã©chantillon (Volt)", 
                                   "pas de vis (mm)"]
             datas = [wavelengths, absorbances, voltage_reference, voltage_sample, no_screw]
             title_file = "raw_data_" + self.title_file_sample
@@ -150,9 +149,9 @@ class Varian634AcquisitionMode:
         
         # Calculate absorbance based on measurement choice         
 
-        return wavelengths, absorbances, voltage_reference, voltage_sample, no_screw
+        return wavelengths, absorbances, voltages_reference, voltages_sample, no_screw
 
-    def acquisition(self, wavelenght_min, wavelenght_max, wavelenght_step, slot_size, state_motor_motor_slits):
+    def acquisition(self, wavelenght_min, wavelenght_max, wavelenght_step, slot_size):
         """
         Manages the complete acquisition process, including motor initialization and data saving.
 
@@ -165,14 +164,15 @@ class Varian634AcquisitionMode:
         Returns:
             The result of the precision mode operation, including wavelengths and absorbance values.
         """
-        self.motors_controller.initialisation_motors(slot_size, state_motor_motor_slits)
-
+        # state_motor_motor_slits 
+        self.motors_controller.initialisation_motors(slot_size)
         
         [step , number_measurements] = self.initialisation_setting(wavelenght_min, wavelenght_max, wavelenght_step)
-        data_acquisition= self.precision_mode(step, number_measurements)
+
+        data_acquisition = self.precision_mode(step, number_measurements)
 
         # Data saving
-        title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "Tension référence (Volt)", "Tension échantillon (Volt)", 
+        title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "Tension rÃ©fÃ©rence (Volt)", "Tension Ã©chantillon (Volt)", 
                                   "pas de vis (mm)"]
         title_file = "raw_data_" + self.title_file_sample
         self.experim_manager.save_data_csv(self.path, data_acquisition, title_data_acquisition, title_file)  
@@ -180,4 +180,3 @@ class Varian634AcquisitionMode:
         self.motors_controller.reset_screw_position(step*number_measurements)   
            
         return data_acquisition[:2]
-
