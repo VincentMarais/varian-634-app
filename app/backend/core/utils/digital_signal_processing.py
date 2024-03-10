@@ -8,7 +8,11 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.signal import hilbert, savgol_filter
 from scipy.signal import find_peaks
- 
+from scipy.sparse.linalg import spsolve
+from scipy import sparse
+from pybaselines import Baseline
+
+
 
 class PhotodiodeNoiseReducer:
     """
@@ -301,6 +305,63 @@ class PhotodiodeNoiseReducer:
         return y_hat
     
 
+
+    def als(self, y, lam=1e6, p=0.1, itermax=10):
+        """
+        Implements an Asymmetric Least Squares Smoothing
+        baseline correction algorithm (P. Eilers, H. Boelens 2005)
+
+        Baseline Correction with Asymmetric Least Squares Smoothing
+        based on https://github.com/vicngtor/BaySpecPlots
+
+        Baseline Correction with Asymmetric Least Squares Smoothing
+        Paul H. C. Eilers and Hans F.M. Boelens
+        October 21, 2005
+
+        Description from the original documentation:
+
+        Most baseline problems in instrumental methods are characterized by a smooth
+        baseline and a superimposed signal that carries the analytical information: a series
+        of peaks that are either all positive or all negative. We combine a smoother
+        with asymmetric weighting of deviations from the (smooth) trend get an effective
+        baseline estimator. It is easy to use, fast and keeps the analytical peak signal intact.
+        No prior information about peak shapes or baseline (polynomial) is needed
+        by the method. The performance is illustrated by simulation and applications to
+        real data.
+
+
+        Inputs:
+            y:
+                input data (i.e. chromatogram of spectrum)
+            lam:
+                parameter that can be adjusted by user. The larger lambda is,
+                the smoother the resulting background, z
+            p:
+                wheighting deviations. 0.5 = symmetric, <0.5: negative
+                deviations are stronger suppressed
+            itermax:
+                number of iterations to perform
+        Output:
+            the fitted background vector
+
+        """
+        L = len(y)
+    #  D = sparse.csc_matrix(np.diff(np.eye(L), 2))
+        D = sparse.eye(L, format='csc')
+        D = D[1:] - D[:-1]  # numpy.diff( ,2) does not work with sparse matrix. This is a workaround.
+        D = D[1:] - D[:-1]
+        D = D.T
+        w = np.ones(L)
+        for i in range(itermax):
+            W = sparse.diags(w, 0, shape=(L, L))
+            Z = W + lam * D.dot(D.T)
+            z = spsolve(Z, w * y)
+            w = p * (y > z) + (1 - p) * (y < z)
+        return z
+    
+
+    
+    
     def correction_baseline(self, wavelength, absorbance):
         """
         Corrige le gap en les deux photodiode, 
@@ -314,6 +375,33 @@ class PhotodiodeNoiseReducer:
         absorbance_baseline = self.aals(wavelength, absorbance)
         
         absorbance_fit = savgol_filter(absorbance_baseline, window_length=15, polyorder=2, deriv=0, delta=0.01)
+
+        return absorbance_fit
+
+
+    def adjust_absorbance(self, wavelength, absorbance):
+        """
+        Ajuste les valeurs d'absorbance en fonction de la baseline.
+        
+        Parameters:
+        - absorbance (list): Une liste d'absorbance correspondante.
+        
+        Returns:
+        - list: La liste d'absorbance ajustée.
+        """
+        # Vérifie si baseline et absorbance ont la même longueur
+
+        baseline_fitter = Baseline(wavelength, check_finite=False)
+        baseline = baseline_fitter.aspls(list(absorbance), 1e6)[0]
+        if len(baseline) != len(absorbance):
+            raise ValueError("baseline et absorbance doivent avoir la même longueur")
+        
+        # Ajuste l'absorbance en fonction de la valeur de baseline
+        adjusted_absorbance = []
+        for base, abs_val in zip(baseline, absorbance):            
+                adjusted_absorbance.append(abs_val - base)
+            
+        absorbance_fit = savgol_filter(adjusted_absorbance, window_length=11, polyorder=2, deriv=0, delta=0.01)
 
         return absorbance_fit
 
@@ -349,18 +437,31 @@ if __name__ == "__main__":
     absorbance_no_baseline = np.log10(np.array(voltage_1)/np.array(voltage_2))
   
 
+        # Seuil de hauteur pour la détection des pics
+    hauteur_seuil = 0.1
+    y = denoise.adjust_absorbance(WAVELENGTH, absorbance_no_baseline)
+    # Trouver les indices et les propriétés des pics
+    indices_pics, proprietes_pics = find_peaks(y, height=hauteur_seuil)
 
+    # Extraire les hauteurs des pics
+    hauteurs_pics = proprietes_pics['peak_heights']
+    print("WAVELENGTH[indices_pics]", WAVELENGTH[indices_pics])
+    # Afficher le signal et les pics détectés
+  
 
-
-    plt.plot(WAVELENGTH, absorbance_no_baseline, label='Original data')
-    plt.plot(WAVELENGTH, denoise.aals(WAVELENGTH, absorbance_no_baseline), label='Estimated baseline')
-    plt.plot(WAVELENGTH, denoise.correction_baseline(WAVELENGTH,absorbance_no_baseline) , label='Estimated baseline')
-
+    plt.plot(WAVELENGTH, absorbance_no_baseline, label='Absorbance bromophénol sans ligne de base')    
+    plt.plot(WAVELENGTH, y , label='Absorbance bromophénol aspls')
+    plt.axhline(y=hauteur_seuil, color='r', linestyle='--', label='Seuil de hauteur')
+    plt.scatter(WAVELENGTH[indices_pics], y[indices_pics], label='Pics détectés', color='red')
+    # Annoter chaque pic avec ses coordonnées
+    for i, txt in enumerate(indices_pics):
+        plt.text(WAVELENGTH[txt], y[txt], f'({WAVELENGTH[txt]:.2f}, {y[txt]:.2f})', fontsize=8)
     plt.legend()
     plt.show()
     absorb = denoise.correction_baseline(WAVELENGTH,absorbance_no_baseline)
     peaks, _ = find_peaks(absorb, prominence=0)
 
+    
 
     # Convertir les indices des pics en un array python
     peak_values = np.array([absorb[i] for i in peaks])
