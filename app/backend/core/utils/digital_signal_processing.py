@@ -439,7 +439,7 @@ if __name__ == "__main__":
     print(WAVELENGTH)
 
         # Seuil de hauteur pour la détection des pics
-    hauteur_seuil = 0.1
+    hauteur_seuil = 1
     y = denoise.adjust_absorbance(WAVELENGTH, absorbance_no_baseline)
     # Trouver les indices et les propriétés des pics
     indices_pics, proprietes_pics = find_peaks(y, height=hauteur_seuil)
@@ -449,22 +449,19 @@ if __name__ == "__main__":
     # Afficher le signal et les pics détectés
   
     indices_pics = np.asarray(indices_pics, dtype=int)
-
+    y_a = savgol_filter(absorbance_no_baseline, window_length=11, polyorder=2, deriv=0, delta=0.01)
     plt.plot(WAVELENGTH, absorbance_no_baseline, label='Absorbance bromophénol sans ligne de base')    
     plt.plot(WAVELENGTH, y , label='Absorbance bromophénol aspls')
+    plt.plot(WAVELENGTH, y_a , label='Absorbance bromophénol lissé')
     plt.axhline(y=hauteur_seuil, color='r', linestyle='--', label='Seuil de hauteur')
     plt.scatter(WAVELENGTH[indices_pics], y[indices_pics], label='Pics détectés', color='red')
+    plt.scatter(WAVELENGTH[indices_pics], y_a[indices_pics], label='Pics détectés lissé')
+
     # Annoter chaque pic avec ses coordonnées
     for txt_index in indices_pics:
         plt.text(WAVELENGTH[txt_index], y[txt_index], f'({WAVELENGTH[txt_index]:.2f}, {y[txt_index]:.2f})', fontsize=8)
+        plt.text(WAVELENGTH[txt_index], y_a[txt_index], f'({WAVELENGTH[txt_index]:.2f}, {y_a[txt_index]:.2f})', fontsize=8)
 
+    print(WAVELENGTH[indices_pics], y[indices_pics])
     plt.legend()
     plt.show()
-    absorb = denoise.correction_baseline(WAVELENGTH,absorbance_no_baseline)
-    peaks, _ = find_peaks(absorb, prominence=0)
-
-    
-
-    # Convertir les indices des pics en un array python
-    peak_values = np.array([absorb[i] for i in peaks])
-    print(peak_values)
