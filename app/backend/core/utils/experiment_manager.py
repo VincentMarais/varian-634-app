@@ -355,55 +355,14 @@ if __name__ == "__main__":
     # Exemple d'utilisation:
     SAMPLE_NAME = "Bromo"
     WINDOW = 60
-    experiment_manager = ExperimentManager(SAMPLE_NAME)
-    """ROOT = tk.Tk()
+    experiment_manager = ExperimentManager(SAMPLE_NAME, "Fente_1nm")
+    PATH = "C:\\Users\\admin\\Desktop"
     #experiment_manager.creation_directory_date_slot()
-    PATH = experiment_manager.choose_folder(ROOT)
-    [PATH, DATE, SLOT_SIZE] = experiment_manager.creation_directory_date_slot(PATH)
-    print([PATH, DATE, SLOT_SIZE])
-    experiment_manager.save_data_csv(path = PATH, data_list=[[1, 2, 3], [4, 5, 6], [1], [23,5,5,4,3,1]], title_list=['Absorbance', 'Longueur d\'onde (nm)', 'C', "Temps (s)"], file_name='nom_fichier')
-    experiment_manager.classic_graph(PATH, 'nom_fichier', "Temps (s)", 'Absorbance', "Cinétique_test")
-    experiment_manager.graph_absorbance(PATH, "Longueur d'onde (nm)", 'nom_fichier', WINDOW)
-    """
-
-    PATH = "C:\\Users\\admin\\Desktop\\GitHub\\varian-634-app\\experiments\\experiments_2024\\experiments_02_2024\\experiments_16_02_2024\\Calibrage"
-    file = f"{PATH}/{'calibrage_16_02_2024_fente_2nm'}.csv"
-    DATA = pd.read_csv(file, encoding='ISO-8859-1')
-    voltage_1 = DATA["Tension photodiode 1 (Volt)"]
-    voltage_2 = DATA["Tension photodiode 2 (Volt)"]
-    screw = DATA["pas de vis (mm)"]
-    plt.plot(screw, -voltage_1, label='Tension photodiode 1', linewidth=2, color='orange')
-    plt.plot(screw, -voltage_2, label='Tension photodiode 2', linestyle='-', linewidth=2, color='red')
-    plt.legend()
-    plt.grid(True)
-    plt.title('Spectre en intensité du Xe')
-    plt.xlabel("pas de vis (mm)")
-    plt.ylabel('Tension (Volt)')
-    plt.show()
-    
-    PATH_2 = "C:\\Users\\admin\\Desktop\\GitHub\\varian-634-app\\experiments\\experiments_2024\\experiments_02_2024\\experiments_23_02_2024\\scanning"
-    file = f"{PATH_2}/{'23_02_2024_Fente_0_5nm_Bromophénol_final'}.csv"
-    DATA = pd.read_csv(file, encoding='ISO-8859-1')
-    voltage_1 = DATA["Tension photodiode 1 (Volt)"]
-    voltage_2 = DATA["Tension photodiode 2 (Volt)"]
-    A = -0.018636302251767035
-    voltage_2_correc = DATA["Tension photodiode 2 (Volt)"] + A
-    wavelenght = DATA["Longueur d\'onde (nm)"]
-    absorbance_no_baseline = np.log(np.array(voltage_1)/np.array(voltage_2))
-    absorbance_baseline = np.log(np.array(voltage_1)/np.array(voltage_2_correc))
-
-
-    #experiment_manager.graph_absorbance_v2(PATH, file, wavelenght, absorbance_baseline, WINDOW)
-    plt.plot(wavelenght, absorbance_no_baseline, label='Absorbance sans ligne de base', linewidth=2, color='orange')
-    plt.plot(wavelenght, -voltage_2, label='Absorbance avec ligne de base', linestyle='-', linewidth=2, color='red')
-    plt.legend()
-    plt.grid(True)
-    plt.title('Absorbance du Bromophénol')
-    plt.xlabel("Longueur d\'onde (nm)")
-    plt.ylabel('Absorbance')
-    plt.show()
-    
-
+    [PATH, DATE] = experiment_manager.creation_directory_date_slot(PATH)
+    print([PATH, DATE])
+    A = np.array([4.03333, 5.03333, 6])
+    A = np.append(A, 2.30004774564564)
+    experiment_manager.save_data_csv(path = PATH, data_list=[[1, 2, 3], A, np.array([1.03333]), np.array([23,5,5,4,3,1])], title_list=['Absorbance', 'Longueur d\'onde (nm)', 'C', "Temps (s)"], file_name='nom_fichier')
 
 
     

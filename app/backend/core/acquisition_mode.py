@@ -121,9 +121,9 @@ class Varian634AcquisitionMode:
             A tuple containing lists of wavelengths, absorbance, reference voltages, sample voltages, and screw positions.
         """
         # Precision measurement setup
-        voltages_reference, voltages_sample = [], []
+        voltages_reference, voltages_sample = np.array([]), np.array([])
     
-        no_screw, wavelengths, absorbances = [], [], []
+        no_screw, wavelengths, absorbances = np.array([]), np.array([]), np.array([])
         time_per_step = (step * 60) / 10  # Time calculation for each step
 
         self.motors_controller.unlock_motors()
@@ -136,17 +136,17 @@ class Varian634AcquisitionMode:
             [voltage_reference, voltage_sample] = self.experim_manager.link_cuvette_voltage(self.cuvette_choice, 
                                                                                 voltages_photodiode_1, voltages_photodiode_2)
             # Store measurement data for plotting
-            voltages_reference.append(voltage_reference)
-            voltages_sample.append(voltage_sample)
+            voltages_reference = np.append(voltages_reference, voltage_reference)
+            voltages_sample= np.append(voltages_sample, voltage_sample)
             position = i * step
-            no_screw.append(position + step)
-            wavelengths.append(self.signal_processing.calculate_wavelength(position))
+            no_screw = np.append(no_screw, position + step)
+            wavelengths = np.append(wavelengths, self.signal_processing.calculate_wavelength(position))
             
-            absorbances.append(np.log10(voltage_sample/voltage_reference))
+            absorbances= np.append(absorbances, np.log10(voltage_sample/voltage_reference))
             # Save data incrementally             
-            title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "Tension rÃ©fÃ©rence (Volt)", "Tension Ã©chantillon (Volt)", 
+            title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "Tension reference (Volt)", "Tension echantillon (Volt)", 
                                   "pas de vis (mm)"]
-            datas = [list(wavelengths), list(absorbances), voltage_reference, voltage_sample, no_screw]
+            datas = [wavelengths, absorbances, voltage_reference, voltage_sample, no_screw]
             title_file = "raw_data_" + self.title_file_sample
             self.experim_manager.save_data_csv(self.path, datas, title_data_acquisition, title_file)            
             time.sleep(time_per_step)# Wait for diffraction grating adjustment
@@ -175,7 +175,7 @@ class Varian634AcquisitionMode:
         data_acquisition = self.precision_mode(step, number_measurements)
 
         # Data saving
-        title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "Tension rÃ©fÃ©rence (Volt)", "Tension Ã©chantillon (Volt)", 
+        title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "Tension reference (Volt)", "Tension echantillon (Volt)", 
                                   "pas de vis (mm)"]
         title_file = "raw_data_" + self.title_file_sample
         self.experim_manager.save_data_csv(self.path, data_acquisition, title_data_acquisition, title_file)  

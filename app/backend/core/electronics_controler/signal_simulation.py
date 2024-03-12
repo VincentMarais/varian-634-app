@@ -59,7 +59,7 @@ plt.grid(True)
 plt.show()
 
 mediane_par_instant = np.median(peaks_voltages)
-moyenne_pic=np.mean(peaks_voltages)
+moyenne_pic = np.mean(peaks_voltages)
 print("mediane_par_instant", mediane_par_instant)
 print("moyenne_pic", moyenne_pic )
 
@@ -79,7 +79,8 @@ for i in range(N):
     medianes.append(mediane_par_instant)
 
 x_2 = np.arange(N)
-    
+
+
 
 # Calcul de la médiane à chaque instant
 
