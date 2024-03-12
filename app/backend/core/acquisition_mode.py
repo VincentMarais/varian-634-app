@@ -138,15 +138,22 @@ class Varian634AcquisitionMode:
             # Store measurement data for plotting
             voltages_reference = np.append(voltages_reference, voltage_reference)
             voltages_sample= np.append(voltages_sample, voltage_sample)
+
+            print("voltages_reference :", voltages_reference, "type", voltages_reference.dtype)
+            print("voltages_sample :", voltages_sample, "type", voltages_sample.dtype)
             position = i * step
             no_screw = np.append(no_screw, position + step)
+            print("no_screw :", no_screw , "type", no_screw.dtype)
             wavelengths = np.append(wavelengths, self.signal_processing.calculate_wavelength(position))
-            
+            print("wavelengths :", wavelengths, "type", wavelengths.dtype)
             absorbances= np.append(absorbances, np.log10(voltage_sample/voltage_reference))
+            print("absorbances :", absorbances, "type", absorbances.dtype)
+
             # Save data incrementally             
             title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "Tension reference (Volt)", "Tension echantillon (Volt)", 
                                   "pas de vis (mm)"]
-            datas = [wavelengths, absorbances, voltage_reference, voltage_sample, no_screw]
+            # .tolist() because all data was in numpy.float64 and that create conflict with 
+            datas = [wavelengths, absorbances, voltages_reference, voltages_sample, no_screw]
             title_file = "raw_data_" + self.title_file_sample
             self.experim_manager.save_data_csv(self.path, datas, title_data_acquisition, title_file)            
             time.sleep(time_per_step)# Wait for diffraction grating adjustment

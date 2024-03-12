@@ -11,7 +11,7 @@ import os
 import datetime
 import csv
 import itertools
-
+import time
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -50,6 +50,7 @@ class ExperimentManager:
         path_file = f"{path}/{file_name}.csv"
         # Transpose the list of data
         data_transposed = list(itertools.zip_longest(*data_list))
+        print(data_transposed)
         with open(path_file, 'w', newline='', encoding='utf-8') as file_csv:
             writer = csv.writer(file_csv)
             # Write titles as the first line
@@ -360,9 +361,13 @@ if __name__ == "__main__":
     #experiment_manager.creation_directory_date_slot()
     [PATH, DATE] = experiment_manager.creation_directory_date_slot(PATH)
     print([PATH, DATE])
-    A = np.array([4.03333, 5.03333, 6])
-    A = np.append(A, 2.30004774564564)
-    experiment_manager.save_data_csv(path = PATH, data_list=[[1, 2, 3], A, np.array([1.03333]), np.array([23,5,5,4,3,1])], title_list=['Absorbance', 'Longueur d\'onde (nm)', 'C', "Temps (s)"], file_name='nom_fichier')
+    absorbances = np.array([1.03333, 1.555,1.4556])
+    for i in range(0,10):
+        absorbance = np.mean(absorbances)
+        absorbances = np.append(absorbances, absorbance)
+        experiment_manager.save_data_csv(path = PATH, data_list=[absorbances , np.array([1.03333]), np.array([23,5,5,4,3,1]), np.array([23,5,5,4,3,1])], title_list=['Absorbance', 'Longueur d\'onde (nm)', 'C', "Temps (s)"], file_name='nom_fichier')
+        time.sleep(0.5)
 
+    
 
     
