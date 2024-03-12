@@ -430,11 +430,15 @@ if __name__ == "__main__":
     print("Absorbance baseline et non baseline")
 
     data = pd.read_csv(file, encoding='ISO-8859-1')
+    """
     voltage_1 = data["Tension photodiode 1 (Volt)"]
     voltage_2 = data["Tension photodiode 2 (Volt)"]
     screw = data["pas de vis (mm)"]
     WAVELENGTH = np.array([denoise.calculate_wavelength(p) for p in screw])
-    absorbance_no_baseline = np.log10(np.array(voltage_1)/np.array(voltage_2))
+    absorbance_no_baseline = np.log10(np.array(voltage_1)/np.array(voltage_2))"""
+    screw = np.linspace(0, 17, 200)
+    WAVELENGTH = [denoise.calculate_wavelength(p) for p in list(screw)]
+    absorbance_no_baseline = data["Absorbance"]
   
 
         # Seuil de hauteur pour la détection des pics
@@ -445,17 +449,18 @@ if __name__ == "__main__":
 
     # Extraire les hauteurs des pics
     hauteurs_pics = proprietes_pics['peak_heights']
-    print("WAVELENGTH[indices_pics]", WAVELENGTH[indices_pics])
     # Afficher le signal et les pics détectés
   
+    indices_pics = np.asarray(indices_pics, dtype=int)
 
     plt.plot(WAVELENGTH, absorbance_no_baseline, label='Absorbance bromophénol sans ligne de base')    
     plt.plot(WAVELENGTH, y , label='Absorbance bromophénol aspls')
     plt.axhline(y=hauteur_seuil, color='r', linestyle='--', label='Seuil de hauteur')
     plt.scatter(WAVELENGTH[indices_pics], y[indices_pics], label='Pics détectés', color='red')
     # Annoter chaque pic avec ses coordonnées
-    for i, txt in enumerate(indices_pics):
-        plt.text(WAVELENGTH[txt], y[txt], f'({WAVELENGTH[txt]:.2f}, {y[txt]:.2f})', fontsize=8)
+    for txt_index in indices_pics:
+        plt.text(WAVELENGTH[txt_index], y[txt_index], f'({WAVELENGTH[txt_index]:.2f}, {y[txt_index]:.2f})', fontsize=8)
+
     plt.legend()
     plt.show()
     absorb = denoise.correction_baseline(WAVELENGTH,absorbance_no_baseline)
