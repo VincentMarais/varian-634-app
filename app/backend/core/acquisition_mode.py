@@ -88,7 +88,7 @@ class Varian634AcquisitionMode:
         time.sleep(1)
         self.motors_controller.move_screw(course_initial)
         time.sleep(course_initial*60/10)
-        return step, number_measurements
+        return course_initial, step, number_measurements
 
 
     def perform_step_measurement(self):
@@ -109,7 +109,7 @@ class Varian634AcquisitionMode:
 
    
 
-    def precision_mode(self, step, number_measurements):
+    def precision_mode(self, course_initial, step, number_measurements):
         """
         Performs precise measurements across a range of positions, calculates wavelength, and stores results.
 
@@ -141,12 +141,12 @@ class Varian634AcquisitionMode:
 
             print("voltages_reference :", voltages_reference, "type", voltages_reference.dtype)
             print("voltages_sample :", voltages_sample, "type", voltages_sample.dtype)
-            position = i * step
+            position = course_initial + i * step
             no_screw = np.append(no_screw, position + step)
             print("no_screw :", no_screw , "type", no_screw.dtype)
             wavelengths = np.append(wavelengths, self.signal_processing.calculate_wavelength(position))
             print("wavelengths :", wavelengths, "type", wavelengths.dtype)
-            absorbances= np.append(absorbances, np.log10(voltage_sample/voltage_reference))
+            absorbances= np.append(absorbances, np.log10(voltage_reference/voltage_sample))
             print("absorbances :", absorbances, "type", absorbances.dtype)
 
             # Save data incrementally             
@@ -178,8 +178,8 @@ class Varian634AcquisitionMode:
         # state_motor_motor_slits 
         self.motors_controller.initialisation_motors(self.slot_size)
         
-        [step , number_measurements] = self.initialisation_setting(wavelenght_min, wavelenght_max, wavelenght_step)
-        data_acquisition = self.precision_mode(step, number_measurements)
+        [course_initial, step , number_measurements] = self.initialisation_setting(wavelenght_min, wavelenght_max, wavelenght_step)
+        data_acquisition = self.precision_mode(course_initial, step, number_measurements)
 
         # Data saving
         title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "Tension reference (Volt)", "Tension echantillon (Volt)", 
@@ -187,6 +187,6 @@ class Varian634AcquisitionMode:
         title_file = "raw_data_" + self.title_file_sample
         self.experim_manager.save_data_csv(self.path, data_acquisition, title_data_acquisition, title_file)  
         self.motors_controller.wait_for_idle()
-        self.motors_controller.reset_screw_position(step*number_measurements)   
-           
+        self.motors_controller.initialisation_motor_screw()   
+        self.motors_controller.wait_for_idle()        
         return data_acquisition[:2]

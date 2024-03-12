@@ -255,9 +255,7 @@ class GeneralMotorsController:
         Args:
             pin_mirror (list): Digital pin for the mirror position.
         """
-        pin = self.pin_limit_switch_mirror_cuves[0]
-        self.unlock_motors()
-        time.sleep(1) 
+        pin = self.pin_limit_switch_mirror_cuves[0]        
         self.unlock_motors()
         state = self.arduino_sensors.digital[pin].read()
 
@@ -272,8 +270,7 @@ class GeneralMotorsController:
             while state is True:
                 print("Cuvette 1 not reached because ", state)
                 state = self.arduino_sensors.digital[pin].read()
-                print(self.get_position_xyz())
-                
+                print(self.get_position_xyz())                
                 pos_y = self.get_position_xyz()[2]
                 self.move_mirror_motor(distance=pos_y)
                 print(pos_y)        
@@ -286,8 +283,7 @@ class GeneralMotorsController:
             while state is True:
                 print("Cuvette 1 not reached because ", state)
                 state = self.arduino_sensors.digital[pin].read()
-                print(self.get_position_xyz())
-                
+                print(self.get_position_xyz())                
                 pos_y = self.get_position_xyz()[2]
                 self.move_mirror_motor(distance=pos_y)
                 print(pos_y)

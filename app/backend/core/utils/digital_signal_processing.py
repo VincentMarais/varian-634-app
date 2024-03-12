@@ -430,16 +430,13 @@ if __name__ == "__main__":
     print("Absorbance baseline et non baseline")
 
     data = pd.read_csv(file, encoding='ISO-8859-1')
-    """
-    voltage_1 = data["Tension photodiode 1 (Volt)"]
-    voltage_2 = data["Tension photodiode 2 (Volt)"]
+    
+    voltage_1 = data["Tension reference (Volt)"]
+    voltage_2 = data["Tension echantillon (Volt)"]
     screw = data["pas de vis (mm)"]
-    WAVELENGTH = np.array([denoise.calculate_wavelength(p) for p in screw])
-    absorbance_no_baseline = np.log10(np.array(voltage_1)/np.array(voltage_2))"""
-    screw = np.linspace(0, 17, 200)
-    WAVELENGTH = [denoise.calculate_wavelength(p) for p in list(screw)]
-    absorbance_no_baseline = data["Absorbance"]
-  
+    WAVELENGTH = np.array([denoise.calculate_wavelength(p+ 7.062148657089319)  for p in screw]) 
+    absorbance_no_baseline = np.log10(np.array(voltage_1)/np.array(voltage_2))
+    print(WAVELENGTH)
 
         # Seuil de hauteur pour la détection des pics
     hauteur_seuil = 0.1

@@ -180,9 +180,10 @@ class ExperimentManager:
 
     def link_cuvette_voltage(self, choice, voltage_photodiode_1, voltage_photodiode_2):
         """
-        Lie le choix de cuvette 1 de l'utilisateur à la photodiode
+        Lie le choix de la cuvette de la solution de référence
+            cuvette 1 de l'utilisateur à la photodiode
             Si l'utilisateur à mis l'échantillon dans la cuvette 1 alors 
-            la tension mesurer par la photodiode 1 sera celle de l'échantillon
+            la tension mesurer par la photodiode 1 sera celle de la référence
         """
 
         if choice == 'cuvette 1':

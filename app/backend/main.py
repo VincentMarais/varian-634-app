@@ -29,9 +29,9 @@ if __name__ == "__main__":
      
     USER_PATH =  "C:\\Users\\vimarais\\Documents\\Analyse"
     
-    baseline_scanning = Varian634AcquisitionMode(arduino_motors, arduino_sensors, SAMPLE_NAME, "cuvette 1", "Fente_1nm")
-    baseline_scanning.acquisition(780, 800, 1)
+    baseline_scanning = Varian634AcquisitionMode(arduino_motors, arduino_sensors, SAMPLE_NAME, "cuvette 2", "Fente_1nm")
+    baseline_scanning.acquisition(320, 660, 2)
 
-    #baseline_scanning.initialisation_setting(780, 790, 1)
+    #baseline_scanning.initialisation_setting(480, 660, 1)
 
     
