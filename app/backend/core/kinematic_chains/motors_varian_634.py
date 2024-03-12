@@ -256,24 +256,42 @@ class GeneralMotorsController:
             pin_mirror (list): Digital pin for the mirror position.
         """
         pin = self.pin_limit_switch_mirror_cuves[0]
-        state = self.arduino_sensors.digital[pin].read()
         self.unlock_motors()
         time.sleep(1) 
-        if state is True:            
-            self.unlock_motors()
-            self.execute_g_code('G90\n')            
-            self.move_mirror_motor(1)
+        self.unlock_motors()
+        state = self.arduino_sensors.digital[pin].read()
 
+        if state is False:
+            self.execute_g_code('G91\n')            
+            self.move_mirror_motor(0.5)
+            time.sleep(0.5*60/20)
+            state = self.arduino_sensors.digital[pin].read()         
+            self.execute_g_code('G90\n')   
+            time.sleep(1)
+            self.move_mirror_motor(1) 
             while state is True:
                 print("Cuvette 1 not reached because ", state)
                 state = self.arduino_sensors.digital[pin].read()
                 print(self.get_position_xyz())
-            
-            pos_y = self.get_position_xyz()[2]
-            self.move_mirror_motor(distance=pos_y)
-            print(pos_y)
-        else:
-            print("Cuvette 1 is reached")
+                
+                pos_y = self.get_position_xyz()[2]
+                self.move_mirror_motor(distance=pos_y)
+                print(pos_y)        
+
+            print("O.5")
+        else :
+            self.execute_g_code('G90\n')   
+            time.sleep(1)
+            self.move_mirror_motor(1) 
+            while state is True:
+                print("Cuvette 1 not reached because ", state)
+                state = self.arduino_sensors.digital[pin].read()
+                print(self.get_position_xyz())
+                
+                pos_y = self.get_position_xyz()[2]
+                self.move_mirror_motor(distance=pos_y)
+                print(pos_y)
+        
 
     def initialisation_motor_slits(self, slit):
         """
@@ -406,7 +424,7 @@ if __name__ == "__main__":
     #motors_controller.initialize_end_stop([2, 3, 4, 5])
     #time.sleep(1)
     motors_controller.initialize_end_stop([2, 3, 4, 5, 6])
-    motors_controller.move_screw(3.002186133666458)
+    motors_controller.initialize_mirror_position()
     #motors_controller.initialisation_motor_slits("Fente_0_5nm")
 
     """
