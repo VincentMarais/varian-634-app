@@ -4,7 +4,7 @@ from threading import Lock
 from flask import Flask, request
 from flask_socketio import SocketIO
 import serial
-from backend.core.acquisition_mode import Varian634AcquisitionMode
+from core.acquisition_mode import Varian634AcquisitionMode
 from pyfirmata import Arduino
 
 

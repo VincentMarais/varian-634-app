@@ -22,14 +22,14 @@ import os
 import numpy as np
 
 # Motors
-from backend.core.kinematic_chains.motors_varian_634 import GeneralMotorsController
+from core.kinematic_chains.motors_varian_634 import GeneralMotorsController
 
 # Voltage acquisition
-from backend.core.electronics_controler.ni_pci_6221 import VoltageAcquisition
+from core.electronics_controler.ni_pci_6221 import VoltageAcquisition
 
 # Data processing
-from backend.core.utils.experiment_manager import ExperimentManager
-from backend.core.utils.digital_signal_processing import PhotodiodeNoiseReducer
+from core.utils.experiment_manager import ExperimentManager
+from core.utils.digital_signal_processing import PhotodiodeNoiseReducer
 
 
 class Varian634AcquisitionMode:

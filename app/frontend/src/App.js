@@ -11,7 +11,7 @@ const App = () => {
 
   useEffect(() => {
     if (socket) {
-      socket.on('updateSensorData', (data) => {
+      socket.on('update_data', (data) => {
         setAbsorbanceData(prevData => [...prevData, data]);
       });
     }
@@ -39,7 +39,7 @@ const App = () => {
 
 
   const downloadCsv = () => {
-    const csvRows = ['Longueur d\'onde (nm),Absorbance', ...AbsorbanceData.map(d => `${d.data_x},${d.data_y}`)];
+    const csvRows = ['Longueur d\'onde (nm),Absorbance', ...AbsorbanceData.map(d => `${d.wavelength},${d.absorbance}`)];
     const csvString = csvRows.join('\n');
     const blob = new Blob([csvString], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);

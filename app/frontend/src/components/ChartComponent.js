@@ -23,14 +23,14 @@ ChartJS.register(
 
 const ChartComponent = ({ AbsorbanceData }) => {
   // Générer des labels basés sur l'indice i
-  const labels = AbsorbanceData.map((data, data_x ) => data_x);
+  const labels = AbsorbanceData.map((data, wavelength ) => wavelength);
 
   const data = {
     labels,
     datasets: [
       {
         label: 'Absorbance',
-        data: AbsorbanceData.map(data => data.data_y),
+        data: AbsorbanceData.map(absorbance => data.absorbance),
         fill: true,
         backgroundColor: 'rgb(255, 33, 56)',
         borderColor: 'rgba(255, 125, 71, 1)',
