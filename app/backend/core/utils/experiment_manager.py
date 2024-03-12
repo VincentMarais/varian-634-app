@@ -24,7 +24,7 @@ class ExperimentManager:
     A class to manage and analyze experimental data, including file management, data visualization, and user interaction.
     """
 
-    def __init__(self, sample_analyzed_name):
+    def __init__(self, sample_analyzed_name, slot_size):
         """
         Initializes the ExperimentManager with the name of the chemical species being analyzed.
 
@@ -32,7 +32,8 @@ class ExperimentManager:
             sample_analyzed_name (str): The name of the chemical species analyzed in the experiments.
         """
         self.sample_analyzed_name = sample_analyzed_name
-    
+        self.slot_size = slot_size 
+
     def save_data_csv(self, path, data_list, title_list, file_name):
         """
         Transforms and saves the provided data to a CSV file.
@@ -117,18 +118,14 @@ class ExperimentManager:
             path (str): The base path where the new directory will be created.
 
         Returns:
-            tuple: Contains the path, date string, and slot size.
+            tuple: Contains the path, date string.
         """
-        path = self.directory_year_month_day(path)
-        slot_size = self.validate_user_input(
-            "Slot size: Fente_2nm, Fente_1nm, Fente_0_5nm, Fente_0_2nm: ",
-            ['Fente_2nm', 'Fente_1nm', 'Fente_0_5nm', 'Fente_0_2nm']
-        )
+        path = self.directory_year_month_day(path)        
         date_today = datetime.date.today()
         date_str = date_today.strftime("%d_%m_%Y")
-        path = os.path.join(path, slot_size)
+        path = os.path.join(path, self.slot_size)
         self.create_directory(path)
-        return path, date_str, slot_size
+        return path, date_str
 
 
 

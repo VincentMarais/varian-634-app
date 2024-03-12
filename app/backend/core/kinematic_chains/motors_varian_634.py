@@ -406,8 +406,8 @@ if __name__ == "__main__":
     #motors_controller.initialize_end_stop([2, 3, 4, 5])
     #time.sleep(1)
     motors_controller.initialize_end_stop([2, 3, 4, 5, 6])
-
-    motors_controller.initialisation_motor_slits("Fente_0_5nm")
+    motors_controller.move_screw(3.002186133666458)
+    #motors_controller.initialisation_motor_slits("Fente_0_5nm")
 
     """
     while True:

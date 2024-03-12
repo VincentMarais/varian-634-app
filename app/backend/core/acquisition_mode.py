@@ -39,7 +39,7 @@ class Varian634AcquisitionMode:
     signals from sensors, and processes these signals to compute absorbance and other metrics.
     """
 
-    def __init__(self, arduino_motors_instance, arduino_sensors_instance, sample_name, cuvette_choice):
+    def __init__(self, arduino_motors_instance, arduino_sensors_instance, sample_name, cuvette_choice, slot_size):
         """
         Initializes the Varian634BaselineScanning class.
 
@@ -59,10 +59,11 @@ class Varian634AcquisitionMode:
         # Init digital processing
         self.signal_processing = PhotodiodeNoiseReducer()
         self.peak_search_window = 60
+        self.slot_size = slot_size
         # Init experiment tools
         self.experim_manager = ExperimentManager(sample_name)  
         self.raw_data = os.path.join(os.getcwd() ,'raw_data') 
-        self.path, self.date, self.slot_size = self.experim_manager.creation_directory_date_slot(self.raw_data)
+        self.path, self.date = self.experim_manager.creation_directory_date_slot(self.raw_data)
         self.sample_name = sample_name
         self.cuvette_choice = cuvette_choice
         self.title_file_sample = f"{self.date}_{self.slot_size}_{self.sample_name}"
@@ -78,10 +79,13 @@ class Varian634AcquisitionMode:
         print("final_course : " , course_final)
         print("initialiale_course", course_initial)
         number_measurements = int( (wavelenght_max - wavelenght_min)/wavelength_step )
+        print("number_measurements", number_measurements)
         step = (course_final - course_initial)/number_measurements
         print("step", step)
         print(number_measurements)
+        self.motors_controller.unlock_motors()
         self.motors_controller.execute_g_code("G91")
+        time.sleep(1)
         self.motors_controller.move_screw(course_initial)
         time.sleep(course_initial/10)
         return step, number_measurements
@@ -151,7 +155,7 @@ class Varian634AcquisitionMode:
 
         return wavelengths, absorbances, voltages_reference, voltages_sample, no_screw
 
-    def acquisition(self, wavelenght_min, wavelenght_max, wavelenght_step, slot_size):
+    def acquisition(self, wavelenght_min, wavelenght_max, wavelenght_step):
         """
         Manages the complete acquisition process, including motor initialization and data saving.
 
@@ -165,7 +169,7 @@ class Varian634AcquisitionMode:
             The result of the precision mode operation, including wavelengths and absorbance values.
         """
         # state_motor_motor_slits 
-        self.motors_controller.initialisation_motors(slot_size)
+        self.motors_controller.initialisation_motors(self.slot_size)
         
         [step , number_measurements] = self.initialisation_setting(wavelenght_min, wavelenght_max, wavelenght_step)
         
