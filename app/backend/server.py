@@ -4,6 +4,29 @@ from threading import Lock
 from flask import Flask, request
 from flask_socketio import SocketIO
 import serial
+from backend.core.acquisition_mode import Varian634AcquisitionMode
+from pyfirmata import Arduino
+
+
+# INITIALIZATION MOTOR:
+
+COM_PORT_MOTORS = 'COM3'
+COM_PORT_SENSORS = 'COM9'
+BAUD_RATE = 115200
+INITIALIZATION_TIME = 2
+
+arduino_motors = serial.Serial(COM_PORT_MOTORS, BAUD_RATE)
+arduino_motors.write("\r\n\r\n".encode())  # encode to convert "\r\n\r\n"
+time.sleep(INITIALIZATION_TIME)  # Wait for initialization of GRBL
+arduino_motors.flushInput()  # Clear the input buffer by discarding its current contents.
+
+# INITIALIZATION Optical Fork:
+
+arduino_sensors = Arduino(COM_PORT_SENSORS)
+SAMPLE_NAME = "Bromophenol" 
+    
+USER_PATH =  "C:\\Users\\vimarais\\Documents\\Analyse"
+
 
 
 thread = None
@@ -12,7 +35,7 @@ thread_lock = Lock()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'VARIAN634!'
 socketio = SocketIO(app, cors_allowed_origins='*')
-ser = serial.Serial('COM4', 9600, timeout=1)
+baseline_scanning = Varian634AcquisitionMode(arduino_motors, arduino_sensors, socketio, SAMPLE_NAME, "cuvette 2", "Fente_1nm")
 
 sensor_data_running = False
 
@@ -20,7 +43,7 @@ sensor_data_running = False
 # Initialisation des variables globales pour stocker les paramètres
 wavelength_min = None
 wavelength_max = None
-step = None
+step_wavelength = None
 selected_cuvette = None
 selected_slit = None
 
@@ -40,27 +63,19 @@ def get_current_datetime():
     return now.strftime("%m/%d/%Y %H:%M:%S")
 
 
-def sensor_data_task():
-    global sensor_data_running, wavelength_min, wavelength_max, step
+
+
+def scanning_mode():
+    global sensor_data_running, wavelength_min, wavelength_max, step_wavelength
     sensor_data_running = True
-    print("Génération des valeurs du capteur")
-    number_measurements = int((wavelength_max - wavelength_min) / step)
-    print("nombre_mesures:", number_measurements)
-    for i in range(number_measurements + 1):
-        if not sensor_data_running:
-            print("Arrêt de la génération des données du capteur")
-            break
-        time.sleep(1)
-        data = ser.readline().decode('utf-8').rstrip()
-        if data:
-            print("Données:", data)
-            socketio.emit('updateSensorData', {'data_y': data, "data_x": i})
+    baseline_scanning.acquisition(wavelength_min, wavelength_max, step_wavelength)
+
 
 
 @socketio.on('startSensorData')
 def handle_start_sensor_data():
-    global wavelength_min, wavelength_max, step, sensor_data_running, selected_cuvette, selected_slits
-    if None in (wavelength_min, wavelength_max, step) or not selected_cuvette or not selected_slits:
+    global wavelength_min, wavelength_max, step_wavelength, sensor_data_running, selected_cuvette, selected_slits
+    if None in (wavelength_min, wavelength_max, step_wavelength) or not selected_cuvette or not selected_slits:
         error_msg = "Impossible de démarrer la génération de données du capteur : un ou plusieurs paramètres ne sont pas définis ou invalides."
         print(error_msg)
         socketio.emit('error', {'message': error_msg})
@@ -68,17 +83,17 @@ def handle_start_sensor_data():
 
     print("Début de la génération de données du capteur")
     sensor_data_running = True
-    sensor_data_task()  # Démarrage effectif de la génération de données
+    scanning_mode()  # Démarrage effectif de la génération de données
 
 @socketio.on('setScanningParams')
 def handle_set_wave_length_params(json):
-    global wavelength_min, wavelength_max, step, selected_cuvette, selected_slits
+    global wavelength_min, wavelength_max, step_wavelength, selected_cuvette, selected_slits
     wavelength_min = float(json['wavelengthMin'])
     wavelength_max = float(json['wavelengthMax'])
-    step = float(json['step'])
+    step_wavelength = float(json['step'])
     selected_cuvette = json.get('selectedCuvette', '')
     selected_slits = json.get('selectedSlits', [])
-    print(f'Paramètres de longueur d\'onde reçus : Min = {wavelength_min}, Max = {wavelength_max}, Pas = {step}, Cuvette = {selected_cuvette}, Lames = {selected_slits}')
+    print(f'Paramètres de longueur d\'onde reçus : Min = {wavelength_min}, Max = {wavelength_max}, Pas = {step_wavelength}, Cuvette = {selected_cuvette}, Lames = {selected_slits}')
 
 @socketio.on('stopSensorData')
 def handle_stop_sensor_data():

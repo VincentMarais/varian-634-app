@@ -22,14 +22,14 @@ import os
 import numpy as np
 
 # Motors
-from core.kinematic_chains.motors_varian_634 import GeneralMotorsController
+from backend.core.kinematic_chains.motors_varian_634 import GeneralMotorsController
 
 # Voltage acquisition
-from core.electronics_controler.ni_pci_6221 import VoltageAcquisition
+from backend.core.electronics_controler.ni_pci_6221 import VoltageAcquisition
 
 # Data processing
-from core.utils.experiment_manager import ExperimentManager
-from core.utils.digital_signal_processing import PhotodiodeNoiseReducer
+from backend.core.utils.experiment_manager import ExperimentManager
+from backend.core.utils.digital_signal_processing import PhotodiodeNoiseReducer
 
 
 class Varian634AcquisitionMode:
@@ -39,7 +39,7 @@ class Varian634AcquisitionMode:
     signals from sensors, and processes these signals to compute absorbance and other metrics.
     """
 
-    def __init__(self, arduino_motors_instance, arduino_sensors_instance, sample_name, cuvette_choice, slot_size):
+    def __init__(self, arduino_motors_instance, arduino_sensors_instance, socketio, sample_name, cuvette_choice, slot_size):
         """
         Initializes the Varian634BaselineScanning class.
 
@@ -61,6 +61,7 @@ class Varian634AcquisitionMode:
         self.peak_search_window = 60
         self.slot_size = slot_size
         # Init experiment tools
+        self.socketio = socketio
         self.experim_manager = ExperimentManager(sample_name, slot_size)  
         self.raw_data = os.path.join(os.getcwd() ,'raw_data') 
         self.path, self.date = self.experim_manager.creation_directory_date_slot(self.raw_data)
@@ -144,9 +145,11 @@ class Varian634AcquisitionMode:
             position = course_initial + i * step
             no_screw = np.append(no_screw, position + step)
             print("no_screw :", no_screw , "type", no_screw.dtype)
-            wavelengths = np.append(wavelengths, self.signal_processing.calculate_wavelength(position))
+            wavelength = self.signal_processing.calculate_wavelength(position)
+            wavelengths = np.append(wavelengths, wavelength)
             print("wavelengths :", wavelengths, "type", wavelengths.dtype)
-            absorbances= np.append(absorbances, np.log10(voltage_reference/voltage_sample))
+            absorbance = np.log10(voltage_reference/voltage_sample)
+            absorbances= np.append(absorbances, absorbance)
             print("absorbances :", absorbances, "type", absorbances.dtype)
 
             # Save data incrementally             
@@ -155,9 +158,10 @@ class Varian634AcquisitionMode:
             # .tolist() because all data was in numpy.float64 and that create conflict with 
             datas = [wavelengths, absorbances, voltages_reference, voltages_sample, no_screw]
             title_file = "raw_data_" + self.title_file_sample
-            self.experim_manager.save_data_csv(self.path, datas, title_data_acquisition, title_file)            
+            self.experim_manager.save_data_csv(self.path, datas, title_data_acquisition, title_file) 
+            self.socketio.emit('update_data', {'wavelength': wavelength.tolist(), 'absorbance': absorbance.tolist()})          
             time.sleep(time_per_step)# Wait for diffraction grating adjustment
-        
+            return wavelength, absorbance 
         # Calculate absorbance based on measurement choice         
 
         return wavelengths, absorbances, voltages_reference, voltages_sample, no_screw
@@ -180,7 +184,7 @@ class Varian634AcquisitionMode:
         
         [course_initial, step , number_measurements] = self.initialisation_setting(wavelenght_min, wavelenght_max, wavelenght_step)
         data_acquisition = self.precision_mode(course_initial, step, number_measurements)
-
+        self.socketio.emit('update_data', {'wavelength': data_acquisition[0].tolist(), 'absorbance': data_acquisition[1].tolist()})
         # Data saving
         title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "Tension reference (Volt)", "Tension echantillon (Volt)", 
                                   "pas de vis (mm)"]
