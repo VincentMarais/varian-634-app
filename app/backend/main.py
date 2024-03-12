@@ -3,8 +3,7 @@ import time
 # MODES
 from core.acquisition_mode import Varian634AcquisitionMode
 
-# TOOLS
-from core.utils.experiment_manager import ExperimentManager
+
 
 
 if __name__ == "__main__":
@@ -27,12 +26,11 @@ if __name__ == "__main__":
 
     arduino_sensors = Arduino(COM_PORT_SENSORS)
     SAMPLE_NAME = "Bromophenol" 
-    experim_manager = ExperimentManager(SAMPLE_NAME)
      
     USER_PATH =  "C:\\Users\\vimarais\\Documents\\Analyse"
     
     baseline_scanning = Varian634AcquisitionMode(arduino_motors, arduino_sensors, SAMPLE_NAME, "cuvette 1", "Fente_1nm")
-    baseline_scanning.acquisition(780, 790, 1)
+    baseline_scanning.acquisition(780, 800, 1)
 
     #baseline_scanning.initialisation_setting(780, 790, 1)
 

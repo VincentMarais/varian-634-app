@@ -168,26 +168,21 @@ class VoltageAcquisition:
         - min_voltages (float) :  Mean of the measured voltages.
         """
 
-        mean_voltages=[]
-        peak_search_window = (self.samples_per_channel/self.frequency[0])*0.9
+        min_voltages=[]
         with nidaqmx.Task() as task_impulsion, nidaqmx.Task() as task_voltage:
             self.configure_task_impulsion(task_impulsion)
             self.configure_task_voltage(task_voltage, physical_channel)
             for _ in range(3):
                 # Acquisition des données
                 voltages = task_voltage.read(number_of_samples_per_channel=self.samples_per_channel)
-                peaks, _ = find_peaks(voltages, distance=peak_search_window)
                 # Conversion des données en un tableau numpy pour faciliter les calculs
-                # Convertir les indices des pics en un array python
-                peak_voltages = np.array([voltages[i] for i in peaks])
-                print(peak_voltages)
-                print(np.shape(peak_voltages))
+                voltages = np.array(voltages)
                 # Trouver et stocker le minimum
-                mean_voltage = np.mean(peak_voltages)
-                mean_voltages.append(mean_voltage)
+                min_voltage = np.min(voltages)
+                min_voltages.append(min_voltage)
             task_impulsion.stop()
             task_voltage.stop()
-            mean = float(np.mean(mean_voltages))
+            mean = np.mean(min_voltages)
         return mean
 
 

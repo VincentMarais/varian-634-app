@@ -61,7 +61,7 @@ class Varian634AcquisitionMode:
         self.peak_search_window = 60
         self.slot_size = slot_size
         # Init experiment tools
-        self.experim_manager = ExperimentManager(sample_name)  
+        self.experim_manager = ExperimentManager(sample_name, slot_size)  
         self.raw_data = os.path.join(os.getcwd() ,'raw_data') 
         self.path, self.date = self.experim_manager.creation_directory_date_slot(self.raw_data)
         self.sample_name = sample_name
@@ -87,7 +87,7 @@ class Varian634AcquisitionMode:
         self.motors_controller.execute_g_code("G91")
         time.sleep(1)
         self.motors_controller.move_screw(course_initial)
-        time.sleep(course_initial/10)
+        time.sleep(course_initial*60/10)
         return step, number_measurements
 
 
@@ -146,7 +146,7 @@ class Varian634AcquisitionMode:
             # Save data incrementally             
             title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "Tension rÃ©fÃ©rence (Volt)", "Tension Ã©chantillon (Volt)", 
                                   "pas de vis (mm)"]
-            datas = [wavelengths, absorbances, voltage_reference, voltage_sample, no_screw]
+            datas = [list(wavelengths), list(absorbances), voltage_reference, voltage_sample, no_screw]
             title_file = "raw_data_" + self.title_file_sample
             self.experim_manager.save_data_csv(self.path, datas, title_data_acquisition, title_file)            
             time.sleep(time_per_step)# Wait for diffraction grating adjustment
@@ -172,7 +172,6 @@ class Varian634AcquisitionMode:
         self.motors_controller.initialisation_motors(self.slot_size)
         
         [step , number_measurements] = self.initialisation_setting(wavelenght_min, wavelenght_max, wavelenght_step)
-        
         data_acquisition = self.precision_mode(step, number_measurements)
 
         # Data saving
