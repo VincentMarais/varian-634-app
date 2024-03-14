@@ -180,16 +180,15 @@ class ExperimentManager:
 
     def link_cuvette_voltage(self, choice, voltage_photodiode_1, voltage_photodiode_2):
         """
-        Lie le choix de la cuvette de la solution de référence
-            cuvette 1 de l'utilisateur à la photodiode
+        Lie le choix de la cuvette pour l'échantillon de l'utilisateur
             Si l'utilisateur à mis l'échantillon dans la cuvette 1 alors 
-            la tension mesurer par la photodiode 1 sera celle de la référence
+            la tension mesurer par la photodiode 1 sera celle de l'échantillon
         """
 
         if choice == 'cuvette 1':
-            reference_solution, sample_solution = (voltage_photodiode_1, voltage_photodiode_2)
+            sample_solution, reference_solution  = (voltage_photodiode_1, voltage_photodiode_2)
         else:
-            reference_solution, sample_solution = (voltage_photodiode_2, voltage_photodiode_1)
+            sample_solution, reference_solution  = (voltage_photodiode_2, voltage_photodiode_1)
         
         return reference_solution, sample_solution
     
@@ -368,6 +367,7 @@ if __name__ == "__main__":
         absorbances = np.append(absorbances, absorbance)
         experiment_manager.save_data_csv(path = PATH, data_list=[absorbances , np.array([1.03333]), np.array([23,5,5,4,3,1]), np.array([23,5,5,4,3,1])], title_list=['Absorbance', 'Longueur d\'onde (nm)', 'C', "Temps (s)"], file_name='nom_fichier')
         time.sleep(0.5)
+
 
     
 

@@ -1,0 +1,14 @@
+Balayage de 420nm à 700nm d'une solution de blue de bromophenol : 
+raw_data_12_03_2024_Fente_1nm_Bromophenol.csv
+raw_data_12_03_2024_Fente_2nm_Bromophenol.csv
+
+Balayage de 320nm à 660nm d'une solution de blue de bromophenol : 
+raw_data_12_03_2024_Fente_1nm_Bromophenol(1).csv
+
+Dans les figure .pdf
+
+plt.plot(WAVELENGTH, absorbance_no_baseline, label='Absorbance bromophénol sans ligne de base')    
+plt.plot(WAVELENGTH, y , label='Absorbance bromophénol aspls') : ligne de base réalisé 
+avec l'algorithme aspls
+plt.plot(WAVELENGTH, absor_fit, label='Absorbance bromophénol fit polyfit') :  ligne de base réalisé 
+avec le calibrage 23_02_2024

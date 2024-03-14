@@ -2,7 +2,7 @@ import time
 
 # MODES
 from core.acquisition_mode import Varian634AcquisitionMode
-
+from core.electronics_controler.ni_pci_6221 import ElectronicVarian634
 
 
 
@@ -18,16 +18,13 @@ if __name__ == "__main__":
     INITIALIZATION_TIME = 2
 
     arduino_motors = serial.Serial(COM_PORT_MOTORS, BAUD_RATE)
-    arduino_motors.write("\r\n\r\n".encode())  # encode to convert "\r\n\r\n"
-    time.sleep(INITIALIZATION_TIME)  # Wait for initialization of GRBL
-    arduino_motors.flushInput()  # Clear the input buffer by discarding its current contents.
+    ElectronicVarian634().initialize_arduino_motor(arduino_motors)
 
     # INITIALIZATION Optical Fork:
 
     arduino_sensors = Arduino(COM_PORT_SENSORS)
     SAMPLE_NAME = "Bromophenol" 
      
-    USER_PATH =  "C:\\Users\\vimarais\\Documents\\Analyse"
     
     baseline_scanning = Varian634AcquisitionMode(arduino_motors, arduino_sensors, SAMPLE_NAME, "cuvette 2", "Fente_2nm")
     baseline_scanning.acquisition(560, 630, 1)

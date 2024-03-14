@@ -25,7 +25,7 @@ import numpy as np
 from core.kinematic_chains.motors_varian_634 import GeneralMotorsController
 
 # Voltage acquisition
-from core.electronics_controler.ni_pci_6221 import VoltageAcquisition
+from backend.core.electronics_controler.ni_pci_6221 import ElectronicVarian634
 
 # Data processing
 from core.utils.experiment_manager import ExperimentManager
@@ -53,7 +53,7 @@ class Varian634AcquisitionMode:
         self.arduino_sensors = arduino_sensors_instance
         self.motors_controller = GeneralMotorsController(self.arduino_motors, self.arduino_sensors)
         self.slits_position = [0, 0.07, 0.07, 0.08] # position of slits [2nm, 1nm, 0.5nm, 0.2nm]
-        self.daq = VoltageAcquisition()
+        self.daq = ElectronicVarian634()
         self.channels = ['Dev1/ai0', 'Dev1/ai1']
 
         # Init digital processing

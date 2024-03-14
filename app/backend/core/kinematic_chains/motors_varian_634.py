@@ -58,6 +58,11 @@ class GeneralMotorsController:
         self.pin_limit_switch_mirror_cuves = [3]
 
 
+    def initialize_arduino_motor(self):
+        self.arduino_motors.write("\r\n\r\n".encode())  # encode to convert "\r\n\r\n"
+        time.sleep(INITIALIZATION_TIME=2)  # Wait for initialization of GRBL
+        self.arduino_motors.flushInput()  # Clear the input buffer by discarding its current contents.
+
     def search_word(self, data, word):
         """
         Rearch a word in the list
@@ -237,6 +242,9 @@ class GeneralMotorsController:
         # Allow the iterator to start
         time.sleep(1)
 
+    def read_sensor(self, sensor):
+        return self.arduino_sensors.digital[sensor].read()
+
     def wait_sensor(self, digital_value, pin):
         """
         Attend que le capteur change d'état
@@ -288,6 +296,15 @@ class GeneralMotorsController:
                 self.move_mirror_motor(distance=pos_y)
                 print(pos_y)
         
+
+    def move_slits_with_limits(self, direction, step, limit_sensor, limit_value, max_retries=5):
+        retries = 0
+        while (limit_value if direction > 0 else not limit_value) and retries < max_retries:
+            self.unlock_motors()
+            self.move_slits(step)
+            limit_value = self.read_sensor(limit_sensor)
+            retries += 1
+            time.sleep(0.5)
 
     def initialisation_motor_slits(self, slit):
         """
@@ -389,12 +406,7 @@ class GeneralMotorsController:
         self.initialisation_motor_slits(slip)
         self.wait_for_idle()
 
-        """
-        if state_motor_motor_slits:            
-            self.initialisation_motor_slits(slip)
-        else:
-            pass
-        """
+
 if __name__ == "__main__":
 
     # MOTOR INITIALIZATION:
@@ -404,15 +416,15 @@ if __name__ == "__main__":
     INITIALIZATION_TIME = 2
 
     arduino_motors = serial.Serial(COM_PORT_MOTORS, BAUD_RATE)
-    arduino_motors.write("\r\n\r\n".encode())  # encode to convert "\r\n\r\n"
-    time.sleep(INITIALIZATION_TIME)   # Wait for GRBL initialization
-    arduino_motors.flushInput()  # Flush the input buffer, removing all its contents.
+    
 
     # OPTICAL FORK INITIALIZATION:
 
     arduino_sensors = Arduino(COM_PORT_SENSORS)
 
     motors_controller = GeneralMotorsController(arduino_motors, arduino_sensors)
+
+    motors_controller.initialize_arduino_motor()
 
 
     # Test set_motors_speed function
@@ -423,11 +435,3 @@ if __name__ == "__main__":
     motors_controller.initialize_mirror_position()
     #motors_controller.initialisation_motor_slits("Fente_0_5nm")
 
-    """
-    while True:
-        pin_limit= 6
-        print(pin_limit)
-        pin_limit_value = arduino_sensors.digital[pin_limit].read() # False : fente / True pas fente
-        print(pin_limit_value)
-        time.sleep(0.5)
-    """

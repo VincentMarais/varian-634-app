@@ -1,7 +1,7 @@
 import time
 from datetime import datetime
 from threading import Lock
-from flask import Flask, request
+from flask import Flask
 from flask_socketio import SocketIO
 import serial
 from core.acquisition_mode import Varian634AcquisitionMode
@@ -25,7 +25,6 @@ arduino_motors.flushInput()  # Clear the input buffer by discarding its current 
 arduino_sensors = Arduino(COM_PORT_SENSORS)
 SAMPLE_NAME = "Bromophenol" 
     
-USER_PATH =  "C:\\Users\\vimarais\\Documents\\Analyse"
 
 
 
@@ -40,12 +39,14 @@ baseline_scanning = Varian634AcquisitionMode(arduino_motors, arduino_sensors, so
 sensor_data_running = False
 
 
-# Initialisation des variables globales pour stocker les paramètres
+# Initialisation des variables globales pour stocker les paramètres du mode scanning
 wavelength_min = None
 wavelength_max = None
 step_wavelength = None
 selected_cuvette = None
 selected_slit = None
+
+# Initialisation des variables globales pour stocker les paramètres du mode cinétique
 
 
 @socketio.on('setComPort')

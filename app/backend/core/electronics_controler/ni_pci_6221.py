@@ -40,7 +40,7 @@ from pyfirmata import util, INPUT
 from scipy.signal import find_peaks
 
 
-class VoltageAcquisition:
+class ElectronicVarian634:
     """
     A class that allows reading the voltage across the photodiodes using an NI-PCI 6221 card.
     """
@@ -231,6 +231,8 @@ class VoltageAcquisition:
             task_voltage.stop()
             
         return moment, mean_voltages
+
+
 
     
     def sensors_state(self, board, pin):
