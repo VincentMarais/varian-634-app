@@ -22,21 +22,44 @@ ChartJS.register(
 );
 
 const ChartComponent = ({ AbsorbanceData }) => {
-  // Générer des labels basés sur l'indice i
-  const labels = AbsorbanceData.map((data, wavelength ) => wavelength);
+  if (!AbsorbanceData || AbsorbanceData.length === 0) {
+    return <div>L'acquisition n'a pas commencé</div>;
+  }
+
+  // Group data by slitId
+  const groupedData = AbsorbanceData.reduce((acc, data) => {
+    const { slitId, data_x, data_y } = data;
+    if (!acc[slitId]) acc[slitId] = [];
+    acc[slitId].push({ data_x, data_y });
+    return acc;
+  }, {});
+
+  // Generate a global set of sorted unique labels for all groups
+  const globalLabels = [...new Set(AbsorbanceData.map(data => data.data_x))]
+                        .sort((a, b) => Number(a) - Number(b));
+
+  // Generate datasets
+  const datasets = Object.keys(groupedData).map((slitId, index) => {
+    const dataPoints = groupedData[slitId];
+
+    // Map globalLabels to ensure every label has a corresponding value or null
+    const mappedData = globalLabels.map(label => {
+      const dataPoint = dataPoints.find(dp => dp.data_x === label);
+      return dataPoint ? dataPoint.data_y : null;
+    });
+
+    return {
+      label: `Absorbance (${slitId})`,
+      data: mappedData,
+      fill: false,
+      borderColor: `hsl(${index * 90 % 360}, 60%, 50%)`,
+      pointBackgroundColor: `hsl(${index * 90 % 360}, 60%, 50%)`,
+    };
+  });
 
   const data = {
-    labels,
-    datasets: [
-      {
-        label: 'Absorbance',
-        data: AbsorbanceData.map(absorbance => data.absorbance),
-        fill: true,
-        backgroundColor: 'rgb(255, 33, 56)',
-        borderColor: 'rgba(255, 125, 71, 1)',
-        pointBackgroundColor: 'rgba(255, 99, 71, 2)',
-      },
-    ],
+    labels: globalLabels,
+    datasets,
   };
 
   const options = {
@@ -71,7 +94,7 @@ const ChartComponent = ({ AbsorbanceData }) => {
       },
       title: {
         display: true,
-        text: 'Scanning Varian 634',
+        text: 'Mode balayage VARIAN 634',
         font: {
           size: 18,
         },
@@ -80,7 +103,7 @@ const ChartComponent = ({ AbsorbanceData }) => {
   };
 
   return (
-    <div className="chart-container" style={{ width: '50%', height: '400px' }}>
+    <div className="chart-container" style={{ width: '100%', height: '500px' }}>
       <Line options={options} data={data} />
     </div>
   );

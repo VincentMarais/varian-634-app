@@ -6,71 +6,25 @@ import numpy as np
 from scipy.interpolate import UnivariateSpline
 import matplotlib.pyplot as plt
 import pandas as pd
-from scipy.signal import hilbert, savgol_filter
-from scipy.signal import find_peaks
-from scipy.sparse.linalg import spsolve
-from scipy import sparse
+from scipy.signal import hilbert, savgol_filter, find_peaks
 from pybaselines import Baseline
 
 
 
-class PhotodiodeNoiseReducer:
+class SignalProcessingVarian634:
     """
-    A class to reduce noise from photodiode signals.
-
-    ...
-
-    Methods
-    -------
-    negative_absorbance_correction(voltages_sample_reference, voltage_sample_analyzed):
-        Corrects the analyzed sample voltages based on reference sample voltages.
-
-    graph_digital_processing(data_x, datas_y, title_graph, titles_data_y):
-        Plots a digital signal processing graph.
-
-    fourier_transform(signal):
-        Performs Fourier transform on the input signal and displays the temporal and frequency domains.
-
-    hilbert_transform(signal):
-        Applies Hilbert transform to the input signal and plots the original signal and envelope.
-
-    simulation_gaussian_noise():
-        Simulates a signal with Gaussian noise and performs Fourier transform on it.
-
-    spline_interpolation(signal, smoothing_factor):
-        Applies cubic spline interpolation to the input signal and plots the original and interpolated signals.
-
-    sample_absorbance(absorbance_baseline, absorbance_scanning):
-        Reduces the difference between two photodiode signals.
-
-    voltage_possessing(door_function_width, voltage):
-        Performs voltage denoising using convolution with a smoothing window.
+    A class to reduce noise from photodiode signals. 
 
     """
 
     def __init__(self):
         pass
 
-    def negative_absorbance_correction(self, voltages_sample_reference, voltage_sample_analyzed):
-        """
-        Corrects the analyzed sample voltages based on reference sample voltages.
-
-        Parameters:
-            voltages_sample_reference (list): List of voltages measured at the photodiode terminals with the blank solution.
-            voltage_sample_analyzed (list): List of voltages measured at the photodiode terminals with the sample.
-
-        Returns:
-            tuple: Updated lists of voltages for reference sample and analyzed sample.
-        """
-        for i, (voltage_ref, voltage_analyzed) in enumerate(zip(voltages_sample_reference, voltage_sample_analyzed)):
-            if np.abs(voltage_ref) < np.abs(voltage_analyzed):
-                voltage_sample_analyzed[i] = voltage_ref
-        return voltages_sample_reference, voltage_sample_analyzed
-
-
+# Tools Signal processing
     def calculate_wavelength(self, position):
         """
         Calculates the wavelength based on the position.
+        Formule déterminé grâce au calibrage
         """
         return -32.02 * position + 886.13
     
@@ -106,6 +60,37 @@ class PhotodiodeNoiseReducer:
         plt.tight_layout()
         plt.show()
 
+
+# Mathematical tools
+        
+    def best_polyfit(self, x, y):
+        best_r2 = -np.inf
+        best_coefficients = None
+        x = np.array(x)
+        y = np.array(y)
+        
+        for degree in range(3):
+            coefficients = np.polyfit(x, y, degree)
+            # Ensure coefficients are array-like
+            coefficients = np.atleast_1d(coefficients)
+            
+            fitted_values = np.polyval(coefficients, x)
+            residuals = y - fitted_values
+            ss_res = np.sum(residuals ** 2)
+            ss_tot = np.sum((y - np.mean(y)) ** 2)
+            
+            # Handle case where ss_tot is zero
+            if ss_tot == 0:
+                r2 = float('nan')  # or some other value indicating an undefined R^2
+            else:
+                r2 = 1 - (ss_res / ss_tot)
+            
+            if r2 > best_r2:
+                best_r2 = r2
+                best_coefficients = coefficients
+        
+        return best_coefficients
+    
     def fourier_transform(self, signal):
         """
         Performs Fourier transform on the input signal and displays the temporal and frequency domains.
@@ -159,35 +144,6 @@ class PhotodiodeNoiseReducer:
         self.graph_digital_processing(x_datas, y_datas, 'Hilbert', titles_data_y)
         plt.show()
 
-    def simulation_gaussian_noise(self):
-        """
-        Simulates a signal with Gaussian noise and performs Fourier transform on it.
-
-        Returns:
-            None
-        """
-        amplitude = 1.0
-        frequency = 5.0
-        duration = 1.0
-        num_samples = 3000
-
-        time = np.linspace(0, duration, num_samples, endpoint=False)
-        sinusoidal_signal = amplitude * np.sin(2 * np.pi * frequency * time)
-        gaussian_noise = np.random.normal(0, 0.5, num_samples)
-        signal = sinusoidal_signal + gaussian_noise
-
-        plt.figure(figsize=(12, 4))
-        plt.plot(time, sinusoidal_signal, label='Sinusoidal Signal')
-        plt.plot(time, signal, label='Signal with Noise')
-        plt.xlabel('Time (s)')
-        plt.ylabel('Amplitude')
-        plt.legend()
-        plt.grid()
-        plt.tight_layout()
-        plt.show()
-        self.fourier_transform(signal)
-        self.fourier_transform(sinusoidal_signal)
-
     def spline_interpolation(self, x_data, signal, smoothing_factor):
         """
         Applies cubic spline interpolation to the input signal and plots the original and interpolated signals.
@@ -206,36 +162,6 @@ class PhotodiodeNoiseReducer:
         self.graph_digital_processing(x_data, y_datas, 'Spline', title_datas_y)
         return signal_spline
 
-    def sample_absorbance(self, absorbance_baseline, absorbance_scanning):
-        """
-        Reduces the difference between two photodiode signals. Because 
-        theoretically the absorbance A=0 with no cuvettes but is not 
-        true because two photodiodes is differente
-
-        Parameters:
-            absorbance_baseline (array): Baseline absorbance signal.
-            absorbance_scanning (array): Scanning absorbance signal.
-
-        Returns:
-            array: Sample absorbance signal.
-        """
-        absorbance_baseline_mean = np.mean(absorbance_baseline)
-        sample_absorbance = [absorbance_scanning[i] - absorbance_baseline_mean for i in range(len(absorbance_scanning))]
-        return sample_absorbance
-
-    def voltage_possessing(self, door_function_width, voltage):
-        """
-        Performs voltage denoising using convolution with a smoothing window.
-
-        Parameters:
-            door_function_width (int): Smoothing window size.
-            voltage (array): Input voltage signal.
-
-        Returns:
-            array: Denoised voltage signal.
-        """
-        voltage_convol = np.convolve(voltage, np.ones(door_function_width) / door_function_width, mode='same')
-        return voltage_convol
     
     def calculate_average_translation(self, list_A, list_B):
         """
@@ -262,66 +188,11 @@ class PhotodiodeNoiseReducer:
         n = len(list_A)  # Number of points
         average_x = sum_diff_x / n
         
-        return average_x
+        return average_x    
+
     
-    def aals(self, x, y, alpha=0.01, beta=0.01, tol=1e-5, max_iter=1000):
-        """
-        Adaptive Asymmetric Least Squares baseline estimation.
-
-        Parameters:
-        x (array_like): The independent variable (e.g. wavelength).
-        y (array_like): The dependent variable (e.g. signal).
-        alpha (float): The asymmetry parameter for the LS fit.
-        beta (float): The smoothing parameter for the running average.
-        tol (float): The tolerance for convergence.
-        max_iter (int): The maximum number of iterations.
-
-        Returns:
-        (array_like) The estimated baseline.
-        """
-        n = len(x)
-        y_hat = np.zeros_like(y)
-        resid = np.zeros_like(y)
-
-        # Initialize running average
-        window = int(n * beta)
-        if window % 2 == 0:
-            window += 1
-        ma = np.convolve(y, np.ones(window) / window, mode='same')
-
-        for i in range(max_iter):
-            # Compute residuals
-            y_hat[:-1] = ma[:-1] + alpha * (y[1:] - ma[:-1])
-            resid[:-1] = y[:-1] - y_hat[:-1]
-
-            # Update running average
-            ma = np.convolve(resid, np.ones(window) / window, mode='same')
-
-            # Check for convergence
-            if np.max(np.abs(resid[1:] - resid[:-1])) < tol:
-                break
-
-
-        return y_hat 
-    
-    def correction_baseline(self, wavelength, absorbance):
-        """
-        Corrige le gap en les deux photodiode, 
-        nous avons remarqué quand trançant le spectre du Xe sur les 
-        des photodiodes la Tension photodiode 1  = Tension phodiode_2 + a
-
-        Ce programme permet de déterminer a, afin d'avoir 
-        Tension photodiode 1  = Tension phodiode_2
-        et donc Absorbance_baseline = 0
-        """
-        absorbance_baseline = self.aals(wavelength, absorbance)
-        
-        absorbance_fit = savgol_filter(absorbance_baseline, window_length=15, polyorder=2, deriv=0, delta=0.01)
-
-        return absorbance_fit
-
-
-    def adjust_absorbance_algo(self, wavelength, absorbance):
+# Baseline correction
+    def baseline_correction_aspls(self, wavelength, absorbance):
         """
         Ajuste les valeurs d'absorbance en fonction de la baseline.
         
@@ -348,7 +219,10 @@ class PhotodiodeNoiseReducer:
         return absorbance_fit
     
 
-    def absorbance_corr(self, wavelength_baseline, absorbance_baseline, wavelenght, absorbance):
+    def baseline_correction_polyfit(self, wavelength_baseline, absorbance_baseline, wavelenght, absorbance):
+        """
+        
+        """
         wavelenght_baseline = np.array(wavelength_baseline)
         absorbance_baseline = np.array(absorbance_baseline)
         wavelenght = np.array(wavelenght)
@@ -363,38 +237,10 @@ class PhotodiodeNoiseReducer:
         return absorbance_fit
 
 
-    def best_polyfit(self, x, y):
-        best_r2 = -np.inf
-        best_coefficients = None
-        x = np.array(x)
-        y = np.array(y)
-        
-        for degree in range(3):
-            coefficients = np.polyfit(x, y, degree)
-            # Ensure coefficients are array-like
-            coefficients = np.atleast_1d(coefficients)
-            
-            fitted_values = np.polyval(coefficients, x)
-            residuals = y - fitted_values
-            ss_res = np.sum(residuals ** 2)
-            ss_tot = np.sum((y - np.mean(y)) ** 2)
-            
-            # Handle case where ss_tot is zero
-            if ss_tot == 0:
-                r2 = float('nan')  # or some other value indicating an undefined R^2
-            else:
-                r2 = 1 - (ss_res / ss_tot)
-            
-            if r2 > best_r2:
-                best_r2 = r2
-                best_coefficients = coefficients
-        
-        return best_coefficients
-
 
 
 if __name__ == "__main__":
-    denoise = PhotodiodeNoiseReducer()
+    signal_processing = SignalProcessingVarian634()
 
     import tkinter as tk
     from tkinter import filedialog
@@ -423,7 +269,7 @@ if __name__ == "__main__":
     voltage_ref = data["Tension reference (Volt)"]
     voltage_sample = data["Tension echantillon (Volt)"]
     screw = data["pas de vis (mm)"]
-    WAVELENGTH = np.array([denoise.calculate_wavelength(p+ 7.062148657089319)  for p in screw]) 
+    WAVELENGTH = np.array([signal_processing.calculate_wavelength(p+ 7.062148657089319)  for p in screw]) 
     absorbance_no_baseline = np.log10(np.array(voltage_ref)/np.array(voltage_sample))
     print(WAVELENGTH)
 
@@ -433,14 +279,14 @@ if __name__ == "__main__":
     voltage_2_base = data_baseline["Tension photodiode 2 (Volt)"]
     ABSORBANCE_BASELINE = np.log10(np.array(voltage_2_base)/np.array(voltage_1_base))
     screw = data_baseline["pas de vis (mm)"]
-    WAVELENGTH_BASELINE = np.array([denoise.calculate_wavelength(p)  for p in screw]) 
-    absor_fit = denoise.absorbance_corr(WAVELENGTH_BASELINE, ABSORBANCE_BASELINE, WAVELENGTH, absorbance_no_baseline)
+    WAVELENGTH_BASELINE = np.array([signal_processing.calculate_wavelength(p)  for p in screw]) 
+    absor_fit = signal_processing.baseline_correction_polyfit(WAVELENGTH_BASELINE, ABSORBANCE_BASELINE, WAVELENGTH, absorbance_no_baseline)
 
         # Seuil de hauteur pour la détection des pics
     hauteur_seuil = 0.1
-    y = denoise.adjust_absorbance_algo(WAVELENGTH, absorbance_no_baseline)
+    y = signal_processing.baseline_correction_aspls(WAVELENGTH, absorbance_no_baseline)
     hauteur_seuil = 1
-    absor_fit = denoise.absorbance_corr(WAVELENGTH_BASELINE, ABSORBANCE_BASELINE, WAVELENGTH, absorbance_no_baseline)
+    absor_fit = signal_processing.baseline_correction_polyfit(WAVELENGTH_BASELINE, ABSORBANCE_BASELINE, WAVELENGTH, absorbance_no_baseline)
     # Trouver les indices et les propriétés des pics
     indices_pics, proprietes_pics = find_peaks(y, height=hauteur_seuil)
     indices_pics_absorb, proprietes_pics_absor = find_peaks(absor_fit, height=hauteur_seuil)
@@ -478,7 +324,7 @@ if __name__ == "__main__":
     plt.grid(True)
     plt.legend()
     plt.show()
-    absorb = denoise.correction_baseline(WAVELENGTH,absorbance_no_baseline)
+    absorb = signal_processing.correction_baseline(WAVELENGTH,absorbance_no_baseline)
     peaks, _ = find_peaks(absorb, prominence=0)
 
     

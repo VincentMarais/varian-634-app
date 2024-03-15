@@ -29,6 +29,11 @@ of the received light. This information
 is crucial for subsequent calculations, 
 especially in determining the absorbance 
 of the analyzed chemical sample.
+
+# Voltage acquisition parameters
+# cf link : Figure 8. NI PCI/PXI-6221 Pinout
+# Dev1/ai1 : pin 33 / pin 66 (ground) (Capteur 1)
+# Dev1/ai0 : pin 68 / pin 34 (ground) (Capteur 2)
 """
 
 import time
@@ -55,11 +60,6 @@ class ElectronicVarian634:
         - samples_per_channel : Number of samples to acquire per channel.
         """
 
-        # Voltage acquisition parameters
-        # cf link : Figure 8. NI PCI/PXI-6221 Pinout
-        # Dev1/ai1 : pin 33 / pin 66 (ground) (Capteur 1)
-        # Dev1/ai0 : pin 68 / pin 34 (ground) (Capteur 2)
-        self.channels = ['Dev1/ai0', 'Dev1/ai1']
         self.samples_per_channel = 100000  # Sampling frequency
         self.sample_rate = 100000
         
@@ -117,7 +117,6 @@ class ElectronicVarian634:
         self.configure_task_voltage(task, physical_channel)
         voltages = task.read(number_of_samples_per_channel=self.samples_per_channel)
         task.stop()
-
         return voltages
 
     def measure_mean_voltage(self, task, physical_channel):
@@ -138,24 +137,6 @@ class ElectronicVarian634:
         mean = np.mean(voltages)
         return mean
     
-    def integrate(self, values, step):
-        """
-        Integrate a list of values using the trapezoidal rule.
-        
-        Parameters:
-            values (list): List of values representing the function values.
-            step (float): Step size between values.
-            
-        Returns:
-            float: Approximation of the integral.
-        """
-        integral = 0.0
-        n = len(values)
-        
-        for i in range(1, n):
-            integral += 0.5 * (values[i-1] + values[i]) * step
-        
-        return integral
 
     def voltage_acquisition_scanning_baseline(self, physical_channel):
         """
@@ -267,7 +248,7 @@ if __name__ == "__main__":
 
     from pyfirmata import Arduino
 
-    acqui_voltage = VoltageAcquisition()
+    acqui_voltage = ElectronicVarian634()
 
     # Arduino
     BOARD = Arduino('COM9')

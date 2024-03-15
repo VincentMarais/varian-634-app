@@ -1,22 +1,7 @@
 """
-This program manages the operation modes for Varian 634 instruments including baseline, calibration, 
-scanning, and kinetics analysis.
-
-
-Define deferente speed of analysis 3 for exampl (look the exampl in the spectro use in TP GP3A) :
-- suvey 100nm/min
-- half 10nm/min
-- slow 1nm/min  
-
-Visible range with the screw pitch:
-400nm -> 5.4mm and ending at 800 nm -> 18.73nm
-
-Course maxi : 26mm
-
-Pour une acquisition longue dÃ©sactiver la mise en veille du PC
-
-
+Program to test the frontend
 """
+
 import time
 import os
 import numpy as np
@@ -25,17 +10,17 @@ from pyfirmata import Arduino
 from flask_socketio import SocketIO
 
 # Motors
-from backend.core.kinematic_chains.motors_varian_634 import GeneralMotorsController
+from core.kinematic_chains.motors_varian_634 import GeneralMotorsController
 
 # Voltage acquisition
-from backend.core.electronics_controler.ni_pci_6221 import ElectronicVarian634
+from core.electronics_controler.ni_pci_6221 import ElectronicVarian634
 
 # Data processing
-from backend.core.utils.experiment_manager import ExperimentManager
-from backend.core.utils.digital_signal_processing import SignalProcessingVarian634
+from core.utils.experiment_manager import ExperimentManager
+from core.utils.digital_signal_processing import SignalProcessingVarian634
 
 
-class Varian634AcquisitionMode:
+class Varian634ATestApp:
     """
     Manages the operation modes for Varian 634 instruments including baseline, calibration, 
     scanning, and kinetics analysis. It controls motors for movement, acquires voltage 
@@ -87,14 +72,15 @@ class Varian634AcquisitionMode:
         print("number_measurements", number_measurements)
         step = (course_final - course_initial)/number_measurements
         print("step", step)
-        print(number_measurements)
-        self.motors_controller.unlock_motors()
-        self.motors_controller.relative_move()
         time.sleep(1)
-        self.motors_controller.move_screw(course_initial)
-        time.sleep(course_initial*60/10)
+        print("self.motors_controller.move_screw(course_initial)")
+        time.sleep(1)
         return course_initial, step, number_measurements
 
+
+    def voltage_acquisition_scanning_baseline(self, channels):
+        print(channels)
+        return float(self.arduino_sensors.readline().decode('utf-8').rstrip())
 
     def perform_step_measurement(self):
         """
@@ -103,11 +89,12 @@ class Varian634AcquisitionMode:
         Returns:
             Tuple containing measured voltages from photodiode 1 and photodiode 2.
         """
-        voltage_photodiode_2 = self.daq.voltage_acquisition_scanning_baseline(self.channels[0])
-        self.motors_controller.move_mirror_motor(0.33334)  # Move mirror to switch cuvette
+        voltage_photodiode_2 = self.voltage_acquisition_scanning_baseline(self.channels[0])
+        print("move_mirror_motor(0.33334)")  # Move mirror to switch cuvette
         time.sleep(1)  # Wait for mirror adjustment
-        voltage_photodiode_1 = self.daq.voltage_acquisition_scanning_baseline(self.channels[1])
-        self.motors_controller.move_mirror_motor(-0.33334)  # Move mirror back
+        voltage_photodiode_1 = self.voltage_acquisition_scanning_baseline(self.channels[1])
+        print("move_mirror_motor(-0.33334)")  # Move mirror to switch cuvette
+  # Move mirror back
         time.sleep(1)
 
         return voltage_photodiode_1, voltage_photodiode_2
@@ -126,18 +113,16 @@ class Varian634AcquisitionMode:
             A tuple containing lists of wavelengths, absorbance, reference voltages, sample voltages, and screw positions.
         """
         # Precision measurement setup
-        voltages_reference, voltages_sample = np.array([]), np.array([])
-    
+        voltages_reference, voltages_sample = np.array([]), np.array([])    
         no_screw, wavelengths, absorbances = np.array([]), np.array([]), np.array([])
         time_per_step = (step * 60) / 10  # Time calculation for each step
-
-        self.motors_controller.unlock_motors()
-        self.motors_controller.relative_move()  # Set relative movement mode
+        print("unlock_motors()")
+        print("relative_move()") # Set relative movement mode
         time.sleep(1)  # Wait for command acknowledgment
-        for i in range(0, number_measurements):
+        for i in range(0, number_measurements + 1):
             voltages_photodiode_1, voltages_photodiode_2 = self.perform_step_measurement()
             # Move diffraction grating
-            self.motors_controller.move_screw(step)
+            print(f'move:{step}')
             [voltage_reference, voltage_sample] = self.experim_manager.link_cuvette_voltage(self.cuvette_choice, 
                                                                                 voltages_photodiode_1, voltages_photodiode_2)
             # Store measurement data for plotting
@@ -152,8 +137,11 @@ class Varian634AcquisitionMode:
             wavelength = self.signal_processing.calculate_wavelength(position)
             wavelengths = np.append(wavelengths, wavelength)
             print("wavelengths :", wavelengths, "type", wavelengths.dtype)
+            time.sleep(2)
             absorbance = np.log10(voltage_reference/voltage_sample)
             absorbances= np.append(absorbances, absorbance)
+            time.sleep(2)
+
             print("absorbances :", absorbances, "type", absorbances.dtype)
 
             # Save data incrementally             
@@ -163,11 +151,10 @@ class Varian634AcquisitionMode:
             datas = [wavelengths, absorbances, voltages_reference, voltages_sample, no_screw]
             title_file = "raw_data_" + self.title_file_sample
             self.experim_manager.save_data_csv(self.path, datas, title_data_acquisition, title_file) 
-            self.socketio.emit('update_data', {'wavelength': wavelength, 'absorbance': absorbance})          
-            time.sleep(time_per_step)# Wait for diffraction grating adjustment
-            return wavelength, absorbance 
-        # Calculate absorbance based on measurement choice         
+            self.socketio.emit('update_data', {'data_y': absorbance, "data_x": wavelength, "slitId": self.slot_size})
 
+        # Calculate absorbance based on measurement choice         
+        
         return wavelengths, absorbances, voltages_reference, voltages_sample, no_screw
 
     def acquisition(self, wavelenght_min, wavelenght_max, wavelenght_step):
@@ -184,17 +171,28 @@ class Varian634AcquisitionMode:
             The result of the precision mode operation, including wavelengths and absorbance values.
         """
         # state_motor_motor_slits 
-        self.motors_controller.initialisation_motors(self.slot_size)
+        print("self.motors_controller.initialisation_motors(self.slot_size)")
+        time.sleep(6)
         
         [course_initial, step , number_measurements] = self.initialisation_setting(wavelenght_min, wavelenght_max, wavelenght_step)
         data_acquisition = self.precision_mode(course_initial, step, number_measurements)
-        self.socketio.emit('update_data', {'wavelength': data_acquisition[0].tolist(), 'absorbance': data_acquisition[1].tolist()})
         # Data saving
         title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "Tension reference (Volt)", "Tension echantillon (Volt)", 
                                   "pas de vis (mm)"]
         title_file = "raw_data_" + self.title_file_sample
         self.experim_manager.save_data_csv(self.path, data_acquisition, title_data_acquisition, title_file)  
-        self.motors_controller.wait_for_idle()
-        self.motors_controller.initialisation_motor_screw()   
-        self.motors_controller.wait_for_idle()        
+        print("retour au départ")       
+        time.sleep(2)
+        print("Fin")
         return data_acquisition[:2]
+
+if __name__ == "__main__":
+    COM_PORT_MOTORS = 'COM5'
+    COM_PORT_SENSORS = 'COM4'
+    BAUD_RATE = 9600
+    INITIALIZATION_TIME = 2
+
+    arduino_motors = serial.Serial(COM_PORT_MOTORS, BAUD_RATE)
+    arduino_sensors = serial.Serial('COM4', BAUD_RATE, timeout=1)
+    while True:
+        print(arduino_sensors.readline().decode('utf-8').rstrip())

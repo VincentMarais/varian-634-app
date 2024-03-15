@@ -11,15 +11,15 @@ from typing import List, Tuple, Union
 # Constants
 MOTOR_AXIS = str
 G_CODE_SPEED = str
-PIN = int
+ALL_PIN = List
+
 
 SCREW_MOTOR_AXIS = 'X'
 SLITS_MOTOR_AXIS = 'Y'
 MIRROR_CUVES_MOTOR_AXIS = 'Z'
 
 
-
-
+ 
 class GeneralMotorsController:
     """
     This class represents a controller for all the motors on the VARIAN 634.
@@ -38,29 +38,30 @@ class GeneralMotorsController:
         """
         # Arduino
         self.arduino_motors = arduino_motors_instance
-        self.arduino_sensors = arduino_sensors_instance
-        # all digital pins used on the Arduino UNO 
-        # with no CNC shield 
-        self.all_pin = [2, 3, 4, 5, 6]
-        # Screw motor
-        self.screw_motor = ['X', '$110', 10]  # [axis, g_code_speed, speed]
-        # pin = 2 (between limits)
-        self.pin_limit_switch_screw = [2, 4]
-
+        self.arduino_sensors = arduino_sensors_instance 
+        self.all_pin = [2, 3, 4, 5, 6]  # all digital pins used on the Arduino UNO with 
+        # no CNC shield (Arduino sensor) 
+        # Screw motor     
+        self.screw_motor = ['X', '$110', 10] # Parameters of screw motor : [axis, g_code_speed, speed]        
+        self.pin_limit_switch_screw = [2, 4] # pin = 2 (between limits)
         # Slits motor
         self.slits_motor = ['Y', '$111', 14]  # [axis, g_code_speed, speed]
         # pin = 5 in optical fork between slits variable
-        self.pin_limit_switch_slits = [5,6] # forche optique :5 et 6 :  limits switch 
+        self.pin_limit_switch_slits = [5, 6] # forche optique : 5 et 6 : limits switch  
         self.slits_position = [0, 0.065, 0.135, 0.22] # position of slits [2nm, 1nm, 0.5nm, 0.2nm]
         self.name_slits = ["Fente_2nm", "Fente_1nm", "Fente_0_5nm", "Fente_0_2nm"]
         # Mirror cuves motor
         self.mirror_cuves_motor = ['Z', '$112', 20]  # [axis, g_code_speed, speed]
-        self.pin_limit_switch_mirror_cuves = [3]
+        self.pin_limit_switch_mirror_cuves = [3] # pin = 3 (optical fork on mirror motor)
 
 
     def initialize_arduino_motor(self):
+        """
+        Code qui permet d'initialisé proprement l'arduino contenant le 
+        programme grbl, c'est à dire s'assurer que les messages G-Code de l'opération 
+        """
         self.arduino_motors.write("\r\n\r\n".encode())  # encode to convert "\r\n\r\n"
-        time.sleep(INITIALIZATION_TIME=2)  # Wait for initialization of GRBL
+        time.sleep(2)  # Wait for initialization of GRBL
         self.arduino_motors.flushInput()  # Clear the input buffer by discarding its current contents.
 
     def search_word(self, data, word):
@@ -128,7 +129,6 @@ class GeneralMotorsController:
         state = str(self.get_motor_state())
         while 'Idle' not in state:
             state = str(self.get_motor_state())
-            time.sleep(0.1)
             print(state)
         self.arduino_motors.flushInput()        
 
@@ -176,6 +176,14 @@ class GeneralMotorsController:
         """
         g_code = '$H' + '\n'
         self.arduino_motors.write(g_code.encode())
+
+    
+    def relative_move(self):
+        self.execute_g_code("G91")
+
+    def absolute_move(self):
+        self.execute_g_code("G90")
+
 
 # Kinematics of motors 
     def move_motor(self, motor_parameters, distance):
@@ -268,11 +276,11 @@ class GeneralMotorsController:
         state = self.arduino_sensors.digital[pin].read()
 
         if state is False:
-            self.execute_g_code('G91\n')            
+            self.relative_move()            
             self.move_mirror_motor(0.5)
             time.sleep(0.5*60/20)
             state = self.arduino_sensors.digital[pin].read()         
-            self.execute_g_code('G90\n')   
+            self.absolute_move()   
             time.sleep(1)
             self.move_mirror_motor(1) 
             while state is True:
@@ -285,7 +293,7 @@ class GeneralMotorsController:
 
             print("O.5")
         else :
-            self.execute_g_code('G90\n')   
+            self.absolute_move()   
             time.sleep(1)
             self.move_mirror_motor(1) 
             while state is True:
@@ -325,7 +333,7 @@ class GeneralMotorsController:
         initial = True
         # Mise au départ 
         time.sleep(1)       
-        self.execute_g_code("G91")
+        self.relative_move()
         if pin_optical_value is False and initial:
             while pin_optical_value is False:
                 self.move_slits(i)

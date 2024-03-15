@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import useSocket from './hooks/useSocket';
-import SensorControlPanel from './components/SensorControlPanel';
+import ScanningControlPanel from './components/ScanningControlPanel';
 import ChartComponent from './components/ChartComponent';
 import './App.css';
 
@@ -39,7 +39,7 @@ const App = () => {
 
 
   const downloadCsv = () => {
-    const csvRows = ['Longueur d\'onde (nm),Absorbance', ...AbsorbanceData.map(d => `${d.wavelength},${d.absorbance}`)];
+    const csvRows = ['Longueur d\'onde (nm),Absorbance', ...AbsorbanceData.map(d => `${d.data_x},${d.data_y}`)];
     const csvString = csvRows.join('\n');
     const blob = new Blob([csvString], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -56,7 +56,7 @@ const App = () => {
   return (
     <div className="App">
       <ChartComponent AbsorbanceData={AbsorbanceData} />
-      <SensorControlPanel
+      <ScanningControlPanel
         socket={socket}
         isGeneratingData={isGeneratingData}
         toggleSocketConnection={toggleSocketConnection}
