@@ -22,45 +22,43 @@ ChartJS.register(
 );
 
 const ChartComponent = ({ AbsorbanceData }) => {
-  if (!AbsorbanceData || AbsorbanceData.length === 0) {
-    return <div>L'acquisition n'a pas commencé</div>;
+  // Configuration par défaut pour un graphique vide
+  let globalLabels = [''];
+  let datasets = [{
+    label: 'Aucune donnée',
+    data: [null],
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    pointBackgroundColor: 'rgba(0, 0, 0, 0.1)',
+  }];
+
+  if (AbsorbanceData && AbsorbanceData.length > 0) {
+    const groupedData = AbsorbanceData.reduce((acc, data) => {
+      const { slitId, data_x, data_y } = data;
+      if (!acc[slitId]) acc[slitId] = [];
+      acc[slitId].push({ data_x, data_y });
+      return acc;
+    }, {});
+
+    globalLabels = [...new Set(AbsorbanceData.map(data => data.data_x))].sort((a, b) => Number(a) - Number(b));
+
+    datasets = Object.keys(groupedData).map((slitId, index) => {
+      const dataPoints = groupedData[slitId];
+      const mappedData = globalLabels.map(label => {
+        const dataPoint = dataPoints.find(dp => dp.data_x === label);
+        return dataPoint ? dataPoint.data_y : null;
+      });
+
+      return {
+        label: `Absorbance (${slitId})`,
+        data: mappedData,
+        fill: false,
+        borderColor: `hsl(${index * 90 % 360}, 60%, 50%)`,
+        pointBackgroundColor: `hsl(${index * 90 % 360}, 60%, 50%)`,
+      };
+    });
   }
 
-  // Group data by slitId
-  const groupedData = AbsorbanceData.reduce((acc, data) => {
-    const { slitId, data_x, data_y } = data;
-    if (!acc[slitId]) acc[slitId] = [];
-    acc[slitId].push({ data_x, data_y });
-    return acc;
-  }, {});
-
-  // Generate a global set of sorted unique labels for all groups
-  const globalLabels = [...new Set(AbsorbanceData.map(data => data.data_x))]
-                        .sort((a, b) => Number(a) - Number(b));
-
-  // Generate datasets
-  const datasets = Object.keys(groupedData).map((slitId, index) => {
-    const dataPoints = groupedData[slitId];
-
-    // Map globalLabels to ensure every label has a corresponding value or null
-    const mappedData = globalLabels.map(label => {
-      const dataPoint = dataPoints.find(dp => dp.data_x === label);
-      return dataPoint ? dataPoint.data_y : null;
-    });
-
-    return {
-      label: `Absorbance (${slitId})`,
-      data: mappedData,
-      fill: false,
-      borderColor: `hsl(${index * 90 % 360}, 60%, 50%)`,
-      pointBackgroundColor: `hsl(${index * 90 % 360}, 60%, 50%)`,
-    };
-  });
-
-  const data = {
-    labels: globalLabels,
-    datasets,
-  };
+  const data = { labels: globalLabels, datasets };
 
   const options = {
     scales: {

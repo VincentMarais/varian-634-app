@@ -2,9 +2,6 @@ import React, { useState } from 'react';
 
 const ScanningControlPanel = ({
   socket,
-  isGeneratingData,
-  toggleSocketConnection,
-  startSensorDataGeneration,
   downloadCsv,
   resetGraphData,
 }) => {
@@ -14,7 +11,23 @@ const ScanningControlPanel = ({
   const [selectedCuvette, setSelectedCuvette] = useState('');
   const [selectedSlits, setSelectedSlits] = useState([]);
   const [sampleName, setSampleName] = useState('');
+  const [isSimulationRunning, setIsSimulationRunning] = useState(false);
 
+  const toggleSensorData = () => {
+    if (!isSimulationRunning) {
+      if (!wavelengthMin || !wavelengthMax || !step || !selectedCuvette || selectedSlits.length === 0 || !sampleName.trim()) {
+        alert("Veuillez remplir tous les champs avant de démarrer.");
+        return;
+      }
+      socket.emit('setScanningParams', { wavelengthMin, wavelengthMax, step, selectedCuvette, selectedSlits, sampleName });
+      socket.emit('startSensorData');
+    } else {
+      socket.emit('stopSensorData');
+    }
+    setIsSimulationRunning(!isSimulationRunning); // Toggle l'état de la simulation
+  };
+
+  
   // Cette fonction est maintenant ajustée pour envoyer les paramètres et démarrer la génération des données
   const startSensorData = () => {
     if (!wavelengthMin || !wavelengthMax || !step || !selectedCuvette || selectedSlits.length === 0 || !sampleName.trim()) {
@@ -71,8 +84,8 @@ const ScanningControlPanel = ({
         onChange={(e) => setSampleName(e.target.value)}
         placeholder="Nom de l'échantillon"
       />
-      <button onClick={startSensorData}>
-        Démarrer les données du capteur
+      <button onClick={toggleSensorData}>
+        {isSimulationRunning ? "Arrêter" : "Démarrer"}
       </button>
       <button onClick={downloadCsv}>Télécharger CSV</button>
       <button onClick={resetGraphData}>Réinitialiser les données du graphique</button>

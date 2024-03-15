@@ -31,6 +31,7 @@ socketio = SocketIO(app, cors_allowed_origins='*')
 # Initialisation MODE d'acquisition Varian634
 
 sensor_data_running = False
+sensor_data_should_stop = False  
 
 
 # Initialisation des variables globales pour stocker les paramètres du mode scanning
@@ -58,12 +59,16 @@ def handle_set_wave_length_params(json):
 # Initialisation des variables globales pour stocker les paramètres du mode cinétique
 def scanning_mode():
     global sensor_data_running, wavelength_min, wavelength_max, step_wavelength, selected_cuvette, selected_slits, sample_name
-    sensor_data_running = True    
-    for slit in selected_slits:        
+    sensor_data_running = True
+    sensor_data_should_stop = False  # Réinitialiser pour une nouvelle exécution
+    
+    for slit in selected_slits:
+        if sensor_data_should_stop:
+            break  # Sortie anticipée si un arrêt est demandé       
         baseline_scanning = Varian634ATestApp(arduino_motors, arduino_sensors, socketio, sample_name, selected_cuvette, slit)
         baseline_scanning.acquisition(wavelength_min, wavelength_max, step_wavelength)
 
-
+    sensor_data_running = False  # Assurez-vous de réinitialiser cela auss
 @socketio.on('startSensorData')
 def handle_start_sensor_data():
     global wavelength_min, wavelength_max, step_wavelength, sensor_data_running, selected_cuvette, selected_slits
@@ -77,12 +82,11 @@ def handle_start_sensor_data():
     sensor_data_running = True
     scanning_mode()  # Démarrage effectif de la génération de données
 
-
 @socketio.on('stopSensorData')
 def handle_stop_sensor_data():
-    global sensor_data_running
-    sensor_data_running = False  # Cela indiquera à la boucle de s'arrêter
-    print("Signal d'arrêt reçu")
+    global sensor_data_should_stop
+    sensor_data_should_stop = True
+    print("Arrêt du mode scanning demandé")
 
 @app.route('/')
 def index():
