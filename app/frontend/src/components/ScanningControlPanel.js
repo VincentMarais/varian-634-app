@@ -28,16 +28,6 @@ const ScanningControlPanel = ({
   };
 
   
-  // Cette fonction est maintenant ajustée pour envoyer les paramètres et démarrer la génération des données
-  const startSensorData = () => {
-    if (!wavelengthMin || !wavelengthMax || !step || !selectedCuvette || selectedSlits.length === 0 || !sampleName.trim()) {
-      alert("Veuillez remplir tous les champs avant de démarrer.");
-      return;
-    }
-    socket.emit('setScanningParams', { wavelengthMin, wavelengthMax, step, selectedCuvette, selectedSlits, sampleName });
-    socket.emit('startSensorData');
-  };
-
   const handleSlitChange = (slitValue) => {
     setSelectedSlits(prev => {
       if (prev.includes(slitValue)) {
