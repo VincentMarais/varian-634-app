@@ -57,7 +57,7 @@ const App = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'data_VARIAN_634_grouped_by_slitId.csv'; // Nom du fichier adapté
+    link.download = 'data_VARIAN_634.csv'; // Nom du fichier adapté
     link.click();
   };
   

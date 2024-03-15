@@ -54,19 +54,19 @@ const ScanningControlPanel = ({
         type="number"
         value={wavelengthMin}
         onChange={(e) => setWavelengthMin(e.target.value)}
-        placeholder="Longueur d'onde Min [1,799]"
+        placeholder=" λ_Min [400nm,886nm]"
       />
       <input
         type="number"
         value={wavelengthMax}
         onChange={(e) => setWavelengthMax(e.target.value)}
-        placeholder="Longueur d'onde Max [2,800]"
+        placeholder=" λ_Max [400nm,886nm]"
       />
       <input
         type="number"
         value={step}
         onChange={(e) => setStep(e.target.value)}
-        placeholder="pas [1,800]"
+        placeholder="pas [0.1nm,100nm]"
       />
       <div>
         <input type="radio" name="cuvette" value="cuvette 1" onChange={(e) => setSelectedCuvette(e.target.value)} /> Cuvette 1

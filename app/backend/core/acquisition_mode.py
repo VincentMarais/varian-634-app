@@ -25,14 +25,14 @@ from pyfirmata import Arduino
 from flask_socketio import SocketIO
 
 # Motors
-from backend.core.kinematic_chains.motors_varian_634 import GeneralMotorsController
+from core.kinematic_chains.motors_varian_634 import GeneralMotorsController
 
 # Voltage acquisition
-from backend.core.electronics_controler.ni_pci_6221 import ElectronicVarian634
+from core.electronics_controler.ni_pci_6221 import ElectronicVarian634
 
 # Data processing
-from backend.core.utils.experiment_manager import ExperimentManager
-from backend.core.utils.digital_signal_processing import SignalProcessingVarian634
+from core.utils.experiment_manager import ExperimentManager
+from core.utils.digital_signal_processing import SignalProcessingVarian634
 
 
 class Varian634AcquisitionMode:
@@ -132,9 +132,9 @@ class Varian634AcquisitionMode:
         time_per_step = (step * 60) / 10  # Time calculation for each step
 
         self.motors_controller.unlock_motors()
-        self.motors_controller.relative_move()  # Set relative movement mode
+        self.motors_controller.execute_g_code("G91")  # Set relative movement mode
         time.sleep(1)  # Wait for command acknowledgment
-        for i in range(0, number_measurements):
+        for i in range(0, number_measurements + 1):
             voltages_photodiode_1, voltages_photodiode_2 = self.perform_step_measurement()
             # Move diffraction grating
             self.motors_controller.move_screw(step)
@@ -147,13 +147,11 @@ class Varian634AcquisitionMode:
             print("voltages_reference :", voltages_reference, "type", voltages_reference.dtype)
             print("voltages_sample :", voltages_sample, "type", voltages_sample.dtype)
             position = course_initial + i * step
-            no_screw = np.append(no_screw, position + step)
+            no_screw = np.append(no_screw, position)
             print("no_screw :", no_screw , "type", no_screw.dtype)
-            wavelength = self.signal_processing.calculate_wavelength(position)
-            wavelengths = np.append(wavelengths, wavelength)
+            wavelengths = np.append(wavelengths, self.signal_processing.calculate_wavelength(position))
             print("wavelengths :", wavelengths, "type", wavelengths.dtype)
-            absorbance = np.log10(voltage_reference/voltage_sample)
-            absorbances= np.append(absorbances, absorbance)
+            absorbances= np.append(absorbances, np.log10(voltage_reference/voltage_sample))
             print("absorbances :", absorbances, "type", absorbances.dtype)
 
             # Save data incrementally             
@@ -163,10 +161,9 @@ class Varian634AcquisitionMode:
             datas = [wavelengths, absorbances, voltages_reference, voltages_sample, no_screw]
             title_file = "raw_data_" + self.title_file_sample
             self.experim_manager.save_data_csv(self.path, datas, title_data_acquisition, title_file) 
-            self.socketio.emit('update_data', {'wavelength': wavelength, 'absorbance': absorbance})          
-            time.sleep(time_per_step)# Wait for diffraction grating adjustment
-            return wavelength, absorbance 
-        # Calculate absorbance based on measurement choice         
+            self.socketio.emit('update_data', {'data_y': np.log10(voltage_reference/voltage_sample), "data_x": self.signal_processing.calculate_wavelength(position), "slitId": self.slot_size})
+           
+            time.sleep(time_per_step)# Wait for diffraction grating adjustment         
 
         return wavelengths, absorbances, voltages_reference, voltages_sample, no_screw
 
@@ -188,7 +185,6 @@ class Varian634AcquisitionMode:
         
         [course_initial, step , number_measurements] = self.initialisation_setting(wavelenght_min, wavelenght_max, wavelenght_step)
         data_acquisition = self.precision_mode(course_initial, step, number_measurements)
-        self.socketio.emit('update_data', {'wavelength': data_acquisition[0].tolist(), 'absorbance': data_acquisition[1].tolist()})
         # Data saving
         title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "Tension reference (Volt)", "Tension echantillon (Volt)", 
                                   "pas de vis (mm)"]

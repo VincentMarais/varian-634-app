@@ -1,8 +1,5 @@
-import time
-
 # MODES
 from core.acquisition_mode import Varian634AcquisitionMode
-from core.electronics_controler.ni_pci_6221 import ElectronicVarian634
 
 
 
@@ -18,7 +15,6 @@ if __name__ == "__main__":
     INITIALIZATION_TIME = 2
 
     arduino_motors = serial.Serial(COM_PORT_MOTORS, BAUD_RATE)
-    ElectronicVarian634().initialize_arduino_motor(arduino_motors)
 
     # INITIALIZATION Optical Fork:
 

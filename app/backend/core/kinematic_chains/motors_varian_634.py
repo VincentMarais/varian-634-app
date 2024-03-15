@@ -130,6 +130,7 @@ class GeneralMotorsController:
         while 'Idle' not in state:
             state = str(self.get_motor_state())
             print(state)
+            time.sleep(0.1)
         self.arduino_motors.flushInput()        
 
     def get_position_xyz(self):

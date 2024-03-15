@@ -2,25 +2,21 @@ from threading import Lock
 from flask import Flask
 from flask_socketio import SocketIO
 import serial
-from core.acquisition_mode import Varian634AcquisitionMode
-from core.kinematic_chains.motors_varian_634 import GeneralMotorsController
+from test_app import Varian634ATestApp
 from pyfirmata import Arduino
 
 
 # INITIALIZATION HARDWARE:
-COM_PORT_MOTORS = 'COM3'
-COM_PORT_SENSORS = 'COM9'
-BAUD_RATE = 115200
+COM_PORT_MOTORS = 'COM8'
+COM_PORT_SENSORS = 'COM10'
+BAUD_RATE = 9600
 INITIALIZATION_TIME = 2
 
 arduino_motors = serial.Serial(COM_PORT_MOTORS, BAUD_RATE)
+arduino_sensors = serial.Serial(COM_PORT_SENSORS, BAUD_RATE, timeout=1)
 
 # INITIALIZATION Optical Fork:
-arduino_sensors = Arduino(COM_PORT_SENSORS)
-motors = GeneralMotorsController(arduino_motors, arduino_sensors)
-motors.initialize_arduino_motor()
-
-# INITIALIZATION Optical Fork:
+SAMPLE_NAME = "Bromophenol"
 
 # Initialisation serveur 
 thread = None
@@ -66,10 +62,11 @@ def scanning_mode():
     for slit in selected_slits:
         if sensor_data_should_stop:
             break  # Sortie anticipée si un arrêt est demandé       
-        baseline_scanning = Varian634AcquisitionMode(arduino_motors, arduino_sensors, socketio, sample_name, selected_cuvette, slit)
+        baseline_scanning = Varian634ATestApp(arduino_motors, arduino_sensors, socketio, sample_name, selected_cuvette, slit)
         baseline_scanning.acquisition(wavelength_min, wavelength_max, step_wavelength)
 
     sensor_data_running = False  # Assurez-vous de réinitialiser cela auss
+    
 @socketio.on('startSensorData')
 def handle_start_sensor_data():
     global wavelength_min, wavelength_max, step_wavelength, sensor_data_running, selected_cuvette, selected_slits
