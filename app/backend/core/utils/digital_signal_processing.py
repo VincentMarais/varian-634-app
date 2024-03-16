@@ -266,12 +266,23 @@ if __name__ == "__main__":
 
     data = pd.read_csv(file, encoding='ISO-8859-1')
     
-    
+    fichier_excel = 'C:\\Users\\admin\\Desktop\\GitHub\\varian-634-app\\experiments\\experiments_2024\\experiments_03_2024\\experiments_15_03_2024\\Rubrene_final_600_400nm.xlsx'
+    feuille = 'Feuil1'
+    colonne_wave = 'Wavelength nm.'
+    colonne_abs = 'Absorbance'
+
+
+# Lecture du fichier Excel
+    df = pd.read_excel(fichier_excel, sheet_name=feuille, engine='openpyxl')
+
+# Sélection de la colonne et conversion en liste
     WAVELENGTH = data["Longueur d\'onde (nm)"]
     absorbance_no_baseline = data["Absorbance (Fente_1nm)"]
+    WAVELENGTH_spectro = df[colonne_wave].tolist()
+    absorbance_spectro = df[colonne_abs].tolist()
     print(WAVELENGTH)
 
-    file_baseline = "C:\\Users\\vimarais\\Documents\\test\\varian-634-app\\experiments\\calibrage\\ligne_de_base_23_02_2024_fente_1nm.csv" 
+    file_baseline = "C:\\Users\\admin\\Desktop\\GitHub\\varian-634-app\\experiments\\calibrage\\ligne_de_base_23_02_2024_fente_1nm.csv" 
     data_baseline = pd.read_csv(file_baseline, encoding='ISO-8859-1')
     voltage_1_base = data_baseline["Tension photodiode 1 (Volt)"]
     voltage_2_base = data_baseline["Tension photodiode 2 (Volt)"]
@@ -286,6 +297,7 @@ if __name__ == "__main__":
     absor_fit = signal_processing.baseline_correction_polyfit(WAVELENGTH_BASELINE, ABSORBANCE_BASELINE, WAVELENGTH, absorbance_no_baseline)
     # Trouver les indices et les propriétés des pics
     indices_pics, proprietes_pics = find_peaks(absor_fit, height=hauteur_seuil)
+    indices_pics_spectro, proprietes_pics_spectro = find_peaks(absorbance_spectro, height=hauteur_seuil)
 
     # Extraire les hauteurs des pics
     hauteurs_pics = proprietes_pics['peak_heights']
@@ -297,17 +309,31 @@ if __name__ == "__main__":
     wavelength_peak = WAVELENGTH[np.argmax((absor_fit))]
 
     indices_pics = np.asarray(indices_pics, dtype=int)
+    indices_pics = np.asarray(indices_pics, dtype=int)
+
     y_a = savgol_filter(absorbance_no_baseline, window_length=11, polyorder=2, deriv=0, delta=0.01)
     #plt.plot(WAVELENGTH, absorbance_no_baseline, label='Absorbance bromophénol sans ligne de base')    
-    plt.plot(WAVELENGTH, absor_fit, label='Absorbance bromophénol')
+    plt.plot(WAVELENGTH, absor_fit, label='Absorbance Rubrene')
+    plt.plot(WAVELENGTH_spectro, absorbance_spectro, label='Absorbance Rubrene spectro M. Audonnet')
+
     for txt_index in indices_pics:
         plt.text(WAVELENGTH[txt_index], absor_fit[txt_index], f'({WAVELENGTH[txt_index]:.2f}, {absor_fit[txt_index]:.2f})', fontsize=14)
         plt.scatter(WAVELENGTH[txt_index], absor_fit[txt_index], color='red')
-    
+
+    for txt_index_i in indices_pics_spectro:
+        plt.text(WAVELENGTH_spectro[txt_index_i], absorbance_spectro[txt_index_i], f'({WAVELENGTH_spectro[txt_index_i]:.2f}, {absorbance_spectro[txt_index_i]:.2f})', fontsize=14)
+        plt.scatter(WAVELENGTH_spectro[txt_index_i], absorbance_spectro[txt_index_i], color='red')
     plt.xlabel('Longueur d\'onde (nm)', fontsize=14)
     plt.ylabel('Absorbance', fontsize=14)
     plt.grid(True)
     plt.legend()
     plt.show()
+
+    from experiment_manager import ExperimentManager
+
+    experiment_manager = ExperimentManager("Rubrene", "Fente_1nm")
+    data_list = [WAVELENGTH, absor_fit]
+    title = ["Longueur d\'onde (nm)","Absorbance (Fente_1nm)" ]
+    experiment_manager.save_data_csv("C:\\Users\\admin\\Desktop\\GitHub\\varian-634-app\\experiments\\experiments_2024\\experiments_03_2024\\experiments_15_03_2024", data_list, title, "absorbnce_rubrene_fit")
 
 

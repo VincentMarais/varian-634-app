@@ -115,7 +115,6 @@ class Varian634ATestApp:
         # Precision measurement setup
         voltages_reference, voltages_sample = np.array([]), np.array([])    
         no_screw, wavelengths, absorbances = np.array([]), np.array([]), np.array([])
-        time_per_step = (step * 60) / 10  # Time calculation for each step
         print("unlock_motors()")
         print("relative_move()") # Set relative movement mode
         time.sleep(1)  # Wait for command acknowledgment
