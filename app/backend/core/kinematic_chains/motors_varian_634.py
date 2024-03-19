@@ -94,12 +94,16 @@ class GeneralMotorsController:
     def get_motor_state(self):
         """
         Query and return the current state of the motor.
-
+        <Idle,MPos:0.000,0.000,0.00' b'0,WPos:0.000,0.000,0.000> 
+        The number of characters in the string is: 56
         Returns:
             str: The current state of the motor (based on the motor's response).
         """
         self.execute_g_code('?')
-        return self.arduino_motors.read(25)  # Read the first 20 characters for state
+        s = str(self.arduino_motors.read(56)) 
+# or in one line
+        #result = s[s.index("\\r\\nok\\r\\n") + len("\\r\\nok\\r\\n"):]
+        return s  # Read the first 20 characters for state
     
 # G_CODE to control the kinematics of motors
 
@@ -441,6 +445,9 @@ if __name__ == "__main__":
     #motors_controller.initialize_end_stop([2, 3, 4, 5])
     #time.sleep(1)
     motors_controller.initialize_end_stop([2, 3, 4, 5, 6])
-    motors_controller.initialize_mirror_position()
+    motors_controller.move_screw(-2)
     #motors_controller.initialisation_motor_slits("Fente_0_5nm")
-
+   
+    while True:
+        print(motors_controller.get_motor_state())
+        time.sleep(0.5)

@@ -137,7 +137,6 @@ class Varian634AcquisitionMode:
         for i in range(0, number_measurements + 1):
             voltages_photodiode_1, voltages_photodiode_2 = self.perform_step_measurement()
             # Move diffraction grating
-            self.motors_controller.move_screw(step)
             [voltage_reference, voltage_sample] = self.experim_manager.link_cuvette_voltage(self.cuvette_choice, 
                                                                                 voltages_photodiode_1, voltages_photodiode_2)
             # Store measurement data for plotting
@@ -153,6 +152,7 @@ class Varian634AcquisitionMode:
             print("wavelengths :", wavelengths, "type", wavelengths.dtype)
             absorbances= np.append(absorbances, np.log10(voltage_reference/voltage_sample))
             print("absorbances :", absorbances, "type", absorbances.dtype)
+            self.motors_controller.move_screw(step)
 
             # Save data incrementally             
             title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "Tension reference (Volt)", "Tension echantillon (Volt)", 
