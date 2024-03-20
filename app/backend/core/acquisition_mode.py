@@ -191,6 +191,6 @@ class Varian634AcquisitionMode:
         title_file = "raw_data_" + self.title_file_sample
         self.experim_manager.save_data_csv(self.path, data_acquisition, title_data_acquisition, title_file)  
         self.motors_controller.wait_for_idle()
-        self.motors_controller.initialisation_motor_screw()   
+        self.motors_controller.reset_screw_position(step*number_measurements)   
         self.motors_controller.wait_for_idle()        
         return data_acquisition[:2]
