@@ -34,7 +34,7 @@ class SignalProcessingVarian634:
         abs pour que GBRL est des valeurs positive de position cela 
         évite l'initialisé dans le sens inverse
         """
-        return np.abs((wavelength - 886.13)/-32.02)
+        return np.abs((wavelength - 884.13)/-32.02)
 
     def graph_digital_processing(self, data_x, datas_y, title_graph, titles_data_y):
         """
@@ -214,7 +214,7 @@ class SignalProcessingVarian634:
         for base, abs_val in zip(baseline, absorbance):            
                 adjusted_absorbance.append(abs_val - base)
             
-        absorbance_fit = savgol_filter(adjusted_absorbance, window_length=11, polyorder=2, deriv=0, delta=0.01)
+        absorbance_fit = savgol_filter(adjusted_absorbance, window_length=11, polyorder=3, deriv=0, delta=0.01)
 
         return absorbance_fit
     
@@ -276,8 +276,10 @@ if __name__ == "__main__":
     df = pd.read_excel(fichier_excel, sheet_name=feuille, engine='openpyxl')
 
 # Sélection de la colonne et conversion en liste
-    WAVELENGTH = data["Longueur d\'onde (nm)"]
-    absorbance_no_baseline = data["Absorbance (Fente_1nm)"]
+    
+    screw_raw = data["pas de vis (mm)"]
+    WAVELENGTH = np.array([signal_processing.calculate_wavelength(p+ 7.062148657089319)  for p in screw_raw]) 
+    absorbance_no_baseline = data["Absorbance"]
     WAVELENGTH_spectro = df[colonne_wave].tolist()
     absorbance_spectro = df[colonne_abs].tolist()
     print(WAVELENGTH)
@@ -289,16 +291,23 @@ if __name__ == "__main__":
     ABSORBANCE_BASELINE = np.log10(np.array(voltage_2_base)/np.array(voltage_1_base))
     screw = data_baseline["pas de vis (mm)"]
     WAVELENGTH_BASELINE = np.array([signal_processing.calculate_wavelength(p)  for p in screw]) 
-    absor_fit = signal_processing.baseline_correction_polyfit(WAVELENGTH_BASELINE, ABSORBANCE_BASELINE, WAVELENGTH, absorbance_no_baseline)
-
         # Seuil de hauteur pour la détection des pics
     hauteur_seuil = 0.1
-    y = signal_processing.baseline_correction_aspls(WAVELENGTH, absorbance_no_baseline)
     absor_fit = signal_processing.baseline_correction_polyfit(WAVELENGTH_BASELINE, ABSORBANCE_BASELINE, WAVELENGTH, absorbance_no_baseline)
     # Trouver les indices et les propriétés des pics
     indices_pics, proprietes_pics = find_peaks(absor_fit, height=hauteur_seuil)
     indices_pics_spectro, proprietes_pics_spectro = find_peaks(absorbance_spectro, height=hauteur_seuil)
+    coefficients = signal_processing.best_polyfit(WAVELENGTH_BASELINE, ABSORBANCE_BASELINE)
+    print("coefficients", coefficients)
+    plt.plot(WAVELENGTH_BASELINE, ABSORBANCE_BASELINE, label='Absorbance ligne de base')
+    plt.plot(WAVELENGTH_BASELINE, np.polyval(coefficients, WAVELENGTH_BASELINE), label='Régression')
 
+
+    plt.xlabel('Longueur d\'onde (nm)', fontsize=18)
+    plt.ylabel('Absorbance', fontsize=18)
+    plt.grid(True)
+    plt.legend()
+    plt.show()
     # Extraire les hauteurs des pics
     hauteurs_pics = proprietes_pics['peak_heights']
     hauteurs_pics_absor = proprietes_pics['peak_heights']
@@ -313,20 +322,16 @@ if __name__ == "__main__":
 
     y_a = savgol_filter(absorbance_no_baseline, window_length=11, polyorder=2, deriv=0, delta=0.01)
     #plt.plot(WAVELENGTH, absorbance_no_baseline, label='Absorbance bromophénol sans ligne de base')    
-    plt.plot(WAVELENGTH, absor_fit, label='Absorbance Rubrene')
-    plt.plot(WAVELENGTH_spectro, absorbance_spectro, label='Absorbance Rubrene spectro M. Audonnet')
+    plt.plot(WAVELENGTH, absor_fit, label='Absorbance du bleu de bromophénol')
+    plt.plot(WAVELENGTH, absorbance_no_baseline, label='Absorbance sans traitement du bleu de bromophénol')
 
     for txt_index in indices_pics:
         plt.text(WAVELENGTH[txt_index], absor_fit[txt_index], f'({WAVELENGTH[txt_index]:.2f}, {absor_fit[txt_index]:.2f})', fontsize=14)
         plt.scatter(WAVELENGTH[txt_index], absor_fit[txt_index], color='red')
-
-    for txt_index_i in indices_pics_spectro:
-        plt.text(WAVELENGTH_spectro[txt_index_i], absorbance_spectro[txt_index_i], f'({WAVELENGTH_spectro[txt_index_i]:.2f}, {absorbance_spectro[txt_index_i]:.2f})', fontsize=14)
-        plt.scatter(WAVELENGTH_spectro[txt_index_i], absorbance_spectro[txt_index_i], color='red')
-    plt.xlabel('Longueur d\'onde (nm)', fontsize=14)
-    plt.ylabel('Absorbance', fontsize=14)
+    plt.xlabel('Longueur d\'onde (nm)', fontsize=18)
+    plt.ylabel('Absorbance', fontsize=18)
     plt.grid(True)
-    plt.legend()
+    plt.legend(loc='upper left')
     plt.show()
 
     from experiment_manager import ExperimentManager

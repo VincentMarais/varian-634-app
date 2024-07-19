@@ -17,7 +17,7 @@ def photodiode_voltages_simu():
     # Génération des données
     x = np.arange(0,1,1/longueur)
     y = np.zeros(longueur)
-    a = np.random.uniform(0.3, 1.1, longueur // periode)
+    a = np.random.uniform(0.6, 1.1, longueur // periode)
 
     for i in range(len(a)):
         y[i * periode] = a[i] * -1
@@ -62,54 +62,34 @@ mediane_par_instant = np.median(peaks_voltages)
 moyenne_pic = np.mean(peaks_voltages)
 print("mediane_par_instant", mediane_par_instant)
 print("moyenne_pic", moyenne_pic )
-
-N = 3  # Nombre de signaux
-
-moyennes= []
-medianes = []
-mini=[]
-# Génération des N signaux
-signaux = np.zeros((N, longueur))
-for i in range(N):
-    [x, y, peaks, peaks_voltages] = photodiode_voltages_simu()
-    mini.append(np.min(y))
-    mediane_par_instant = np.median(peaks_voltages)
-    moyenne_par_instant= np.mean(peaks_voltages)
-    moyennes.append(moyenne_par_instant)
-    medianes.append(mediane_par_instant)
-
-x_2 = np.arange(N)
+N = 20  # Nombre de signaux
+ecart_type_medianes = []
 
 
+ecart_type_medianes = []
+ecart_type_moyennes = []
+ecart_type_mini = []
+ecart_type_peak= []
+for n in range(1,N):
+    moyennes= []
+    medianes = []
+    mini=[]
+    # Génération des N signaux
+    signaux = np.zeros((n, longueur))
+    for i in range(n):
+        [x, y, peaks, peaks_voltages] = photodiode_voltages_simu()
+        mini.append(np.min(y))
+        mediane_par_instant = np.median(peaks_voltages)
+        moyenne_par_instant= np.mean(peaks_voltages)
+        moyennes.append(moyenne_par_instant)
+        medianes.append(mediane_par_instant)
 
-# Calcul de la médiane à chaque instant
-
-# Affichage de la médiane des signaux
-plt.figure(figsize=(10, 6))
-plt.plot(x_2, medianes, label="Médiane à chaque instant", color="red")
-plt.plot(x_2, moyennes, label="moyenne à chaque instant", color="blue")
-plt.plot(x_2, mini ,label="mini à chaque instant")
-plt.axhline(y=np.median(np.array(moyennes)), color='r', linestyle='-', label="mediane moyennes pics")
-plt.axhline(y=np.mean(np.array(moyennes)), color='g', linestyle='-', label="moyenne de la moyennes pics")
-plt.axhline(y=np.median(np.array(medianes)), color='b', linestyle='-', label="mediane de la medianes pics")
-plt.axhline(y=np.mean(np.array(medianes)), color='y', linestyle='-', label="moyenne de la medianes pics")
-plt.axhline(y=np.mean(np.array(mini)), color='y', linestyle='-', label="moyenne des mini pics")
-
-
-
-
-plt.xlabel("Temps")
-plt.ylabel("Valeur")
-plt.title("Médiane des valeurs à chaque instant pour N signaux")
-plt.legend()
-plt.grid(True)
-plt.show()
-
-# Calcul de l'écart-type
-ecart_type_medianes = np.std(medianes)
-ecart_type_moyennes = np.std(moyennes)
-ecart_type_mini = np.std(mini)
-ecart_type_peak=np.std(-peaks_voltages)
+    x_2 = np.arange(n)
+    
+    ecart_type_medianes.append(np.std(medianes))
+    ecart_type_moyennes.append(np.std(moyennes))
+    ecart_type_mini.append(np.std(mini))
+    ecart_type_peak.append(np.std(-peaks_voltages))
 
 
 print(f"L'écart-type de medianes est: {ecart_type_medianes}")
@@ -117,6 +97,20 @@ print(f"L'écart-type de moyennes est: {ecart_type_moyennes}")
 print(f"L'écart-type de mini est: {ecart_type_mini}")
 print(f"L'écart-type des peak est: {ecart_type_peak}")
 
+
+plt.figure(figsize=(10, 6))
+plt.plot(x_2, ecart_type_medianes, label="ecart_type_medianes", color="red")
+plt.plot(x_2, ecart_type_moyennes, label="ecart_type_moyennes", color="blue")
+plt.plot(x_2, ecart_type_mini ,label="ecart_type_mini")
+
+
+
+
+plt.xlabel("Nombre d'acquisition de la tension")
+plt.ylabel("Valeur l'écart type")
+plt.legend()
+plt.grid(True)
+plt.show()
 import scipy.signal as signal
 
 

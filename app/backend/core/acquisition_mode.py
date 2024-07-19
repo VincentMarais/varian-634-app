@@ -56,7 +56,7 @@ class Varian634AcquisitionMode:
         self.arduino_motors = arduino_motors_instance
         self.arduino_sensors = arduino_sensors_instance
         self.motors_controller = GeneralMotorsController(self.arduino_motors, self.arduino_sensors)
-        self.slits_position = [0, 0.07, 0.07, 0.08] # position of slits [2nm, 1nm, 0.5nm, 0.2nm]
+        self.slits_position = [0, 0.065, 0.135, 0.22] # position of slits [2nm, 1nm, 0.5nm, 0.2nm]
         self.daq = ElectronicVarian634()
         self.channels = ['Dev1/ai0', 'Dev1/ai1']
 
@@ -167,15 +167,14 @@ class Varian634AcquisitionMode:
 
         return wavelengths, absorbances, voltages_reference, voltages_sample, no_screw
 
-    def acquisition(self, wavelenght_min, wavelenght_max, wavelenght_step):
+    def acquisition(self, mode, wavelenght_min, wavelenght_max, wavelenght_step):
         """
         Manages the complete acquisition process, including motor initialization and data saving.
 
         Parameters:
             screw_travel: Total distance for the screw to travel.
             number_measurements: Total number of measurements to perform.
-            mode: Acquisition mode (e.g., calibration, baseline, scanning).
-            mode_variable_slits: Flag to use variable slit positions or not.
+            mode: Acquisition mode (e.g., baseline, scanning).
 
         Returns:
             The result of the precision mode operation, including wavelengths and absorbance values.
@@ -188,7 +187,7 @@ class Varian634AcquisitionMode:
         # Data saving
         title_data_acquisition = ["Longueur d'onde (nm)", "Absorbance", "Tension reference (Volt)", "Tension echantillon (Volt)", 
                                   "pas de vis (mm)"]
-        title_file = "raw_data_" + self.title_file_sample
+        title_file = "raw_data_" + mode + "_" + self.title_file_sample
         self.experim_manager.save_data_csv(self.path, data_acquisition, title_data_acquisition, title_file)  
         self.motors_controller.wait_for_idle()
         self.motors_controller.initialisation_motor_screw()   

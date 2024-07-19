@@ -289,7 +289,7 @@ class GeneralMotorsController:
             time.sleep(1)
             self.move_mirror_motor(1) 
             while state is True:
-                print("Cuvette 1 not reached because ", state)
+                print("Cuvette 2 not reached because ", state)
                 state = self.arduino_sensors.digital[pin].read()
                 print(self.get_position_xyz())                
                 pos_y = self.get_position_xyz()[2]
@@ -302,7 +302,7 @@ class GeneralMotorsController:
             time.sleep(1)
             self.move_mirror_motor(1) 
             while state is True:
-                print("Cuvette 1 not reached because ", state)
+                print("Cuvette 2 not reached because ", state)
                 state = self.arduino_sensors.digital[pin].read()
                 print(self.get_position_xyz())                
                 pos_y = self.get_position_xyz()[2]
